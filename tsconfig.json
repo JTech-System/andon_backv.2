@@ -21,6 +21,9 @@
       "@utils/*": ["./src/utils/*"],
       "@users/*": ["./src/modules/users/*"],
       "@auth/*": ["./src/integrations/auth/*"],
+      "@incidents/*": ["./src/modules/incidents/*"],
+      "@production-lines/*": ["./src/modules/production-lines/*"],
+      "@machines/*": ["./src/modules/machines/*"]
     }
   }
 }

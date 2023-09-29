@@ -1,11 +1,23 @@
+import {
+  IncidentPrioritiesArray,
+  IncidentPriority,
+} from '@incidents/enums/incident-priority.enum';
+import {
+  IncidentStatus,
+  IncidentStatusArray,
+} from '@incidents/enums/incident-status.enum';
 import { ApiProperty } from '@nestjs/swagger';
 import { ResponseUserDto } from '@users/dto/response-user.dto';
 import { User } from '@users/entities/user.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { IncidentCategory } from './incident-category.entity';
+import { ProductionLine } from '@production-lines/entities/production-line.entity';
+import { Machine } from '@machines/entities/machine.entity';
 
 @Entity()
 export class Incident extends BaseEntity {
+  // Required
   @ApiProperty({
     maxLength: 16,
   })
@@ -34,13 +46,42 @@ export class Incident extends BaseEntity {
   @ManyToOne(() => User, (user) => user.id)
   updatedBy: User;
 
+  @ApiProperty()
+  @Column({
+    type: 'text',
+  })
+  description: string;
+
+  @ApiProperty({
+    enum: IncidentStatusArray,
+  })
+  @Column({
+    type: 'enum',
+    enum: IncidentStatusArray,
+  })
+  status: IncidentStatus;
+
+  @ApiProperty({
+    type: IncidentCategory,
+  })
+  @ManyToOne(() => IncidentCategory, (incidentCategory) => incidentCategory.id)
+  category: IncidentCategory;
+
+  @ApiProperty({
+    type: ProductionLine,
+  })
+  @ManyToOne(() => ProductionLine, (productionLine) => productionLine.id)
+  productionLine: ProductionLine;
+
+  //
+
   @ApiProperty({
     required: false,
   })
   @Column({
     nullable: true,
   })
-  closedOn: Date;
+  closedOn?: Date;
 
   @ApiProperty({
     type: ResponseUserDto,
@@ -50,12 +91,6 @@ export class Incident extends BaseEntity {
     nullable: true,
   })
   closedBy?: User;
-
-  @ApiProperty()
-  @Column({
-    type: 'text',
-  })
-  description: string;
 
   @ApiProperty({
     required: false,
@@ -69,8 +104,19 @@ export class Incident extends BaseEntity {
   @ApiProperty({
     required: false,
   })
-  @Column()
+  @Column({
+    nullable: true,
+  })
   resolutionTimeInMinutes: number;
+
+  @ApiProperty({
+    required: false,
+  })
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  closeNotes?: string;
 
   @ApiProperty({
     type: ResponseUserDto,
@@ -79,21 +125,34 @@ export class Incident extends BaseEntity {
   @ManyToOne(() => User, (user) => user.id, {
     nullable: true,
   })
-  assignedTo: User;
+  assignedTo?: User;
 
-  //   "category": "Equipo de Scaneo", # this is of incidents
-  //   "production_line": "ARM REST U553 DP", # not of incidents
-  //   "machine": "", # not of incidents
-  //   "priority": "", # this is of incidents
-  //   "state": "Unassigned", # are defined
+  @ApiProperty({
+    enum: IncidentPrioritiesArray,
+    required: false,
+  })
+  @Column({
+    type: 'enum',
+    enum: IncidentPrioritiesArray,
+    nullable: true,
+  })
+  priority?: IncidentPriority;
+
+  @ApiProperty({
+    type: Machine,
+    required: false,
+  })
+  @ManyToOne(() => Machine, (machine) => machine.id, {
+    nullable: true,
+  })
+  machine: Machine;
 
   //   "assigned_group": "",
 
   //   "downtime": "0", # Can be calculated
-  //   "close_notes": "", # Is not the same as proposed solution
   //   "url": "http://192.168.0.160:4200/incident-details?_id=650e09f5636c32a773edbd11", # Not necessary
   //   "task_sla": {
-  //     "$oid": "650e09f5636c32a773edbd12" # sla = service level agreement 
+  //     "$oid": "650e09f5636c32a773edbd12" # sla = service level agreement
 
   //    "comments": []
 }

@@ -10,6 +10,8 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './integrations/auth/auth.module';
 import { AuthMiddleware } from '@auth/auth.middleware';
 import { IncidentsModule } from './modules/incidents/incidents.module';
+import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
+import { MachinesModule } from './modules/machines/machines.module';
 
 @Module({
   imports: [
@@ -31,6 +33,10 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
     AuthModule,
 
     IncidentsModule,
+
+    ProductionLinesModule,
+
+    MachinesModule,
   ],
   controllers: [],
   providers: [],
