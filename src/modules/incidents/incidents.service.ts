@@ -56,8 +56,8 @@ export class IncidentsService {
         createdBy: true,
         updatedBy: true,
         category: true,
-        productionLine: true
-      }
+        productionLine: true,
+      },
     });
     if (incident) return incident;
     throw new NotFoundException('Incident not found');
@@ -83,7 +83,11 @@ export class IncidentsService {
   }
 
   async findAllCategories(): Promise<IncidentCategory[]> {
-    return await this.incidentCategoriesRepository.find();
+    return await this.incidentCategoriesRepository.find({
+      order: {
+        value: 'ASC',
+      },
+    });
   }
 
   async findOneCategory(id: string): Promise<IncidentCategory> {

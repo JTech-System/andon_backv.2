@@ -17,7 +17,11 @@ export class MachinesService {
   }
 
   async findAll(): Promise<Machine[]> {
-    return await this.machinesRepository.find();
+    return await this.machinesRepository.find({
+      order: {
+        value: 'ASC',
+      },
+    });
   }
 
   async findOne(id: string): Promise<Machine> {

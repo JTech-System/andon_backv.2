@@ -22,7 +22,11 @@ export class ProductionLinesService {
   }
 
   async findAll(): Promise<ProductionLine[]> {
-    return await this.productionLinesRepository.find();
+    return await this.productionLinesRepository.find({
+      order: {
+        value: "ASC"
+      }
+    });
   }
 
   async findOne(id: string): Promise<ProductionLine> {
