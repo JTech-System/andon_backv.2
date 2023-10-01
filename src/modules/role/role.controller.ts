@@ -3,7 +3,9 @@ import { RoleService } from './role.service';
 import { CreateRoleDto } from '../role/dto/create-role.dto';
 import { Role } from '../role/entities/role.entity';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiTags,
@@ -18,12 +20,14 @@ export class RoleController {
     type: CreateRoleDto,
   })
   @ApiBearerAuth()
+  @ApiConflictResponse({ description: 'Role with this name already exists' })
+  @ApiBadRequestResponse({ description: 'Invalid input' })
   async create(
     @Body() createRoleDto: CreateRoleDto,
   ): Promise<Role> {
     return this.roleService.create(createRoleDto);
   }
-
+  
   @Get()
   findAll(): Promise<Role[]> {
     return this.roleService.findAll();

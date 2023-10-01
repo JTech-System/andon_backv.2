@@ -15,5 +15,5 @@ export class CreateRoleDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsInt({ each: true })
-  permissions: number[]; // IDs of permissions associated with this role
+  permissions: string[]; // IDs of permissions associated with this role
 }

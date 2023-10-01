@@ -1,5 +1,5 @@
 // src/role/role.service.ts
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Role } from '../role/entities/role.entity';
@@ -16,15 +16,29 @@ export class RoleService {
     ) {}
 
     async create(createRoleDto: CreateRoleDto): Promise<Role> {
+        const existingRole = await this.roleRepository.findOne({ name: createRoleDto.name });
+        if (existingRole) {
+          throw new ConflictException('Role with this name already exists');
+        }
+    
         const permissions = await this.permissionRepository.findByIds(createRoleDto.permissions);
+        if (permissions.length !== createRoleDto.permissions.length) {
+          throw new NotFoundException('One or more permissions not found');
+        }
+    
         const role = this.roleRepository.create({
-            name: createRoleDto.name,
-            permissions: permissions,
+          name: createRoleDto.name,
+          permissions: permissions,
         });
-
-        return this.roleRepository.save(role);
-    }
-    async addPermissionsToRole(roleId: number, permissionIds: number[]): Promise<Role> {
+    
+        try {
+          return await this.roleRepository.save(role);
+        } catch (error) {
+          throw new InternalServerErrorException('An error occurred while creating the role');
+        }
+      }
+      
+    async addPermissionsToRole(roleId: string, permissionIds: number[]): Promise<Role> {
         const role = await this.roleRepository.findOne({ where: { id: roleId }, relations: ['permissions'] });
         const permissions = await this.permissionRepository.findBy({ id: In(permissionIds) });
     

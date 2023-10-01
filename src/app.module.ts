@@ -12,7 +12,7 @@ import { AuthMiddleware } from '@auth/auth.middleware';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
 import { MachinesModule } from './modules/machines/machines.module';
-import { RoleModule } from './modules/roles/role.module';
+import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [
