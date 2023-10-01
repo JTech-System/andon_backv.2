@@ -43,4 +43,14 @@ export class CreateUserDto {
       'password minimum eight characters, at least one uppercase letter, one lowercase letter and one number',
   })
   password: string;
+  
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description: 'The IDs of roles to be associated with the user.',
+    required: false,
+  })
+  roleIds?: string[];
 }
+
+

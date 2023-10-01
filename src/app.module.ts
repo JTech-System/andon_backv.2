@@ -13,9 +13,15 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
 import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
 import { MachinesModule } from './modules/machines/machines.module';
 import { RoleModule } from './modules/role/role.module';
+import { RateLimiterModule } from 'nestjs-rate-limiter';
 
 @Module({
   imports: [
+    (RateLimiterModule as any).forRoot({
+      type: 'Memory',
+      points: 10, 
+      duration: 120, 
+    }),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
@@ -27,20 +33,13 @@ import { RoleModule } from './modules/role/role.module';
       synchronize: true,
       autoLoadEntities: true,
     }),
-
     //Modules
     UsersModule,
-
     AuthModule,
-
     IncidentsModule,
-
     ProductionLinesModule,
-
     MachinesModule,
-
     RoleModule,
-
   ],
   controllers: [],
   providers: [],

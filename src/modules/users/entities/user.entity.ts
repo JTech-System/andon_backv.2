@@ -1,6 +1,7 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, JoinTable, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '@utils/entities/base.entity';
+import { Role } from 'src/modules/role/entities/role.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -42,7 +43,22 @@ export class User extends BaseEntity {
   })
   passwordHash: string;
 
-  //Roles
+  @ApiProperty()
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+  
+  @ApiProperty({
+    type: () => Role,
+    isArray: true,
+    description: 'A list of roles associated with the user.',
+  })
+  @ManyToMany(() => Role, role => role.users, { eager: true })
+  @JoinTable()
+  roles: Role[];
+  
+  
 
   //Groups
 }
