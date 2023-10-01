@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { RoleService } from './role.service';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { Role } from './entities/role.entity';
+import { CreateRoleDto } from '../role/dto/create-role.dto';
+import { Role } from '../role/entities/role.entity';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
