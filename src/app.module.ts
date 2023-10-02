@@ -2,7 +2,7 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  RequestMethod,
+  RequestMethod
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,9 +14,17 @@ import { ProductionLinesModule } from './modules/production-lines/production-lin
 import { MachinesModule } from './modules/machines/machines.module';
 import { RoleModule } from './modules/role/role.module';
 import { RateLimiterModule } from 'nestjs-rate-limiter';
+import { CacheModule } from '@nestjs/cache-manager';
+
+
 
 @Module({
   imports: [
+    CacheModule.register({
+      store: 'redis',
+      host: 'localhost',
+      port: 6379,
+    }),
     (RateLimiterModule as any).forRoot({
       type: 'Memory',
       points: 10, 

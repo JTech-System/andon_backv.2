@@ -22,8 +22,9 @@ import {
 import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { UserRole } from '@utils/enums/user-role.enum'; // Assuming you have an enum for roles
+import { JwtAuthGuard } from '@utils/guards/jwt-auth.guard';
 
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, JwtAuthGuard)
 @ApiBearerAuth()
 @ApiTags('Roles')
 @Controller('roles')
