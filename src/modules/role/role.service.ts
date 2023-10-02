@@ -1,22 +1,18 @@
-// src/role/role.service.ts
 import {
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  Inject
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Role } from '../role/entities/role.entity';
-import { CreateRoleDto } from '../role/dto/create-role.dto';
+import { Role } from './entities/role.entity';
+import { CreateRoleDto } from './dto/create-role.dto';
 import { Permission } from '../permission/entities/permission.entity';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class RoleService {
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     @InjectRepository(Permission)
@@ -25,36 +21,39 @@ export class RoleService {
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
     return await this.roleRepository.manager.transaction(async manager => {
-    const existingRole = await this.roleRepository.findOne({
-      where: { name: createRoleDto.name },
-    });
-    if (existingRole) {
-      throw new ConflictException('Role with this name already exists');
-    }
+        const existingRole = await this.roleRepository.findOne({
+            where: { name: createRoleDto.name },
+        });
+        if (existingRole) {
+            throw new ConflictException('Role with this name already exists');
+        }
 
-    const permissions = await this.permissionRepository.findBy({
-      id: In(createRoleDto.permissions),
-    });
-    if (permissions.length !== createRoleDto.permissions.length) {
-      const foundPermissionIds = permissions.map(p => p.id);
-      const notFoundPermissions = createRoleDto.permissions.filter(id => !foundPermissionIds.includes(id));
-      throw new NotFoundException(`Permissions with IDs ${notFoundPermissions.join(', ')} not found`);
-    }
+        // Change made here - use find with In operator
+        const permissions = await this.permissionRepository.find({
+            where: { id: In(createRoleDto.permissions) },
+        });
 
-    const role = this.roleRepository.create({
-      name: createRoleDto.name,
-      permissions: permissions,
-    });
+        if (permissions.length !== createRoleDto.permissions.length) {
+            const foundPermissionIds = permissions.map(p => p.id);
+            const notFoundPermissions = createRoleDto.permissions.filter(id => !foundPermissionIds.includes(id));
+            throw new NotFoundException(`Permissions with IDs ${notFoundPermissions.join(', ')} not found`);
+        }
 
-    try {
-      return await this.roleRepository.save(role);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'An error occurred while creating the role',
-      );
-    }
-  });
-  }
+        const role = this.roleRepository.create({
+            name: createRoleDto.name,
+            permissions: permissions,
+        });
+
+        try {
+            return await this.roleRepository.save(role);
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'An error occurred while creating the role',
+            );
+        }
+    });
+}
+
 
   async addPermission(roleId: string, permissionId: string): Promise<Role> {
     const role = await this.roleRepository.findOne({where: { id: roleId }, relations: ['permissions'] });

@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from '../role/dto/create-role.dto';
@@ -21,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
-import { UserRole } from '@utils/enums/user-role.enum'; // Assuming you have an enum for roles
+import { UserRole } from '@utils/enums/user-role.enum';
 import { JwtAuthGuard } from '@utils/guards/jwt-auth.guard';
 
 @UseGuards(RolesGuard, JwtAuthGuard)
@@ -32,27 +33,38 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN) // Use enum instead of hard-coded string
-  @ApiCreatedResponse({ type: CreateRoleDto })
-  @ApiConflictResponse({ description: 'Role with this name already exists' })
-  @ApiBadRequestResponse({ description: 'Invalid input' })
+  @Roles(UserRole.ADMIN)
+  @ApiCreatedResponse({ type: Role, description: 'The role has been successfully created.' })
+  @ApiConflictResponse({ description: 'Role with this name already exists.' })
+  @ApiBadRequestResponse({ description: 'Invalid input.' })
   async create(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
-    return this.roleService.create(createRoleDto); // Ensure error handling in the service method
+    const role = await this.roleService.create(createRoleDto);
+    if (!role) {
+      throw new NotFoundException('Role could not be created.');
+    }
+    return role;
   }
 
   @Get()
   @Roles(UserRole.ADMIN)
-  @ApiOkResponse({ type: [Role] })
-  @ApiNotFoundResponse({ description: 'Roles not found' })
-  findAll(): Promise<Role[]> {
-    return this.roleService.findAll(); // Ensure error handling in the service method
+  @ApiOkResponse({ type: [Role], description: 'Returned all roles.' })
+  async findAll(): Promise<Role[]> {
+    const roles = await this.roleService.findAll();
+    if (roles.length === 0) {
+      throw new NotFoundException('No roles found.');
+    }
+    return roles;
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOkResponse({ type: Role })
-  @ApiNotFoundResponse({ description: 'Role not found' })
-  async findOne(@Param('id') id: string): Promise<Role> {
-    return this.roleService.findOne(id);
+  @ApiOkResponse({ type: Role, description: 'Returned role for the given id.' })
+  @ApiNotFoundResponse({ description: 'Role with given id not found.' })
+  async findOne(@Param('id', ParseIntPipe) id: string): Promise<Role> {
+    const role = await this.roleService.findOne(id);
+    if (!role) {
+      throw new NotFoundException(`Role with id ${id} not found.`);
+    }
+    return role;
   }
 }
