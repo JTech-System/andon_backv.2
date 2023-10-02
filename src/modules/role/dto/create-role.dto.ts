@@ -9,7 +9,7 @@ import {
   ArrayUnique,
 } from 'class-validator';
 
-export class CreateRoleDto extends BaseDto {
+export class CreateRoleDto {
   /** @name */
   @ApiProperty({
     description: 'Name of the role',
