@@ -7,10 +7,9 @@ import { Policy } from './entities/policy.entity';
 import { ApiTags, ApiBearerAuth, ApiOkResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
-import { JwtAuthGuard } from '@utils/guards/jwt-auth.guard';
 import { UserRole } from '@utils/enums/user-role.enum';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @ApiBearerAuth()
 @ApiTags('Policies')
 @Controller('policies')

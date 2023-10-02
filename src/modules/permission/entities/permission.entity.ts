@@ -57,9 +57,7 @@ export class Permission extends BaseEntity {
     isArray: true,
     description: 'A list of roles associated with the permission.',
   })
-  @ManyToMany(() => Role, role => role.permissions, { 
-    cascade: true 
-  })
+  @ManyToMany(() => Role, role => role.permissions, {})
   roles: Role[];
 
   /** 

@@ -9,13 +9,16 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Role } from '../role/entities/role.entity';
+import { RoleService } from '../role/role.service';
+
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
-    @InjectRepository(Role) private roleRepository: Repository<Role>, // Inject Role Repository
+    private roleService: RoleService,
+
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -30,9 +33,10 @@ export class UsersService {
 
     let roles = [];
     if (createUserDto.roleIds && createUserDto.roleIds.length > 0) {
-      roles = await this.roleRepository.find({
-        where: createUserDto.roleIds.map((roleId) => ({ id: roleId })),
-      });
+      let roles = [];
+      if (createUserDto.roleIds && createUserDto.roleIds.length > 0) {
+        roles = await this.roleService.findRolesByIds(createUserDto.roleIds);
+      }
 
       if (roles.length !== createUserDto.roleIds.length) {
         throw new BadRequestException('One or more roles were not found.');
