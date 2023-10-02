@@ -26,6 +26,7 @@ export class User extends BaseEntity {
   })
   @Column({
     length: 128,
+    unique: true,
   })
   email: string;
 
@@ -48,15 +49,15 @@ export class User extends BaseEntity {
     default: true,
   })
   isActive: boolean;
-  
+
   @ApiProperty({
     type: () => Role,
     isArray: true,
     description: 'A list of roles associated with the user.',
   })
-  @ManyToMany(() => Role, role => role.users, { eager: true })
+  @ManyToMany(() => Role, (role) => role.users, { eager: true, cascade: true })
   @JoinTable()
-  roles: Role[]; 
+  roles: Role[];
 
   //Groups
 }
