@@ -30,24 +30,6 @@ export class Role extends BaseEntity {
     @ManyToMany(() => Permission, permission => permission.roles, { eager: true })
     @JoinTable()
     permissions: Permission[];
-
-    /**
-     * Calculate the permission bitmask for the role.
-     * This is a derived property and not stored in the database.
-    */
-    @ApiProperty()
-    getPermissionBitmask(): number {
-        return this.permissions.reduce((acc, permission) => acc | permission.bitmask, 0);
-    }
-
-    /** @users */
-    @ApiProperty({
-        type: () => User,
-        isArray: true,
-        description: 'A list of users associated with the role.',
-    })
-    @ManyToMany(() => User, user => user.roles)
-    users: User[];
     /**
      * Calculate the permission bitmask for the role.
      * This is a derived property and not stored in the database.
