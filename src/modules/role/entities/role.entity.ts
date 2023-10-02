@@ -19,7 +19,7 @@ export class Role extends BaseEntity {
     })
     @IsString()
     @MaxLength(128)
-    @Index()  // Added indexing for faster searches
+    @Index() 
     name: string;
 
     /** @permissions */
@@ -36,7 +36,7 @@ export class Role extends BaseEntity {
     /**
      * Calculate the permission bitmask for the role.
      * This is a derived property and not stored in the database.
-     * Is not needed to be include in the swager documentation since it's a method not a property
+     * Is not needed to be include in the swager documentation since it's a method not a property -- TBD
      */
     getPermissionBitmask(): number {
         return this.permissions.reduce((acc, permission) => acc | permission.bitmask, 0);

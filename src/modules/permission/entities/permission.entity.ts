@@ -18,7 +18,7 @@ export class Permission extends BaseEntity {
   @Column({
     length: 128,
   })
-  @Index() // Added indexing
+  @Index()
   name: string;
 
   /** 
@@ -32,7 +32,7 @@ export class Permission extends BaseEntity {
   @Column({
     length: 128,
   })
-  @Index() // Added indexing
+  @Index()
   action: string;
 
   /** 
@@ -46,7 +46,7 @@ export class Permission extends BaseEntity {
   @Column({
     length: 128,
   })
-  @Index() // Added indexing
+  @Index()
   resource: string;
 
   /** 

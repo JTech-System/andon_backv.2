@@ -28,7 +28,6 @@ export class RoleService {
         throw new ConflictException('Role with this name already exists');
       }
 
-      // Change made here - use find with In operator
       const permissions = await this.permissionRepository.find({
         where: { id: In(createRoleDto.permissions) },
       });

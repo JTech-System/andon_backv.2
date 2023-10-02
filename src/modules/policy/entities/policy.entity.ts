@@ -42,7 +42,7 @@ export class Policy extends BaseEntity{
   permissions: Permission[];
   */
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   @IsJSON()
   conditions: any;  // For complex conditions related to ABAC
 }

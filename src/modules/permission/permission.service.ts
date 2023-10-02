@@ -65,7 +65,7 @@ export class PermissionService {
   }
 
   private calculateBitmask(permission: Permission): number {
-    // Implement your bitmask calculation logic here
+    //bitmask calculation logic.. TBD
     return permission.action.length + permission.resource.length;
   }
 

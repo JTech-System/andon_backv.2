@@ -14,7 +14,7 @@ import { CreatePermissionDto } from './dto/create-permission.dto';
 import { Permission } from './entities/permission.entity';
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { Roles } from '@utils/decorators/roles.decorator';
-import { UserRole } from '@utils/enums/user-role.enum'; // Assuming you have an enum for roles
+import { UserRole } from '@utils/enums/user-role.enum';
 import {
   ApiTags,
   ApiBearerAuth,
