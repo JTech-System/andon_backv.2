@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Policy } from './entities/policy.entity';
+import { CreatePolicyDto } from './dto/create-policy.dto';
 
 @Injectable()
 export class PolicyService {
@@ -9,6 +10,34 @@ export class PolicyService {
     @InjectRepository(Policy)
     private policyRepository: Repository<Policy>,
   ) {}
+  
+  async create(createPolicyDto: CreatePolicyDto): Promise<Policy> {
+    const policy = this.policyRepository.create(createPolicyDto);
+    return await this.policyRepository.save(policy);
+  }
+
+  async findAll(): Promise<Policy[]> {
+    return await this.policyRepository.find();
+  }
+
+  async findOne(id: string): Promise<Policy> {
+    const policy = await this.policyRepository.findOne({where: {id : id}});
+    if (!policy) {
+      throw new NotFoundException(`Policy with ID ${id} not found`);
+    }
+    return policy;
+  }
+
+  async update(id: string, updatePolicyDto: CreatePolicyDto): Promise<Policy> {
+    await this.findOne(id);  // This will throw an error if the policy doesn't exist
+    await this.policyRepository.update(id, updatePolicyDto);
+    return this.findOne(id);  // Return the updated policy
+  }
+
+  async remove(id: string): Promise<void> {
+    const policy = await this.findOne(id);  // This will throw an error if the policy doesn't exist
+    await this.policyRepository.remove(policy);
+  }
 
   async getPolicies(userId: string, resource?: string, action?: string): Promise<Policy[]> {
     let whereClause = { userId };
@@ -26,10 +55,21 @@ export class PolicyService {
 
   evaluatePolicies(policies: Policy[], attributes: Record<string, any>): boolean {
     return policies.every(policy => {
-      // Add your complex attribute-based evaluation logic here
-      // For simplicity, an example to check if a user's age is above a certain value
-      return attributes.age && attributes.age >= policy.conditions.age;
+      return this.evaluatePolicy(policy, attributes);
     });
   }
-  
+
+  private evaluatePolicy(policy: Policy, attributes: Record<string, any>): boolean {
+    if (!policy.conditions) {
+      return true; // if there are no conditions, the policy grants access by default
+    }
+
+    return Object.keys(policy.conditions).every(conditionKey => {
+      const conditionValue = policy.conditions[conditionKey];
+      const attributeValue = attributes[conditionKey];
+
+      //TBD for more fancy logic...
+      return attributeValue !== undefined && attributeValue === conditionValue;
+    });
+  }
 }

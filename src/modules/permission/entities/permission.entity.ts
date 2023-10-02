@@ -3,6 +3,7 @@ import { Role } from '../../role/entities/role.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MaxLength } from 'class-validator';
+import { Policy } from 'src/modules/policy/entities/policy.entity';
 
 @Entity()
 export class Permission extends BaseEntity {
@@ -56,7 +57,9 @@ export class Permission extends BaseEntity {
     isArray: true,
     description: 'A list of roles associated with the permission.',
   })
-  @ManyToMany(() => Role, (role) => role.permissions)
+  @ManyToMany(() => Role, role => role.permissions, { 
+    cascade: true 
+  })
   roles: Role[];
 
   /** 
@@ -64,4 +67,14 @@ export class Permission extends BaseEntity {
    */
   @Column()
   bitmask: number;
+/*
+  @ApiProperty({
+    type: () => Policy,
+    isArray: true,
+    description: 'A list of policies associated with the permission.',
+  })
+  
+  @ManyToMany(() => Policy, policy => policy.permissions)
+  policies: Policy[];
+  */
 }

@@ -5,6 +5,7 @@ import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@users/entities/user.entity';
 import { IsString, MaxLength } from 'class-validator';
+import { Policy } from 'src/modules/policy/entities/policy.entity';
 
 @Entity()
 export class Role extends BaseEntity {
@@ -27,9 +28,11 @@ export class Role extends BaseEntity {
         isArray: true,
         description: 'A list of permissions associated with the role.',
     })
-    @ManyToMany(() => Permission, permission => permission.roles, { eager: true })
-    @JoinTable()
-    permissions: Permission[];
+    @ManyToMany(() => Permission, permission => permission.roles, { 
+        cascade: true 
+      })
+      @JoinTable()
+      permissions: Permission[];
     /**
      * Calculate the permission bitmask for the role.
      * This is a derived property and not stored in the database.
@@ -47,4 +50,14 @@ export class Role extends BaseEntity {
     })
     @ManyToMany(() => User, user => user.roles)
     users: User[];
+/*
+    @ApiProperty({
+        type: () => Policy,
+        isArray: true,
+        description: 'A list of policies associated with the role.',
+      })
+      @ManyToMany(() => Policy, policy => policy.roles)
+      @JoinTable()
+      policies: Policy[];
+      */
 }

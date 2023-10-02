@@ -70,10 +70,12 @@ export class PermissionService {
   }
 
   async delete(id: string): Promise<void> {
-    const result = await this.permissionRepository.delete(id);
+    const permission = await this.permissionRepository.findOne({where: { id : id },relations: ['roles'] });
 
-    if (result.affected === 0) {
-        throw new NotFoundException(`Permission with ID ${id} not found`);
+    if (!permission) {
+      throw new NotFoundException(`Permission with ID ${id} not found`);
     }
-}
+
+    await this.permissionRepository.remove(permission);
+  }
 }
