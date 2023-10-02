@@ -24,7 +24,7 @@ export class UsersService {
     });
     if (existingUser) {
       throw new BadRequestException(
-        `A user with email ${createUserDto.email} already exists.`,
+        `Account already exists.`,
       );
     }
 

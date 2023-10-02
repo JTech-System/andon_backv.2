@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles Testing Steps</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 24px;
+            border-bottom: 2px solid #ccc;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        li:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    Roles Testing Steps
+</header>
+
+<main>
+
+    <h2>Role Creation:</h2>
+    <ul>
+        <li>Create a Role: Create a new role entity with a specific name.</li>
+        <li>Assign Permissions: Assign permissions to the role either by selecting existing permissions or creating new ones. This can be done by updating the permissions array of the role entity.</li>
+    </ul>
+
+    <h2>Role Assignment:</h2>
+    <ul>
+        <li>Assign to User: Assign roles to users. This could be done by updating the roles array in the User entity.</li>
+    </ul>
+
+    <h2>Role Update:</h2>
+    <ul>
+        <li>Update Permissions: To update the permissions of a role, you can add or remove permissions from the permissions array. Recalculate the permission bitmask if it's being used.</li>
+    </ul>
+
+    <h2>Permission Checks:</h2>
+    <ul>
+        <li>Using Permissions Array: Iterate through the permissions array and check if the required permission exists for detailed checks.</li>
+        <li>Using Bitmask: Use the bitmask for quick permission checks. It’s less detailed but faster.</li>
+    </ul>
+
+</main>
+
+</body>
+</html>
