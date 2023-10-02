@@ -14,6 +14,8 @@ import { ProductionLinesModule } from './modules/production-lines/production-lin
 import { MachinesModule } from './modules/machines/machines.module';
 import { RoleModule } from './modules/role/role.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { PolicyModule } from './modules/policy/policy.module';
+import { PermissionModule } from './modules/permission/permission.module';
 
 
 
@@ -42,6 +44,8 @@ import { CacheModule } from '@nestjs/cache-manager';
     ProductionLinesModule,
     MachinesModule,
     RoleModule,
+    PolicyModule,
+    PermissionModule
   ],
   controllers: [],
   providers: [],
