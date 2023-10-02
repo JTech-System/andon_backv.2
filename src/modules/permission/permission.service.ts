@@ -12,10 +12,10 @@ export class PermissionService {
         private permissionRepository: Repository<Permission>,
     ) {}
 
-    create(createPermissionDto: CreatePermissionDto): Promise<Permission> {
-        const permission = this.permissionRepository.create(createPermissionDto);
+    create(createPermissionDto: CreatePermissionDto, bitmask: number): Promise<Permission> {
+        const permission = this.permissionRepository.create({ ...createPermissionDto, bitmask });
         return this.permissionRepository.save(permission);
-    }
+      }
 
     findAll(): Promise<Permission[]> {
         return this.permissionRepository.find();
