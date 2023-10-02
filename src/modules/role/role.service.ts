@@ -21,6 +21,7 @@ export class RoleService {
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
+    return await this.roleRepository.manager.transaction(async manager => {
     const existingRole = await this.roleRepository.findOne({
       where: { name: createRoleDto.name },
     });
@@ -32,7 +33,9 @@ export class RoleService {
       id: In(createRoleDto.permissions),
     });
     if (permissions.length !== createRoleDto.permissions.length) {
-      throw new NotFoundException('One or more permissions not found');
+      const foundPermissionIds = permissions.map(p => p.id);
+      const notFoundPermissions = createRoleDto.permissions.filter(id => !foundPermissionIds.includes(id));
+      throw new NotFoundException(`Permissions with IDs ${notFoundPermissions.join(', ')} not found`);
     }
 
     const role = this.roleRepository.create({
@@ -47,6 +50,7 @@ export class RoleService {
         'An error occurred while creating the role',
       );
     }
+  });
   }
 
   async addPermissionsToRole(

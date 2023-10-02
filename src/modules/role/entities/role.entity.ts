@@ -1,20 +1,24 @@
 // src/role/role.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, Index } from 'typeorm';
 import { Permission } from '../../permission/entities/permission.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@users/entities/user.entity';
+import { IsString, MaxLength } from 'class-validator';
 
 @Entity()
 export class Role extends BaseEntity {
     /** @name */
-
     @ApiProperty({
         maxLength: 128,
-      })
-      @Column({
+        description: 'Name of the role',
+    })
+    @Column({
         length: 128,
-      })      
+    })
+    @IsString()
+    @MaxLength(128)
+    @Index()  // Added indexing for faster searches
     name: string;
 
     /** @permissions */
@@ -27,6 +31,21 @@ export class Role extends BaseEntity {
     @JoinTable()
     permissions: Permission[];
 
-  @ManyToMany(() => User, user => user.roles)
-  users: User[];
+    /**
+     * Calculate the permission bitmask for the role.
+     * This is a derived property and not stored in the database.
+     * Is not needed to be include in the swager documentation since it's a method not a property
+     */
+    getPermissionBitmask(): number {
+        return this.permissions.reduce((acc, permission) => acc | permission.bitmask, 0);
+    }
+
+    /** @users */
+    @ApiProperty({
+        type: () => User,
+        isArray: true,
+        description: 'A list of users associated with the role.',
+    })
+    @ManyToMany(() => User, user => user.roles)
+    users: User[];
 }
