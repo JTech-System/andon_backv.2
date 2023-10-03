@@ -7,6 +7,7 @@ import { Policy } from 'src/modules/policy/entities/policy.entity';
 
 @Entity()
 export class Permission extends BaseEntity {
+  [x: string]: any;
   /** 
    * @name represents the name of the permission.
    */

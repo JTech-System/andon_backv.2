@@ -16,6 +16,7 @@ import { RoleModule } from './modules/role/role.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { ResourceModule } from './modules/resource/resource.module';
 
 
 
@@ -45,7 +46,8 @@ import { PermissionModule } from './modules/permission/permission.module';
     MachinesModule,
     RoleModule,
     PolicyModule,
-    PermissionModule
+    PermissionModule,
+    ResourceModule,
   ],
   controllers: [],
   providers: [],
