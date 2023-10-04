@@ -10,7 +10,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ResponseUserDto } from '@users/dto/response-user.dto';
 import { User } from '@users/entities/user.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { IncidentCategory } from './incident-category.entity';
 import { ProductionLine } from '@production-lines/entities/production-line.entity';
 import { Machine } from '@machines/entities/machine.entity';
@@ -64,6 +64,7 @@ export class Incident extends BaseEntity {
   @ApiProperty({
     type: IncidentCategory,
   })
+  @Index()
   @ManyToOne(() => IncidentCategory, (incidentCategory) => incidentCategory.id)
   category: IncidentCategory;
 

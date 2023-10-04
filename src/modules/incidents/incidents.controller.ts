@@ -5,7 +5,9 @@ import {
   Body,
   Patch,
   Param,
+  Query,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { IncidentsService } from './incidents.service';
 import { CreateIncidentDto } from './dto/create-incident.dto';
@@ -14,6 +16,8 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiProperty,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Incident } from './entities/incident.entity';
@@ -22,6 +26,14 @@ import { User } from '@users/entities/user.entity';
 import { IncidentCategory } from './entities/incident-category.entity';
 import { CreateIncidentCategoryDto } from './dto/create-incident-category.dto';
 import { UpdateIncidentCategoryDto } from './dto/update-incident-category.dto';
+import { PaginationIncidentDto } from './dto/pagination-incident.dto';
+import {
+  IncidentStatus,
+  IncidentStatusArray,
+} from './enums/incident-status.enum';
+import { IncidentStatusValidationPipe } from './pipes/incident-status-validation.pipe';
+import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
+import { DateValidationPipe } from '@utils/pipes/date-validation.pipe';
 
 @ApiTags('Incidents')
 @Controller('incidents')
@@ -40,10 +52,81 @@ export class IncidentsController {
     return this.incidentsService.create(createIncidentDto, currentUser);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.incidentsService.findAll();
-  // }
+  @Get()
+  @ApiOkResponse({
+    type: PaginationIncidentDto,
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    type: Number,
+    required: false,
+    enum: [5, 10, 25, 100],
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'status',
+    type: String,
+    enum: IncidentStatusArray,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'startCreatedOn',
+    type: Date,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'endCreatedOn',
+    type: Date,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'groupId',
+    type: String,
+    required: false,
+  })
+  @ApiBearerAuth()
+  async findAll(
+    @Query('pageSize', new ParseIntPipe({ optional: true })) pageSize?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('search') search?: string,
+    @Query('status', new IncidentStatusValidationPipe())
+    status?: IncidentStatus,
+    @Query(
+      'categoryId',
+      new UUIDValidationPipe({
+        optional: true,
+      }),
+    )
+    categoryId?: string,
+    @Query('startCreatedOn', new DateValidationPipe({optional: true})) startCreatedOn?: Date,
+    @Query('endCreatedOn', new DateValidationPipe({optional: true})) endCreatedOn?: Date,
+    @Query('groupId', new UUIDValidationPipe({optional: true})) groupId?: string,
+  ): Promise<PaginationIncidentDto> {
+    return await this.incidentsService.findAll(
+      pageSize ?? 25,
+      page ?? 1,
+      search,
+      status,
+      categoryId,
+      startCreatedOn,
+      endCreatedOn,
+      groupId,
+    );
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
@@ -101,13 +184,16 @@ export class IncidentsController {
     @Param('id') id: string,
     @Body() updateIncidentCategoryDto: UpdateIncidentCategoryDto,
   ) {
-    return await this.incidentsService.update(id, updateIncidentCategoryDto);
+    return await this.incidentsService.updateCategory(
+      id,
+      updateIncidentCategoryDto,
+    );
   }
 
   @Delete('categories/:id')
   @ApiOkResponse()
   @ApiBearerAuth()
   async deleteCategory(@Param('id') id: string): Promise<void> {
-    await this.deleteCategory(id);
+    await this.incidentsService.deleteCategory(id);
   }
 }

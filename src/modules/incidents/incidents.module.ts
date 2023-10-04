@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Incident } from './entities/incident.entity';
 import { IncidentCategory } from './entities/incident-category.entity';
 import { ProductionLinesModule } from '@production-lines/production-lines.module';
+import { IncidentStatusValidationPipe } from './pipes/incident-status-validation.pipe';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { ProductionLinesModule } from '@production-lines/production-lines.module
     ProductionLinesModule,
   ],
   controllers: [IncidentsController],
-  providers: [IncidentsService],
+  providers: [IncidentsService, IncidentStatusValidationPipe],
 })
 export class IncidentsModule {}

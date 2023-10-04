@@ -12,6 +12,7 @@ import { AuthMiddleware } from '@auth/auth.middleware';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
 import { MachinesModule } from './modules/machines/machines.module';
+import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { MachinesModule } from './modules/machines/machines.module';
   ],
   controllers: [],
   providers: [],
+  exports: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
