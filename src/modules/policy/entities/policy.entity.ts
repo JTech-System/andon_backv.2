@@ -36,7 +36,7 @@ export class Policy extends BaseEntity{
     type: () => Permission,
     isArray: true,
     description: 'A list of permissions associated with the policy.',
-  })
+  })s
   @ManyToMany(() => Permission, permission => permission.policies, { onDelete: 'CASCADE' })  // Adding cascade delete
   @JoinTable()
   permissions: Permission[];
