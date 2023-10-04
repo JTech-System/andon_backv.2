@@ -18,6 +18,7 @@ import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
 
 
+import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { PermissionModule } from './modules/permission/permission.module';
   ],
   controllers: [],
   providers: [],
+  exports: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
