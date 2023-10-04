@@ -112,9 +112,12 @@ export class IncidentsController {
       }),
     )
     categoryId?: string,
-    @Query('startCreatedOn', new DateValidationPipe({optional: true})) startCreatedOn?: Date,
-    @Query('endCreatedOn', new DateValidationPipe({optional: true})) endCreatedOn?: Date,
-    @Query('groupId', new UUIDValidationPipe({optional: true})) groupId?: string,
+    @Query('startCreatedOn', new DateValidationPipe({ optional: true }))
+    startCreatedOn?: Date,
+    @Query('endCreatedOn', new DateValidationPipe({ optional: true }))
+    endCreatedOn?: Date,
+    @Query('groupId', new UUIDValidationPipe({ optional: true }))
+    groupId?: string,
   ): Promise<PaginationIncidentDto> {
     return await this.incidentsService.findAll(
       pageSize ?? 25,
@@ -138,10 +141,12 @@ export class IncidentsController {
   //   return this.incidentsService.update(+id, updateIncidentDto);
   // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.incidentsService.remove(+id);
-  // }
+  @Delete(':id')
+  @ApiOkResponse()
+  @ApiBearerAuth()
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.incidentsService.remove(id);
+  }
 
   // Incident Categories
   @Post('categories')

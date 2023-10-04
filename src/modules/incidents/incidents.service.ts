@@ -134,9 +134,10 @@ export class IncidentsService {
   //   return `This action updates a #${id} incident`;
   // }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} incident`;
-  // }
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    await this.incidentsRepository.delete({ id });
+  }
 
   // Incident Categories
 
