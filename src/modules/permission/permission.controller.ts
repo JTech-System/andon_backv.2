@@ -22,6 +22,7 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 
 @ApiTags('Permission')
@@ -33,6 +34,7 @@ export class PermissionController {
 
   @Post()
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create a Permission' })
   @ApiCreatedResponse({ type: Permission })
   @ApiBadRequestResponse({ description: 'Invalid input' })
   async create(
@@ -43,6 +45,7 @@ export class PermissionController {
 
   @Get()
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all Permissions' })
   @ApiOkResponse({ type: [Permission] })
   findAll(): Promise<Permission[]> {
     return this.permissionService.findAll();
@@ -50,6 +53,7 @@ export class PermissionController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get a Permission by ID' })
   @ApiOkResponse({ type: Permission })
   @ApiNotFoundResponse({ description: 'Permission not found' })
   findOne(@Param('id', new ParseUUIDPipe()) id: string): Promise<Permission> {
@@ -59,6 +63,7 @@ export class PermissionController {
   @Put(':id')
   @Roles(UserRole.ADMIN)
   @ApiOkResponse({ type: Permission })
+  @ApiOperation({ summary: 'Update a Permission' })
   @ApiNotFoundResponse({ description: 'Permission not found' })
   @ApiBadRequestResponse({ description: 'Invalid input' })
   async update(
@@ -70,6 +75,7 @@ export class PermissionController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a Permission' })
   @ApiOkResponse({ description: 'Permission deleted successfully' })
   @ApiNotFoundResponse({ description: 'Permission not found' })
   async remove(@Param('id') id: string): Promise<void> {
