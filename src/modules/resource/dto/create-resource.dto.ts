@@ -13,6 +13,15 @@ export class CreateResourceDto {
   name: string;
 
   @ApiProperty({
+    maxLength: 128,
+    description: 'Table name the resource is ',
+    example: 'Attachments',
+  })
+  @IsString({ message: 'Table should be a string' })
+  @MaxLength(128, { message: 'Table should not be longer than 128 characters' })
+  table: string;
+
+  @ApiProperty({
     maxLength: 256,
     description: 'Description of the resource',
     example: 'A resource representing documents in the system',

@@ -54,16 +54,13 @@ export class PolicyController {
   remove(@Param('id') id: string): Promise<void> {
     return this.policyService.remove(id);
   }
-  @Get('/policies:userId')
-  @Roles(UserRole.ADMIN) // Assuming you want this endpoint to be accessed by admins only
-  @ApiOkResponse({ description: 'Returns policies for a given user' })
-  @ApiNotFoundResponse({ description: 'User with given ID not found' })
-  @ApiBadRequestResponse({ description: 'Invalid request parameters' })
-  async getPolicies(
-    @Param('userId', new ParseUUIDPipe({ version: '4' })) userId: string, // Added ParseUUIDPipe to validate UUID format
-    @Query('resource') resource?: string,
-    @Query('action') action?: string,
-  ) {
-    return await this.policyService.getPolicies(userId, resource, action); // Added await for better error handling
+
+  @Get('/by-permission/:permissionId')
+  @Roles(UserRole.ADMIN)
+  @ApiOkResponse({ type: [Policy], description: 'The policies associated with a specific permission have been successfully retrieved.' })
+  @ApiNotFoundResponse({ description: 'Not found.' })
+  findPoliciesByPermission(@Param('permissionId') permissionId: string): Promise<Policy[]> {
+    return this.policyService.findPoliciesByPermission(permissionId);
   }
+  
 }

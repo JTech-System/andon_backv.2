@@ -9,6 +9,7 @@ import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { Permission } from '../permission/entities/permission.entity';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class RoleService {
@@ -17,6 +18,8 @@ export class RoleService {
     private roleRepository: Repository<Role>,
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
+    private userService: UsersService,
+
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
@@ -114,4 +117,22 @@ export class RoleService {
 
     return roles;
   }
+
+  async findRolesByUserId(userId: string): Promise<Role[]> {
+    const user = await this.userService.findOne(userId);  // Use UserService to get the user
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (!user.roles || user.roles.length === 0) {
+      throw new NotFoundException(`No roles found for user with ID ${userId}`);
+    }
+
+    return user.roles;
+  }
+  
+
 }
+
+

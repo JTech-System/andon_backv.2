@@ -1,13 +1,13 @@
-import { Entity, Column, ManyToMany, Index } from 'typeorm';
+import { Entity, Column, ManyToMany, Index, JoinTable } from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MaxLength } from 'class-validator';
 import { Policy } from 'src/modules/policy/entities/policy.entity';
+import { Resource } from 'src/modules/resource/entities/resource.entity';
 
 @Entity()
 export class Permission extends BaseEntity {
-  [x: string]: any;
   /** 
    * @name represents the name of the permission.
    */
@@ -40,15 +40,13 @@ export class Permission extends BaseEntity {
    * @resource represents the resource on which the action can be performed.
    */
   @ApiProperty({
-    maxLength: 128,
-  })
-  @IsString()
-  @MaxLength(128)
-  @Column({
-    length: 128,
-  })
-  @Index()
-  resource: string;
+    type: () => Resource,
+    isArray: true,
+    description: 'A list of resources associated with the permission.',
+  })  
+  @ManyToMany(() => Resource, resource => resource.permissions, {})
+  @JoinTable()
+  resources: Resource[];
 
   /** 
    * @roles is a list of roles associated with the permission.
@@ -61,12 +59,6 @@ export class Permission extends BaseEntity {
   @ManyToMany(() => Role, role => role.permissions, {})
   roles: Role[];
 
-  /** 
-   * @bitmask is used for fast permission checks.
-   */
-  @Column()
-  bitmask: number;
-/*
   @ApiProperty({
     type: () => Policy,
     isArray: true,
@@ -75,5 +67,8 @@ export class Permission extends BaseEntity {
   
   @ManyToMany(() => Policy, policy => policy.permissions)
   policies: Policy[];
-  */
+
+
+ 
+  
 }

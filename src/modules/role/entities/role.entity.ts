@@ -33,14 +33,6 @@ export class Role extends BaseEntity {
       })
       @JoinTable()
       permissions: Permission[];
-    /**
-     * Calculate the permission bitmask for the role.
-     * This is a derived property and not stored in the database.
-     * Is not needed to be include in the swager documentation since it's a method not a property -- TBD
-     */
-    getPermissionBitmask(): number {
-        return this.permissions.reduce((acc, permission) => acc | permission.bitmask, 0);
-    }
 
     /** @users */
     @ApiProperty({
@@ -50,7 +42,8 @@ export class Role extends BaseEntity {
     })
     @ManyToMany(() => User, user => user.roles)
     users: User[];
-/*
+
+    /** @policies */
     @ApiProperty({
         type: () => Policy,
         isArray: true,
@@ -59,5 +52,5 @@ export class Role extends BaseEntity {
       @ManyToMany(() => Policy, policy => policy.roles)
       @JoinTable()
       policies: Policy[];
-      */
+      
 }

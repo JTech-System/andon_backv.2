@@ -32,9 +32,8 @@ import {
       return this.resourceService.create(createResourceDto);
     }
   
-    // Example for other CRUD operations
     @Get(':id')
-    @Roles(UserRole.ADMIN, UserRole.USER) 
+    @Roles(UserRole.ADMIN) 
     @ApiOperation({ summary: 'Get a resource by id' })
     @ApiResponse({ status: 200, description: 'Resource fetched successfully.' })
     @ApiResponse({ status: 404, description: 'Resource not found.' })

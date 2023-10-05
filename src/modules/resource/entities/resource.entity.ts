@@ -8,17 +8,26 @@ export class Resource extends BaseEntity {
   @ApiProperty({
     maxLength: 128,
     description: 'Name of the resource',
-    example: 'document',
+    example: 'password',
   })
   @Column({
     length: 128,
   })
   name: string;
-
+  @ApiProperty({
+    maxLength: 128,
+    description: 'Name of the table',
+    example: 'Users',
+  })
+  @Column({
+    length: 128,
+  })
+  table: string;
+  
   @ApiProperty({
     maxLength: 256,
     description: 'Description of the resource',
-    example: 'A resource representing documents in the system',
+    example: 'A resource representing user password field',
   })
   @Column({
     length: 256,
@@ -54,20 +63,6 @@ export class Resource extends BaseEntity {
     eager: true,
     cascade: true,
   })
-  permissions: Permission[];
-
-  @ApiProperty({
-    description: 'The date and time when the resource was created',
-    example: '2023-10-10T12:00:00Z',
-  })
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)' })
-  createdOn: Date;
-
-  @ApiProperty({
-    description: 'The date and time when the resource was last updated',
-    example: '2023-10-10T12:00:00Z',
-  })
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)', onUpdate: 'CURRENT_TIMESTAMP(6)' })
-  updatedOn: Date;
+  permissions: Permission[];  
 
 }
