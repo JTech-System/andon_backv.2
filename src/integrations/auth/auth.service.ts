@@ -27,13 +27,16 @@ export class AuthService {
     });
     if (user) {
       if (await bcrypt.compare(logInDto.password, user.passwordHash)) {
-        user = await this.usersService.findOne(user.id);
+        user = await this.usersService.findOne(user.id);        
+        let permissions = await this.evaluateUserPermissions(user.id);
         const payload = {
           user,
+          permissions
         };
         return {
           token: await this.jwtService.signAsync(payload),
           user,
+          permissions
         };
       }
     }
@@ -52,8 +55,11 @@ export class AuthService {
     } catch {}
     return null;
   }
+
   async evaluateUserPermissions(userId: string): Promise<any> {
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findOne(userId, {
+      relations: ['roles', 'roles.permissions',  'roles.permissions.resources']
+    });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
@@ -64,20 +70,22 @@ export class AuthService {
       fields: {},
       actions: {},
     };
-
+    console.log(user.roles);
     for (const role of user.roles) {
+      console.log(role.permissions);
       for (const permission of role.permissions) {
+        console.log(permission.resources);
         for (const resource of permission.resources) {
-          if (resource.type === 'Route') {
+          if (resource.type === 'route') {
             permissions.routes[resource.name] = {
               canAccess: permission.action.includes('canAccess'),
             };
-          } else if (resource.type === 'Field') {
+          } else if (resource.type === 'field') {
             permissions.fields[resource.name] = {
               canRead: permission.action.includes('canRead'),
               canWrite: permission.action.includes('canWrite'),
             };
-          } else if (resource.type === 'Action') {
+          } else if (resource.type === 'action') {
             permissions.actions[resource.name] = {
               canExecute: permission.action.includes('canExecute'),
             };
@@ -86,9 +94,6 @@ export class AuthService {
       }
     }
 
-    return {
-      userId: user.id,
-      permissions,
-    };
+    return permissions;
   }
 }

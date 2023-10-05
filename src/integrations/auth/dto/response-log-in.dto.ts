@@ -9,4 +9,7 @@ export class ResponseLogInDto {
     type: ResponseUserDto,
   })
   user: ResponseUserDto;
+
+  @ApiProperty()
+  permissions: any;
 }
