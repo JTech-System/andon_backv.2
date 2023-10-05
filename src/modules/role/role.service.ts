@@ -153,7 +153,10 @@ export class RoleService {
     return roles;
   }
 
-  
+  async remove(id: string): Promise<void> {
+    const role = await this.findOne(id);
+    await this.roleRepository.remove(role);
+  }
 
 }
 
