@@ -1,8 +1,10 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { Group } from './entities/group.entity';
+import { RoleService } from '../role/role.service';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class GroupService {
@@ -10,22 +12,48 @@ export class GroupService {
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
+    private roleService: RoleService, 
+    private userService: UsersService,
   ) {}
 
-  async create(groupDto: CreateGroupDto): Promise<Group> {
-    const existingGroup = await this.groupRepository.findOne({ 
-      where: { 
-        name: groupDto.name,
-        table: groupDto.table // Ensure 'table' property exists on DTO and entity
-      }
+  async create(createGroupDto: CreateGroupDto): Promise<Group> {
+    const existingGroup = await this.groupRepository.findOne({
+      where: { name: createGroupDto.name },
     });
 
     if (existingGroup) {
-      throw new ConflictException('Group with this name and table already exists');
+      throw new ConflictException('Group with this name already exists');
     }
 
-    const group = this.groupRepository.create(groupDto);
-    return await this.groupRepository.save(group);
+    let roles = [];
+    if (createGroupDto.roles && createGroupDto.roles.length > 0) {
+      roles = await this.roleService.findRolesByIds(createGroupDto.roles);
+
+      if (roles.length !== createGroupDto.roles.length) {
+        throw new BadRequestException('One or more roles were not found.');
+      }
+    }
+
+    let users = [];
+    if (createGroupDto.users && createGroupDto.users.length > 0) {
+      users = await this.userService.findUsersByIds(createGroupDto.users);
+
+      if (users.length !== createGroupDto.users.length) {
+        throw new BadRequestException('One or more users were not found.');
+      }
+    }
+
+    const group = this.groupRepository.create({
+      ...createGroupDto,
+      roles,
+      users,
+    });
+
+    try {
+      return await this.groupRepository.save(group);
+    } catch (error) {
+      throw new ConflictException('Could not save group');
+    }
   }
 
   async findAll(): Promise<Group[]> {
@@ -33,54 +61,36 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    try {
-      return await this.groupRepository.findOneOrFail(id);
-    } catch (error) {
+    const group = await this.groupRepository.findOne({where: {id: id}});
+
+    if (!group) {
       throw new NotFoundException(`Group with ID ${id} not found`);
     }
-  }
 
-  async findByType(type: string): Promise<Group[]> {
-    const groups = await this.groupRepository.find({ where: { type } });
-
-    if (!groups.length) {
-      throw new NotFoundException('No groups found for the provided type');
-    }
-
-    return groups;
-  }
-
-  async findByValue(name: string): Promise<Group[]> {
-    const groups = await this.groupRepository.find({ where: { name } });
-
-    if (!groups.length) {
-      throw new NotFoundException('No groups found for the provided name');
-    }
-
-    return groups;
+    return group;
   }
 
   async update(id: string, updateGroupDto: CreateGroupDto): Promise<Group> {
-    try {
-      const group = await this.groupRepository.preload({ id, ...updateGroupDto });
-      return await this.groupRepository.save(group);
-    } catch (error) {
-      throw new NotFoundException(`Group with ID ${id} not found`);
+    const group = await this.findOne(id);  
+
+    if (!updateGroupDto.name) {
+      throw new BadRequestException('Name is required');
     }
+
+    // Updating fields
+    group.name = updateGroupDto.name;
+    group.description = updateGroupDto.description;
+    group.type = updateGroupDto.type;
+    group.isActive = updateGroupDto.isActive !== undefined ? updateGroupDto.isActive : group.isActive;
+    
+
+    await this.groupRepository.save(group);
+    return group;
   }
 
   async remove(id: string): Promise<void> {
-    const group = await this.findOne(id);
+    const group = await this.findOne(id);  
+
     await this.groupRepository.remove(group);
-  }
-
-  async findGroupsByIds(groupIds: string[]): Promise<Group[]> {
-    const groups = await this.groupRepository.findByIds(groupIds);
-
-    if (groups.length !== groupIds.length) {
-      throw new NotFoundException('One or more groups were not found');
-    }
-
-    return groups;
   }
 }

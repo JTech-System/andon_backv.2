@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions } from 'typeorm';
+import { Repository, FindOneOptions, In } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -99,5 +99,15 @@ export class UsersService {
   async deactivateUser(id: string): Promise<User> {
     // logic to deactivate user
     return;
+  }
+
+  async findUsersByIds(usersIds: string[]): Promise<User[]> {
+    const permissions = await this.usersRepository.find({ where: { id: In(usersIds) } });
+
+    if (permissions.length !== usersIds.length) {
+      throw new NotFoundException('One or more users were not found.');
+    }
+
+    return permissions;
   }
 }
