@@ -17,6 +17,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { ResourceModule } from './modules/resource/resource.module';
+import { Group } from './modules/groups/entities/group.entity';
 
 
 
@@ -48,6 +49,7 @@ import { ResourceModule } from './modules/resource/resource.module';
     PolicyModule,
     PermissionModule,
     ResourceModule,
+    Group
   ],
   controllers: [],
   providers: [],

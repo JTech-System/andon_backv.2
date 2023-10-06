@@ -16,7 +16,7 @@ export class GroupService {
     const existingGroup = await this.groupRepository.findOne({ 
       where: { 
         name: groupDto.name,
-        table: groupDto.table
+        table: groupDto.table // Ensure 'table' property exists on DTO and entity
       }
     });
 
@@ -33,62 +33,54 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    const group = await this.groupRepository.findOne({where: {id: id}});
-
-    if (!group) {
+    try {
+      return await this.groupRepository.findOneOrFail(id);
+    } catch (error) {
       throw new NotFoundException(`Group with ID ${id} not found`);
     }
-
-    return group;
   }
 
-  async findByType(type: string): Promise<Group> {
-    const group = await this.groupRepository.findOne({ where: {type: type } });
+  async findByType(type: string): Promise<Group[]> {
+    const groups = await this.groupRepository.find({ where: { type } });
 
-    if (!group) {
-      throw new NotFoundException(`Group not found`);
-    }
-
-    return group;
-  }
-  async findByValue(name: string): Promise<Group> {
-    const group = await this.groupRepository.findOne({ where: {name: name} });
-
-    if (!group) {
-      throw new NotFoundException(`Group not found`);
-    }
-
-    return group;
-  }
-
-  async update(id: string, updateGroupDto: CreateGroupDto): Promise<Group> {
-    const group = await this.groupRepository.preload({
-      id: id, 
-      ...updateGroupDto
-    });
-
-    if (!group) {
-      throw new NotFoundException(`Group with ID ${id} not found`);
-    }
-
-    return await this.groupRepository.save(group);
-  }
-
-  async remove(id: string): Promise<void> {
-    const group = await this.findOne(id); // This will ensure that a NotFoundException is thrown if the group does not exist
-    await this.groupRepository.remove(group);
-  }
-
-  async findGroupsByIds(groupIds: string[]): Promise<Group[]> {
-    const groups = await this.groupRepository.find({ 
-      where: { id: In(groupIds) }
-    });
-
-    if (!groups || groups.length === 0) {
-      throw new NotFoundException('Groups not found');
+    if (!groups.length) {
+      throw new NotFoundException('No groups found for the provided type');
     }
 
     return groups;
   }
 
+  async findByValue(name: string): Promise<Group[]> {
+    const groups = await this.groupRepository.find({ where: { name } });
+
+    if (!groups.length) {
+      throw new NotFoundException('No groups found for the provided name');
+    }
+
+    return groups;
+  }
+
+  async update(id: string, updateGroupDto: CreateGroupDto): Promise<Group> {
+    try {
+      const group = await this.groupRepository.preload({ id, ...updateGroupDto });
+      return await this.groupRepository.save(group);
+    } catch (error) {
+      throw new NotFoundException(`Group with ID ${id} not found`);
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    const group = await this.findOne(id);
+    await this.groupRepository.remove(group);
+  }
+
+  async findGroupsByIds(groupIds: string[]): Promise<Group[]> {
+    const groups = await this.groupRepository.findByIds(groupIds);
+
+    if (groups.length !== groupIds.length) {
+      throw new NotFoundException('One or more groups were not found');
+    }
+
+    return groups;
+  }
 }
