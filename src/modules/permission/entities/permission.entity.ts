@@ -57,6 +57,7 @@ export class Permission extends BaseEntity {
     description: 'A list of roles associated with the permission.',
   })
   @ManyToMany(() => Role, role => role.permissions, {})
+  @JoinTable()
   roles: Role[];
 
   @ApiProperty({

@@ -112,4 +112,13 @@ async addUserToGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
   return group;
 }
 
+async remove(id: string): Promise<void> {
+  const group = await this.findOne(id);
+
+  try {
+      await this.groupRepository.remove(group);
+  } catch (error) {
+      throw new ConflictException(`Error deleting group with ID ${id}: ${error.message}`);
+  }
+}
 }

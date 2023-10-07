@@ -66,7 +66,6 @@ export class Group extends BaseEntity {
     isArray: true,
   })
   @ManyToMany(() => Role)
-  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
   roles: Role[];
 
   /** @users */
@@ -76,12 +75,6 @@ export class Group extends BaseEntity {
     isArray: true,
   })
   @ManyToMany(() => User)
-  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
   users: User[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
+

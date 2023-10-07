@@ -32,7 +32,6 @@ export class Role extends BaseEntity {
   @ManyToMany(() => Permission, (permission) => permission.roles, {
     cascade: true,
   })
-  @JoinTable()
   permissions: Permission[];
 
   /** @users */
@@ -51,16 +50,16 @@ export class Role extends BaseEntity {
     description: 'A list of policies associated with the role.',
   })
   @ManyToMany(() => Policy, (policy) => policy.roles)
-  @JoinTable()
   policies: Policy[];
 
   /** @groups */
   @ApiProperty({
-    type: () => Policy,
+    type: () => Group,
     isArray: true,
     description: 'A list of groups associated with the role.',
   })
+  
   @ManyToMany(() => Group, (group) => group.roles)
-  @JoinTable()
+  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
   groups: Group[];
 }

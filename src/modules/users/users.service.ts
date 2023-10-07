@@ -15,10 +15,11 @@ import { RoleService } from '../role/role.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class UsersService {
+export class UsersService {  
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
     private roleService: RoleService,
+
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -26,14 +27,16 @@ export class UsersService {
       where: { email: createUserDto.email },
     });
     if (existingUser) {
-      throw new BadRequestException(`Account already exists.`);
+      throw new BadRequestException(
+        `Account already exists.`,
+      );
     }
 
     let roles = [];
     if (createUserDto.roles && createUserDto.roles.length > 0) {
       if (createUserDto.roles && createUserDto.roles.length > 0) {
         roles = await this.roleService.findRolesByIds(createUserDto.roles);
-
+        
         console.log('Roles before saving:', roles);
       }
 
@@ -64,7 +67,7 @@ export class UsersService {
   async findOne(id: string, options?: FindOneOptions<User>): Promise<User> {
     const findOptions = {
       ...options,
-      where: {
+      where: { 
         id,
         ...(options?.where || {}),
       },
@@ -75,6 +78,7 @@ export class UsersService {
     if (user) return user;
     throw new NotFoundException('User not found');
   }
+  
 
   async findOneBy(options: FindOneOptions<User>): Promise<User | null> {
     return await this.usersRepository.findOne(options);
@@ -99,51 +103,31 @@ export class UsersService {
   }
 
   async findUsersByIds(usersIds: string[]): Promise<User[]> {
-    const permissions = await this.usersRepository.find({
-      where: { id: In(usersIds) },
-    });
+    const users = await this.usersRepository.find({ where: { id: In(usersIds) } });
 
-    if (permissions.length !== usersIds.length) {
+    if (users.length !== usersIds.length) {
       throw new NotFoundException('One or more users were not found.');
     }
 
-    return permissions;
+    return users;
   }
 
   async updateUserRoles(userId: string, roles: Role[]): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: ['roles'],
-    });
+    const user = await this.usersRepository.findOne({where: {id:userId},relations: ['roles'] });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+        throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     user.roles = roles;
 
     try {
-      return await this.usersRepository.save(user);
+        return await this.usersRepository.save(user);
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        'An error occurred while updating user roles',
-      );
+        console.error(error);
+        throw new InternalServerErrorException('An error occurred while updating user roles');
     }
-  }
+}
 
-  findOneByEmail(email: string, arg1: string[]): Promise<User> {
-    const user = this.usersRepository.findOne({
-      where: { email: email },
-      select: {
-        id: true,
-        passwordHash: true,
-      },
-    });
 
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
-    return user;
-  }
 }

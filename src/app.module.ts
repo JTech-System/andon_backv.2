@@ -17,7 +17,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { ResourceModule } from './modules/resource/resource.module';
-import { GroupsModule } from './modules/groups/groups.module';
+import { GroupsModule } from './modules/groups/group.module';
 
 
 
@@ -56,9 +56,8 @@ import { GroupsModule } from './modules/groups/groups.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).exclude(
-      { path: 'public', method: RequestMethod.ALL }
-      // add other public routes to be excluded from the middleware
-    ).forRoutes({ path: '*', method: RequestMethod.ALL });
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

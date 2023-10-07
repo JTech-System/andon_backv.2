@@ -7,7 +7,7 @@ import { ResourceModule } from '../resource/resource.module';
 import { UsersModule } from '@users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Permission]), ResourceModule, UsersModule],
+  imports: [TypeOrmModule.forFeature([Permission]), ResourceModule],
   controllers: [PermissionController],
   providers: [PermissionService],
   exports: [PermissionService],
