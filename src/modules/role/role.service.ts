@@ -153,10 +153,17 @@ export class RoleService {
     return roles;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<string> {
     const role = await this.findOne(id);
-    await this.roleRepository.remove(role);
-  }
+
+    try {
+        await this.roleRepository.remove(role);
+    } catch (error) {
+        throw new InternalServerErrorException(`Error deleting the role: ${error.message}`);
+    }
+
+    return `Role with ID ${id} has been deleted successfully`;
+}
 
 }
 

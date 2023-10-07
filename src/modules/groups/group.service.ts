@@ -5,6 +5,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { Group } from './entities/group.entity';
 import { RoleService } from '../role/role.service';
 import { UsersService } from '@users/users.service';
+import { AddUserGroupDto } from './dto/add-user-group.dto';
 
 @Injectable()
 export class GroupService {
@@ -74,23 +75,41 @@ export class GroupService {
     const group = await this.findOne(id);  
 
     if (!updateGroupDto.name) {
-      throw new BadRequestException('Name is required');
+        throw new BadRequestException('Name is required');
     }
 
-    // Updating fields
-    group.name = updateGroupDto.name;
-    group.description = updateGroupDto.description;
-    group.type = updateGroupDto.type;
-    group.isActive = updateGroupDto.isActive !== undefined ? updateGroupDto.isActive : group.isActive;
-    
-
+    Object.assign(group, updateGroupDto);  
     await this.groupRepository.save(group);
     return group;
+}
+
+async removeUserFromGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
+  const group = await this.groupRepository.findOne({where: {id:updateGroupDto.group_id}, relations: ['roles'] });
+  const user = await this.userService.findOne(updateGroupDto.user_id);
+
+  if (!group || !user) {
+      throw new NotFoundException('Group or User not found');
   }
 
-  async remove(id: string): Promise<void> {
-    const group = await this.findOne(id);  
+  user.roles = user.roles.filter(role => !group.roles.includes(role));
+  await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
+  return group;
+}
 
-    await this.groupRepository.remove(group);
+async addUserToGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
+  const group = await this.groupRepository.findOne({
+      where: {id: updateGroupDto.group_id}, 
+      relations: ['roles']
+  });
+  const user = await this.userService.findOne(updateGroupDto.user_id);
+
+  if (!group || !user) {
+      throw new NotFoundException('Group or User not found');
   }
+
+  user.roles = [...new Set([...user.roles, ...group.roles])];  // Ensure uniqueness
+  await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
+  return group;
+}
+
 }

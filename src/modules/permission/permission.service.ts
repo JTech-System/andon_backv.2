@@ -4,9 +4,11 @@ import { In, Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { ResourceService } from '../resource/resource.service';
+import { Role } from '../role/entities/role.entity';
 
 @Injectable()
 export class PermissionService {
+  
   
   constructor(
     @InjectRepository(Permission)
@@ -60,23 +62,28 @@ export class PermissionService {
 
   async update(id: string, updatePermissionDto: CreatePermissionDto): Promise<Permission> {
     const permission = await this.findOne(id);
+
     Object.assign(permission, updatePermissionDto);
 
     try {
-      return await this.permissionRepository.save(permission);
+        await this.permissionRepository.save(permission);
     } catch (error) {
-      throw new ConflictException('Could not update permission');
+        throw new ConflictException(`Error updating permission with ID ${id}: ${error.message}`);
     }
-  }
 
-  async remove(id: string): Promise<void> {
+    return permission;
+}
+
+async remove(id: string): Promise<void> {
     const permission = await this.findOne(id);
+
     try {
-      await this.permissionRepository.remove(permission);
+        await this.permissionRepository.remove(permission);
     } catch (error) {
-      throw new ConflictException('Could not delete permission');
+        throw new ConflictException(`Error deleting permission with ID ${id}: ${error.message}`);
     }
-  }
+}
+
 
   async findPermissionsByIds(permissionIds: string[]): Promise<Permission[]> {
     const permissions = await this.permissionRepository.find({ where: { id: In(permissionIds) } });
@@ -97,5 +104,37 @@ export class PermissionService {
     }
 
     await this.permissionRepository.remove(permission);
+  }
+
+  
+  async evaluatePermissions(roles: Role[]): Promise<any> {
+
+    const permissions = {
+      routes: {},
+      fields: {},
+      actions: {},
+    };
+    for (const role of roles) {
+      for (const permission of role.permissions) {
+        for (const resource of permission.resources) {
+          if (resource.type === 'route') {
+            permissions.routes[resource.name] = {
+              canAccess: permission.action.includes('canAccess'),
+            };
+          } else if (resource.type === 'field') {
+            permissions.fields[resource.name] = {
+              canRead: permission.action.includes('canRead'),
+              canWrite: permission.action.includes('canWrite'),
+            };
+          } else if (resource.type === 'action') {
+            permissions.actions[resource.name] = {
+              canExecute: permission.action.includes('canExecute'),
+            };
+          }
+        }
+      }
+    }
+
+    return permissions;
   }
 }

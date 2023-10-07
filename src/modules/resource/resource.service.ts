@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CreateResourceDto } from './dto/create-resource.dto';
@@ -63,21 +63,34 @@ export class ResourceService {
 
   async update(id: string, updateResourceDto: CreateResourceDto): Promise<Resource> {
     const resource = await this.resourceRepository.preload({
-      id: id, 
-      ...updateResourceDto
+        id: id, 
+        ...updateResourceDto
     });
 
     if (!resource) {
-      throw new NotFoundException(`Resource with ID ${id} not found`);
+        throw new NotFoundException(`Resource with ID ${id} not found`);
     }
 
-    return await this.resourceRepository.save(resource);
-  }
+    try {
+        await this.resourceRepository.save(resource);
+    } catch (error) {
+        throw new InternalServerErrorException(`Error updating the resource: ${error.message}`);
+    }
 
-  async remove(id: string): Promise<void> {
-    const resource = await this.findOne(id); // This will ensure that a NotFoundException is thrown if the resource does not exist
-    await this.resourceRepository.remove(resource);
-  }
+    return resource;
+}
+
+async remove(id: string): Promise<string> {
+    const resource = await this.findOne(id);
+
+    try {
+        await this.resourceRepository.remove(resource);
+    } catch (error) {
+        throw new InternalServerErrorException(`Error deleting the resource: ${error.message}`);
+    }
+
+    return `Resource with ID ${id} has been deleted successfully`;
+}
 
   async findResourcesByIds(resourceIds: string[]): Promise<Resource[]> {
     const resources = await this.resourceRepository.find({ 

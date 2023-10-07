@@ -17,7 +17,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { ResourceModule } from './modules/resource/resource.module';
-import { Group } from './modules/groups/entities/group.entity';
+import { GroupsModule } from './modules/groups/groups.module';
 
 
 
@@ -25,8 +25,8 @@ import { Group } from './modules/groups/entities/group.entity';
   imports: [
     CacheModule.register({
       store: 'redis',
-      host: 'localhost',
-      port: 6379,
+      host: process.env.REDIS_HOST,
+      port: +process.env.REDIS_PORT,
     }),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
@@ -36,7 +36,7 @@ import { Group } from './modules/groups/entities/group.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'andon',
-      synchronize: true,
+      synchronize: process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
     //Modules
@@ -49,15 +49,16 @@ import { Group } from './modules/groups/entities/group.entity';
     PolicyModule,
     PermissionModule,
     ResourceModule,
-    Group
+    GroupsModule
   ],
   controllers: [],
   providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
+    consumer.apply(AuthMiddleware).exclude(
+      { path: 'public', method: RequestMethod.ALL }
+      // add other public routes to be excluded from the middleware
+    ).forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

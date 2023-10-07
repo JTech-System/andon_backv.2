@@ -4,9 +4,10 @@ import { PermissionService } from './permission.service';
 import { Permission } from './entities/permission.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ResourceModule } from '../resource/resource.module';
+import { UsersModule } from '@users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Permission]), ResourceModule],
+  imports: [TypeOrmModule.forFeature([Permission]), ResourceModule, UsersModule],
   controllers: [PermissionController],
   providers: [PermissionService],
   exports: [PermissionService],

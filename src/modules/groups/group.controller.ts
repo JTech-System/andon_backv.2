@@ -17,6 +17,7 @@ import { Group } from './entities/group.entity'; // Adjust the path according to
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { UserRole } from '@utils/enums/user-role.enum'; // Adjust the path according to your project structure
+import { AddUserGroupDto } from './dto/add-user-group.dto';
 
 @ApiTags('Groups')
 @Controller('groups')
@@ -40,7 +41,7 @@ export class GroupController {
   findAll(): Promise<Group[]> {
     return this.groupService.findAll();
   }
-  
+
   @Get(':id')
   @Roles(UserRole.ADMIN) 
   @ApiOperation({ summary: 'Get a group by id' })
@@ -71,5 +72,24 @@ export class GroupController {
   @ApiResponse({ status: 404, description: 'Group not found.' })
   async remove(@Param('id') id: string): Promise<void> {
     await this.groupService.remove(id);
+  }
+
+
+  @Put('/add_user')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a group' })
+  @ApiResponse({ status: 200, description: 'Group updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Group not found.' })
+  async addUserToGroup(@Body() updateGroupDto: AddUserGroupDto): Promise<Group> {
+    return await this.groupService.addUserToGroup(updateGroupDto);
+  }
+
+  @Put('/remove_user')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a group' })
+  @ApiResponse({ status: 200, description: 'Group updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Group not found.' })
+  async removeUserFromGroup(@Body() updateGroupDto: AddUserGroupDto): Promise<Group> {
+    return await this.groupService.removeUserFromGroup(updateGroupDto);
   }
 }

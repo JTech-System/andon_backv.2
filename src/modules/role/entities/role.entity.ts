@@ -60,7 +60,7 @@ export class Role extends BaseEntity {
     isArray: true,
     description: 'A list of groups associated with the role.',
   })
-  @ManyToMany(() => Policy, (policy) => policy.roles)
+  @ManyToMany(() => Group, (group) => group.roles)
   @JoinTable()
   groups: Group[];
 }

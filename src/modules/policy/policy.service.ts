@@ -54,14 +54,6 @@ export class PolicyService {
     return await this.policyRepository.find({ relations: ['roles', 'permissions'] });
   }
 
-  async findOne(id: string): Promise<Policy> {
-    const policy = await this.policyRepository.findOne({where: {id: id}, relations: ['roles', 'permissions'] });
-    if (!policy) {
-      throw new NotFoundException(`Policy with ID ${id} not found`);
-    }
-    return policy;
-  }
-
   async update(id: string, updatePolicyDto: CreatePolicyDto): Promise<Policy> {
     const policy = await this.findOne(id);  
     if (!policy) {
@@ -103,17 +95,27 @@ export class PolicyService {
     return policies.every(policy => this.evaluatePolicy(policy, attributes));
   }
 
-  private evaluatePolicy(policy: Policy, attributes: Record<string, any>): boolean {
+
+  async findOne(id: string): Promise<Policy> {
+    const policy = await this.policyRepository.findOne({where: {id:id}, relations: ['roles', 'permissions'] });
+    if (!policy) {
+        throw new NotFoundException(`Policy with ID ${id} not found`);
+    }
+    return policy;
+}
+
+private evaluatePolicy(policy: Policy, attributes: Record<string, any>): boolean {
     if (!policy.conditions) {
-      return true;
+        return true;
     }
 
     return Object.keys(policy.conditions).every(conditionKey => {
-      const conditionValue = policy.conditions[conditionKey];
-      const attributeValue = attributes[conditionKey];
+        const conditionValue = policy.conditions[conditionKey];
+        const attributeValue = attributes[conditionKey];
 
-      // Add more complex evaluation logic as needed
-      return attributeValue !== undefined && attributeValue === conditionValue;
+        // Add more complex evaluation logic as needed, e.g., regex, numerical comparisons, etc.
+        return attributeValue !== undefined && attributeValue === conditionValue;
     });
-  }
+}
+
 }
