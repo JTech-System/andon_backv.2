@@ -17,11 +17,9 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
   }));
 
-  // Configure CORS with specific allowed origins
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS.split(','),
   });
-
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
