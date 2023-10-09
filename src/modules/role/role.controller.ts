@@ -86,7 +86,7 @@ export class RoleController {
       throw new NotFoundException(`Role with id ${id} not found.`);
     }
     return role;
-  }0
+  }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)

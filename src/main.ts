@@ -8,7 +8,6 @@ import { HttpExceptionFilter } from './utils/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Enable global filters for error handling
   //app.useGlobalFilters(new HttpExceptionFilter());
   
   app.useGlobalPipes(new ValidationPipe({
