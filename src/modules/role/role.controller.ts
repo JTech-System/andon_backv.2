@@ -10,6 +10,7 @@ import {
   Put,
   Delete,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from '../role/dto/create-role.dto';
@@ -29,6 +30,7 @@ import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { UserRole } from '@utils/enums/user-role.enum';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { RolesResponseDto } from './dto/roles-list.dto';
 
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
@@ -73,6 +75,17 @@ export class RoleController {
       throw new NotFoundException('No roles found.');
     }
     return roles;
+  }
+
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  async findAllFilters(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+  ): Promise<RolesResponseDto> {
+    return await this.roleService.findAllFilters(skip, take, sortField, sortOrder);
   }
 
   @Get(':id')

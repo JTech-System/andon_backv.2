@@ -11,6 +11,7 @@ import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { PermissionService } from '../permission/permission.service';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { RolesResponseDto } from './dto/roles-list.dto';
 
 @Injectable()
 export class RoleService {
@@ -130,6 +131,27 @@ export class RoleService {
     return this.roleRepository.find();
   }
 
+  async findAllFilters(
+    skip = 0,
+    take = 10,
+    sortField = 'id',
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+  ): Promise<RolesResponseDto> {
+    const [result, total] = await this.roleRepository.findAndCount({
+      order: { [sortField]: sortOrder },
+      skip,
+      take,
+    });
+
+    if (total === 0) {
+      // TBD??
+    }
+
+    return {
+      row_count: total,
+      rows: result,
+    };
+  }
   async findOne(id: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
       where: { id: id },
