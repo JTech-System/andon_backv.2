@@ -16,7 +16,6 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
-  ApiProperty,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -34,11 +33,86 @@ import {
 import { IncidentStatusValidationPipe } from './pipes/incident-status-validation.pipe';
 import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 import { DateValidationPipe } from '@utils/pipes/date-validation.pipe';
+import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
 
 @ApiTags('Incidents')
 @Controller('incidents')
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
+
+  // Incident Categories
+
+  @Post('categories')
+  @ApiCreatedResponse({
+    type: IncidentCategory,
+  })
+  @ApiBearerAuth()
+  async createCategory(
+    @Body() createIncidentCategoryDto: CreateIncidentCategoryDto,
+  ): Promise<IncidentCategory> {
+    return await this.incidentsService.createCategory(
+      createIncidentCategoryDto,
+    );
+  }
+
+  @Get('categories')
+  @ApiOkResponse({
+    type: [IncidentCategory],
+  })
+  @ApiBearerAuth()
+  async findAllCategories(): Promise<IncidentCategory[]> {
+    return await this.incidentsService.findAllCategories();
+  }
+
+  @Get('categories/:id')
+  @ApiOkResponse({
+    type: IncidentCategory,
+  })
+  @ApiBearerAuth()
+  async findOneCategory(@Param('id') id: string): Promise<IncidentCategory> {
+    return await this.incidentsService.findOneCategory(id);
+  }
+
+  @Patch('categories/:id')
+  @ApiOkResponse({
+    type: IncidentCategory,
+  })
+  @ApiBearerAuth()
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() updateIncidentCategoryDto: UpdateIncidentCategoryDto,
+  ) {
+    return await this.incidentsService.updateCategory(
+      id,
+      updateIncidentCategoryDto,
+    );
+  }
+
+  @Delete('categories/:id')
+  @ApiOkResponse()
+  @ApiBearerAuth()
+  async deleteCategory(@Param('id') id: string): Promise<void> {
+    await this.incidentsService.deleteCategory(id);
+  }
+
+  // Incident comments
+
+  @Post('comments')
+  @ApiOkResponse({
+    type: Incident,
+  })
+  @ApiBearerAuth()
+  async createComment(
+    @Body() createIncidentCommentDto: CreateIncidentCommentDto,
+    @CurrentUser() currentUser: User,
+  ) {
+    return await this.incidentsService.createComment(
+      createIncidentCommentDto,
+      currentUser,
+    );
+  }
+
+  // Incidents
 
   @Post()
   @ApiCreatedResponse({
@@ -131,74 +205,36 @@ export class IncidentsController {
     );
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.incidentsService.findOne(+id);
-  // }
+  @Get(':id')
+  @ApiOkResponse({
+    type: Incident,
+  })
+  @ApiBearerAuth()
+  async findOne(@Param('id') id: string): Promise<Incident> {
+    return await this.incidentsService.findOne(id);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateIncidentDto: UpdateIncidentDto) {
-  //   return this.incidentsService.update(+id, updateIncidentDto);
-  // }
+  @Patch(':id')
+  @ApiOkResponse({
+    type: Incident,
+  })
+  @ApiBearerAuth()
+  async update(
+    @Param('id') id: string,
+    @Body() updateIncidentDto: UpdateIncidentDto,
+    @CurrentUser() currentUser: User,
+  ): Promise<Incident> {
+    return await this.incidentsService.update(
+      id,
+      updateIncidentDto,
+      currentUser,
+    );
+  }
 
   @Delete(':id')
   @ApiOkResponse()
   @ApiBearerAuth()
   async remove(@Param('id') id: string): Promise<void> {
     await this.incidentsService.remove(id);
-  }
-
-  // Incident Categories
-  @Post('categories')
-  @ApiCreatedResponse({
-    type: IncidentCategory,
-  })
-  @ApiBearerAuth()
-  async createCategory(
-    @Body() createIncidentCategoryDto: CreateIncidentCategoryDto,
-  ): Promise<IncidentCategory> {
-    return await this.incidentsService.createCategory(
-      createIncidentCategoryDto,
-    );
-  }
-
-  @Get('categories')
-  @ApiOkResponse({
-    type: [IncidentCategory],
-  })
-  @ApiBearerAuth()
-  async findAllCategories(): Promise<IncidentCategory[]> {
-    return await this.incidentsService.findAllCategories();
-  }
-
-  @Get('categories/:id')
-  @ApiOkResponse({
-    type: IncidentCategory,
-  })
-  @ApiBearerAuth()
-  async findOneCategory(@Param('id') id: string): Promise<IncidentCategory> {
-    return await this.incidentsService.findOneCategory(id);
-  }
-
-  @Patch('categories/:id')
-  @ApiOkResponse({
-    type: IncidentCategory,
-  })
-  @ApiBearerAuth()
-  async updateCategory(
-    @Param('id') id: string,
-    @Body() updateIncidentCategoryDto: UpdateIncidentCategoryDto,
-  ) {
-    return await this.incidentsService.updateCategory(
-      id,
-      updateIncidentCategoryDto,
-    );
-  }
-
-  @Delete('categories/:id')
-  @ApiOkResponse()
-  @ApiBearerAuth()
-  async deleteCategory(@Param('id') id: string): Promise<void> {
-    await this.incidentsService.deleteCategory(id);
   }
 }

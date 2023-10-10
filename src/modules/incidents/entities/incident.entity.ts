@@ -10,10 +10,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ResponseUserDto } from '@users/dto/response-user.dto';
 import { User } from '@users/entities/user.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { IncidentCategory } from './incident-category.entity';
 import { ProductionLine } from '@production-lines/entities/production-line.entity';
 import { Machine } from '@machines/entities/machine.entity';
+import { IncidentComment } from './incident-comment.entity';
 
 @Entity()
 export class Incident extends BaseEntity {
@@ -64,7 +73,6 @@ export class Incident extends BaseEntity {
   @ApiProperty({
     type: IncidentCategory,
   })
-  @Index()
   @ManyToOne(() => IncidentCategory, (incidentCategory) => incidentCategory.id)
   category: IncidentCategory;
 
@@ -74,7 +82,7 @@ export class Incident extends BaseEntity {
   @ManyToOne(() => ProductionLine, (productionLine) => productionLine.id)
   productionLine: ProductionLine;
 
-  //
+  // Optional
 
   @ApiProperty({
     required: false,
@@ -147,6 +155,12 @@ export class Incident extends BaseEntity {
     nullable: true,
   })
   machine: Machine;
+
+  @ApiProperty({
+    type: [IncidentComment],
+  })
+  @OneToMany(() => IncidentComment, (comment) => comment.incident)
+  comments: IncidentComment[];
 
   //   "assigned_group": "",
 

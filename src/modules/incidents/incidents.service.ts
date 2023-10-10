@@ -10,6 +10,10 @@ import { UpdateIncidentCategoryDto } from './dto/update-incident-category.dto';
 import { IncidentStatus } from './enums/incident-status.enum';
 import { ProductionLinesService } from '@production-lines/production-lines.service';
 import { PaginationIncidentDto } from './dto/pagination-incident.dto';
+import { UpdateIncidentDto } from './dto/update-incident.dto';
+import { MachinesService } from '@machines/machines.service';
+import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
+import { IncidentComment } from './entities/incident-comment.entity';
 
 @Injectable()
 export class IncidentsService {
@@ -18,7 +22,10 @@ export class IncidentsService {
     private incidentsRepository: Repository<Incident>,
     @InjectRepository(IncidentCategory)
     private incidentCategoriesRepository: Repository<IncidentCategory>,
+    @InjectRepository(IncidentComment)
+    private incidentCommentsRepository: Repository<IncidentComment>,
     private productionLinesService: ProductionLinesService,
+    private machinesService: MachinesService,
   ) {}
 
   async create(
@@ -124,15 +131,80 @@ export class IncidentsService {
         updatedBy: true,
         category: true,
         productionLine: true,
+        comments: true,
       },
     });
     if (incident) return incident;
     throw new NotFoundException('Incident not found');
   }
 
-  // update(id: number, updateIncidentDto: UpdateIncidentDto) {
-  //   return `This action updates a #${id} incident`;
-  // }
+  async update(
+    id: string,
+    updateIncidentDto: UpdateIncidentDto,
+    currentUser: User,
+  ): Promise<Incident> {
+    const lastIncident = await this.findOne(id);
+
+    // Find and replaces the id values
+    updateIncidentDto['category'] = await this.findOneCategory(
+      updateIncidentDto.categoryId,
+    );
+    delete updateIncidentDto['categoryId'];
+    updateIncidentDto['productionLine'] =
+      await this.productionLinesService.findOne(
+        updateIncidentDto['productionLineId'],
+      );
+    delete updateIncidentDto['productionLineId'];
+
+    if (updateIncidentDto.groupId) {
+      // group service
+      delete updateIncidentDto['groupId'];
+    }
+    if (updateIncidentDto.assignedToId) {
+      // user service
+      delete updateIncidentDto['assignedToId'];
+    }
+    if (updateIncidentDto.machineId) {
+      updateIncidentDto['machine'] = await this.machinesService.findOne(
+        updateIncidentDto.machineId,
+      );
+      delete updateIncidentDto['machineId'];
+    }
+
+    // Set and unset close by
+    if (
+      lastIncident.status != updateIncidentDto.status &&
+      updateIncidentDto.status == IncidentStatus.CLOSED
+    ) {
+      updateIncidentDto['closedBy'] = currentUser;
+      updateIncidentDto['closedOn'] = new Date();
+    } else if (
+      lastIncident.status != updateIncidentDto.status &&
+      lastIncident.status == IncidentStatus.CLOSED
+    ) {
+      updateIncidentDto['closedBy'] = null;
+      updateIncidentDto['closedOn'] = null;
+    }
+
+    // Set undefined to null
+    [
+      'assignedTo',
+      'machine',
+      'priority',
+      'resolutionTimeInMinutes',
+      'proposedSolution',
+      'closeNotes',
+    ].map((field) => {
+      if (updateIncidentDto[field] == undefined)
+        updateIncidentDto[field] = null;
+    });
+
+    await this.incidentsRepository.update(
+      { id },
+      { updatedBy: currentUser, ...updateIncidentDto },
+    );
+    return await this.findOne(id);
+  }
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
@@ -183,5 +255,19 @@ export class IncidentsService {
   async deleteCategory(id: string): Promise<void> {
     await this.findOneCategory(id);
     await this.incidentCategoriesRepository.delete({ id });
+  }
+
+  // Incident Comments
+  async createComment(
+    createIncidentCommentDto: CreateIncidentCommentDto,
+    currentUser: User,
+  ): Promise<Incident> {
+    const incident = await this.findOne(createIncidentCommentDto.incidentId);
+    await this.incidentCommentsRepository.save({
+      createdBy: currentUser,
+      incident,
+      ...createIncidentCommentDto,
+    });
+    return await this.findOne(incident.id);
   }
 }

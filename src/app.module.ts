@@ -2,7 +2,7 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  RequestMethod
+  RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -16,9 +16,7 @@ import { RoleModule } from './modules/role/role.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
-
-
-import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -46,7 +44,8 @@ import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
     MachinesModule,
     RoleModule,
     PolicyModule,
-    PermissionModule
+    PermissionModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],

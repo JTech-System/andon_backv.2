@@ -6,11 +6,14 @@ import { Incident } from './entities/incident.entity';
 import { IncidentCategory } from './entities/incident-category.entity';
 import { ProductionLinesModule } from '@production-lines/production-lines.module';
 import { IncidentStatusValidationPipe } from './pipes/incident-status-validation.pipe';
+import { MachinesModule } from '@machines/machines.module';
+import { IncidentComment } from './entities/incident-comment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Incident, IncidentCategory]),
+    TypeOrmModule.forFeature([Incident, IncidentCategory, IncidentComment]),
     ProductionLinesModule,
+    MachinesModule,
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],
