@@ -31,6 +31,7 @@ import { RolesGuard } from '@utils/guards/roles.guard';
 import { UserRole } from '@utils/enums/user-role.enum';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RolesResponseDto } from './dto/roles-list.dto';
+import { AddRolePermissionsDto } from './dto/add-role-permissions.dto';
 
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
@@ -63,6 +64,15 @@ export class RoleController {
   @ApiResponse({ status: 404, description: 'Role not found.' })
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.roleService.update(id, updateRoleDto);
+  }
+
+  @Put('/permissions:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a Role Permissions' })
+  @ApiResponse({ status: 200, description: 'Role updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Role not found.' })
+  addPermissions(@Param('id') id: string, @Body() addRolePermissionsDto: AddRolePermissionsDto) {
+    return this.roleService.addRolePermissions(id, addRolePermissionsDto);
   }
 
   @Get()
