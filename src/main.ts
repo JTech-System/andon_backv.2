@@ -7,14 +7,18 @@ import { HttpExceptionFilter } from './utils/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
   //app.useGlobalFilters(new HttpExceptionFilter());
+  
   app.useGlobalPipes(new ValidationPipe({
     // transform: true,
     // whitelist: true,
     // forbidNonWhitelisted: true,
   }));
 
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS.split(','),
+  });
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
@@ -27,6 +31,8 @@ async function bootstrap() {
     customSiteTitle: 'Andon API',
   });
 
-  await app.listen(3000);
+  // Make the port configurable
+  await app.listen(process.env.APP_PORT || 3000);
 }
+
 bootstrap();

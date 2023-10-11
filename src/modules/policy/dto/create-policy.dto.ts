@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsNotEmpty, IsOptional, IsArray, IsObject, IsEnum } from 'class-validator';
-import { ActionType } from '../enums/action-type.enum';  
+import { IsString, MaxLength, IsNotEmpty, IsOptional, IsArray, IsObject, IsBoolean } from 'class-validator';
+import { ActionType } from '../enums/action-type.enum';
 
 export class CreatePolicyDto {
-  
   @ApiProperty({
     maxLength: 128,
     description: 'Name of the policy',
@@ -13,35 +12,35 @@ export class CreatePolicyDto {
   @IsNotEmpty({ message: 'Name should not be empty' })
   @MaxLength(128, { message: 'Name should not be longer than 128 characters' })
   name: string;
-    
-  @ApiProperty({
-    enum: ActionType,
-    description: 'Action that the policy allows or denies',
-    example: ActionType.READ, // Adjust the example based on your actual enum values
-  })
-  @IsEnum(ActionType, { message: 'Action should be one of the allowed actions' })
-  @IsNotEmpty({ message: 'Action should not be empty' })
-  action: ActionType;
 
   @ApiProperty({
     maxLength: 128,
-    description: 'Resource that the policy applies to',
-    example: 'document',
+    description: 'Value of the policy',
+    example: 'allow',
   })
-  @IsString({ message: 'Resource should be a string' })
-  @IsNotEmpty({ message: 'Resource should not be empty' })
-  @MaxLength(128, { message: 'Resource should not be longer than 128 characters' })
-  resource: string;
+  @IsString({ message: 'Value should be a string' })
+  @IsNotEmpty({ message: 'Value should not be empty' })
+  @MaxLength(128, { message: 'Value should not be longer than 128 characters' })
+  value: string;
 
   @ApiProperty({
-    description: 'User ID to whom the policy is assigned',
-    example: '123',
+    description: 'Active status of the policy',
+    example: true,
   })
-  @IsString({ message: 'UserId should be a string' })
-  @IsNotEmpty({ message: 'UserId should not be empty' })
-  userId: string;
+  @IsBoolean({ message: 'Active should be a boolean' })
+  @IsNotEmpty({ message: 'Active should not be empty' })
+  active: boolean;
 
-  /*
+  @ApiProperty({
+    maxLength: 128,
+    description: 'Type of the policy',
+    example: 'access',
+  })
+  @IsString({ message: 'Type should be a string' })
+  @IsNotEmpty({ message: 'Type should not be empty' })
+  @MaxLength(128, { message: 'Type should not be longer than 128 characters' })
+  type: string;
+
   @ApiProperty({
     type: [String],
     description: 'Roles associated with the policy',
@@ -59,7 +58,7 @@ export class CreatePolicyDto {
   @IsArray({ message: 'Permissions should be an array' })
   @IsOptional()
   permissions: string[];
-*/
+
   @ApiProperty({
     type: Object,
     description: 'Conditions under which the policy is applicable',
@@ -67,5 +66,5 @@ export class CreatePolicyDto {
   })
   @IsObject({ message: 'Conditions should be an object' })
   @IsOptional()
-  conditions: any;
+  conditions: JSON;
 }

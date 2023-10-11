@@ -17,13 +17,17 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ResourceModule } from './modules/resource/resource.module';
+import { GroupsModule } from './modules/groups/group.module';
+
+
 
 @Module({
   imports: [
     CacheModule.register({
       store: 'redis',
-      host: 'localhost',
-      port: 6379,
+      host: process.env.REDIS_HOST,
+      port: +process.env.REDIS_PORT,
     }),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
@@ -33,7 +37,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'andon',
-      synchronize: true,
+      synchronize: process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
     //Modules
@@ -46,6 +50,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     PolicyModule,
     PermissionModule,
     NotificationsModule,
+    ResourceModule,
+    GroupsModule
   ],
   controllers: [],
   providers: [],

@@ -3,20 +3,24 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { Permission } from '../permission/entities/permission.entity';
+import { PermissionService } from '../permission/permission.service';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { RolesResponseDto } from './dto/roles-list.dto';
 
 @Injectable()
 export class RoleService {
   constructor(
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
-    @InjectRepository(Permission)
-    private permissionRepository: Repository<Permission>,
+    private permissionService: PermissionService, 
+
+
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
@@ -28,9 +32,7 @@ export class RoleService {
         throw new ConflictException('Role with this name already exists');
       }
 
-      const permissions = await this.permissionRepository.find({
-        where: { id: In(createRoleDto.permissions) },
-      });
+      const permissions = await this.permissionService.findPermissionsByIds(createRoleDto.permissions);
 
       if (permissions.length !== createRoleDto.permissions.length) {
         const foundPermissionIds = permissions.map((p) => p.id);
@@ -57,14 +59,51 @@ export class RoleService {
     });
   }
 
+  async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
+    const role = await this.roleRepository.findOne({where: { id: id}, relations: ['permissions'] });
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${id} not found`);
+    }
+
+    if (updateRoleDto.name) {
+      const existingRole = await this.roleRepository.findOne({
+        where: { name: updateRoleDto.name },
+      });
+      if (existingRole && existingRole.id !== id) {
+        throw new ConflictException('Role with this name already exists');
+      }
+      role.name = updateRoleDto.name;
+    }
+
+    if (updateRoleDto.permissions && updateRoleDto.permissions.length > 0) {
+      const permissions = await this.permissionService.findPermissionsByIds(updateRoleDto.permissions);
+      if (permissions.length !== updateRoleDto.permissions.length) {
+        const foundPermissionIds = permissions.map((p) => p.id);
+        const notFoundPermissions = updateRoleDto.permissions.filter(
+          (id) => !foundPermissionIds.includes(id),
+        );
+        throw new BadRequestException(
+          `Permissions with IDs ${notFoundPermissions.join(', ')} not found`,
+        );
+      }
+      role.permissions = permissions;
+    }
+
+    try {
+      return await this.roleRepository.save(role);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while updating the role',
+      );
+    }
+  }
+
   async addPermission(roleId: string, permissionId: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
       where: { id: roleId },
       relations: ['permissions'],
     });
-    const permission = await this.permissionRepository.findOne({
-      where: { id: permissionId },
-    });
+    const permission = await this.permissionService.findOne(permissionId);
 
     if (role && permission) {
       role.permissions.push(permission);
@@ -92,6 +131,27 @@ export class RoleService {
     return this.roleRepository.find();
   }
 
+  async findAllFilters(
+    skip = 0,
+    take = 10,
+    sortField = 'id',
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+  ): Promise<RolesResponseDto> {
+    const [result, total] = await this.roleRepository.findAndCount({
+      order: { [sortField]: sortOrder },
+      skip,
+      take,
+    });
+
+    if (total === 0) {
+      // TBD??
+    }
+
+    return {
+      row_count: total,
+      rows: result,
+    };
+  }
   async findOne(id: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
       where: { id: id },
@@ -114,4 +174,18 @@ export class RoleService {
 
     return roles;
   }
+
+  async remove(id: string): Promise<string> {
+    const role = await this.findOne(id);
+
+    try {
+        await this.roleRepository.remove(role);
+    } catch (error) {
+        throw new InternalServerErrorException(`Error deleting the role: ${error.message}`);
+    }
+
+    return `Role with ID ${id} has been deleted successfully`;
 }
+}
+
+

@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '@users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt/dist';
+import { PermissionModule } from 'src/modules/permission/permission.module';
 
 @Module({
   imports: [
@@ -14,7 +15,9 @@ import { JwtModule } from '@nestjs/jwt/dist';
         expiresIn: '20h' 
       }
     }),
-    UsersModule],
+    UsersModule,
+    PermissionModule
+  ],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService]

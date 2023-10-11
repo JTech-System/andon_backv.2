@@ -6,58 +6,60 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@users/entities/user.entity';
 import { IsString, MaxLength } from 'class-validator';
 import { Policy } from 'src/modules/policy/entities/policy.entity';
+import { Group } from 'src/modules/groups/entities/group.entity';
 
 @Entity()
 export class Role extends BaseEntity {
-    /** @name */
-    @ApiProperty({
-        maxLength: 128,
-        description: 'Name of the role',
-    })
-    @Column({
-        length: 128,
-    })
-    @IsString()
-    @MaxLength(128)
-    @Index() 
-    name: string;
+  /** @name */
+  @ApiProperty({
+    maxLength: 128,
+    description: 'Name of the role',
+  })
+  @Column({
+    length: 128,
+  })
+  @IsString()
+  @MaxLength(128)
+  @Index()
+  name: string;
 
-    /** @permissions */
-    @ApiProperty({
-        type: () => Permission,
-        isArray: true,
-        description: 'A list of permissions associated with the role.',
-    })
-    @ManyToMany(() => Permission, permission => permission.roles, { 
-        cascade: true 
-      })
-      @JoinTable()
-      permissions: Permission[];
-    /**
-     * Calculate the permission bitmask for the role.
-     * This is a derived property and not stored in the database.
-     * Is not needed to be include in the swager documentation since it's a method not a property -- TBD
-     */
-    getPermissionBitmask(): number {
-        return this.permissions.reduce((acc, permission) => acc | permission.bitmask, 0);
-    }
+  /** @permissions */
+  @ApiProperty({
+    type: () => Permission,
+    isArray: true,
+    description: 'A list of permissions associated with the role.',
+  })
+  @ManyToMany(() => Permission, (permission) => permission.roles, {
+    cascade: true,
+  })
+  permissions: Permission[];
 
-    /** @users */
-    @ApiProperty({
-        type: () => User,
-        isArray: true,
-        description: 'A list of users associated with the role.',
-    })
-    @ManyToMany(() => User, user => user.roles)
-    users: User[];
-/*
-    @ApiProperty({
-        type: () => Policy,
-        isArray: true,
-        description: 'A list of policies associated with the role.',
-      })
-      @ManyToMany(() => Policy, policy => policy.roles)
-      @JoinTable()
-      policies: Policy[];
-      */
+  /** @users */
+  @ApiProperty({
+    type: () => User,
+    isArray: true,
+    description: 'A list of users associated with the role.',
+  })
+  @ManyToMany(() => User, (user) => user.roles)
+  users: User[];
+
+  /** @policies */
+  @ApiProperty({
+    type: () => Policy,
+    isArray: true,
+    description: 'A list of policies associated with the role.',
+  })
+  @ManyToMany(() => Policy, (policy) => policy.roles)
+  policies: Policy[];
+
+  /** @groups */
+  @ApiProperty({
+    type: () => Group,
+    isArray: true,
+    description: 'A list of groups associated with the role.',
+  })
+  
+  @ManyToMany(() => Group, (group) => group.roles)
+  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
+  groups: Group[];
 }

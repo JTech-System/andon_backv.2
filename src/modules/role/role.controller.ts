@@ -7,6 +7,10 @@ import {
   UseGuards,
   ParseIntPipe,
   NotFoundException,
+  Put,
+  Delete,
+  HttpCode,
+  Query,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from '../role/dto/create-role.dto';
@@ -18,11 +22,15 @@ import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { UserRole } from '@utils/enums/user-role.enum';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { RolesResponseDto } from './dto/roles-list.dto';
 
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
@@ -33,7 +41,11 @@ export class RoleController {
 
   @Post()
   @Roles(UserRole.ADMIN)
-  @ApiCreatedResponse({ type: Role, description: 'The role has been successfully created.' })
+  @ApiOperation({ summary: 'Create a Role' })
+  @ApiCreatedResponse({
+    type: Role,
+    description: 'The role has been successfully created.',
+  })
   @ApiConflictResponse({ description: 'Role with this name already exists.' })
   @ApiBadRequestResponse({ description: 'Invalid input.' })
   async create(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
@@ -44,8 +56,18 @@ export class RoleController {
     return role;
   }
 
+  @Put(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a Role' })
+  @ApiResponse({ status: 200, description: 'Role updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Role not found.' })
+  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
+    return this.roleService.update(id, updateRoleDto);
+  }
+
   @Get()
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all Roles' })
   @ApiOkResponse({ type: [Role], description: 'Returned all roles.' })
   async findAll(): Promise<Role[]> {
     const roles = await this.roleService.findAll();
@@ -55,8 +77,20 @@ export class RoleController {
     return roles;
   }
 
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  async findAllFilters(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+  ): Promise<RolesResponseDto> {
+    return await this.roleService.findAllFilters(skip, take, sortField, sortOrder);
+  }
+
   @Get(':id')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get a Role by ID' })
   @ApiOkResponse({ type: Role, description: 'Returned role for the given id.' })
   @ApiNotFoundResponse({ description: 'Role with given id not found.' })
   async findOne(@Param('id', ParseIntPipe) id: string): Promise<Role> {
@@ -65,5 +99,15 @@ export class RoleController {
       throw new NotFoundException(`Role with id ${id} not found.`);
     }
     return role;
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Delete a Role' })
+  @ApiResponse({ status: 204, description: 'Role deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'Role not found.' })
+  remove(@Param('id') id: string) {
+    return this.roleService.remove(id);
   }
 }
