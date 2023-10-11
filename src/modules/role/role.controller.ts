@@ -93,9 +93,11 @@ export class RoleController {
     @Query('skip') skip: number,
     @Query('take') take: number,
     @Query('sortField') sortField: string,
-    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',  
+    @Query('search') search: string
+
   ): Promise<RolesResponseDto> {
-    return await this.roleService.findAllFilters(skip, take, sortField, sortOrder);
+    return await this.roleService.findAllFilters(skip, take, sortField, sortOrder, search);
   }
 
   @Get(':id')

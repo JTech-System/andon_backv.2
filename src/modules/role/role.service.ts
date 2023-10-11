@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Like } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { PermissionService } from '../permission/permission.service';
@@ -176,22 +176,34 @@ export class RoleService {
     take = 10,
     sortField = 'id',
     sortOrder: 'ASC' | 'DESC' = 'ASC',
+    search: string
   ): Promise<RolesResponseDto> {
+    
+    let whereCondition = {};
+  
+    if (search) {
+      whereCondition = {
+        name: Like(`%${search}%`)
+      };
+    }
+  
     const [result, total] = await this.roleRepository.findAndCount({
+      where: whereCondition,
       order: { [sortField]: sortOrder },
       skip,
       take,
     });
-
+  
     if (total === 0) {
-      // TBD??
+      // You can either return an empty result or throw an exception based on your requirements
     }
-
+  
     return {
       row_count: total,
       rows: result,
     };
   }
+  
   async findOne(id: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
       where: { id: id },
