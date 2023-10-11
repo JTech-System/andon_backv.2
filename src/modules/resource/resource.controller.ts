@@ -32,6 +32,14 @@ import {
       return this.resourceService.create(createResourceDto);
     }
   
+    @Get()
+    @Roles(UserRole.ADMIN) 
+    @ApiOperation({ summary: 'Get all resources' })
+    @ApiResponse({ status: 200, description: 'Resources fetched successfully.' })
+    @ApiResponse({ status: 404, description: 'Resources not found.' })
+    findAll() {
+      return this.resourceService.findAll();
+    }
     @Get(':id')
     @Roles(UserRole.ADMIN) 
     @ApiOperation({ summary: 'Get a resource by id' })

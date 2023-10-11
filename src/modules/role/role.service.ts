@@ -12,6 +12,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { PermissionService } from '../permission/permission.service';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RolesResponseDto } from './dto/roles-list.dto';
+import { AddRolePermissionsDto } from './dto/add-role-permissions.dto';
 
 @Injectable()
 export class RoleService {
@@ -97,6 +98,45 @@ export class RoleService {
       );
     }
   }
+
+  async addRolePermissions(id: string, addRolePermissionsDto: AddRolePermissionsDto): Promise<Role> {
+    const role = await this.roleRepository.findOne({ where: { id: id }, relations: ['permissions'] });
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${id} not found`);
+    }
+
+    if (addRolePermissionsDto.permissions && addRolePermissionsDto.permissions.length > 0) {
+      const existingPermissionIds = role.permissions.map(permission => permission.id);
+      
+      // Filter out permissions that are already associated with the role
+      const newPermissionIds = addRolePermissionsDto.permissions.filter(
+        id => !existingPermissionIds.includes(id),
+      );
+
+      if (newPermissionIds.length > 0) {
+        const newPermissions = await this.permissionService.findPermissionsByIds(newPermissionIds);
+        if (newPermissions.length !== newPermissionIds.length) {
+          const foundPermissionIds = newPermissions.map(p => p.id);
+          const notFoundPermissions = newPermissionIds.filter(id => !foundPermissionIds.includes(id));
+          throw new BadRequestException(
+            `Permissions with IDs ${notFoundPermissions.join(', ')} not found`,
+          );
+        }
+
+        // Add new permissions to the existing ones
+        role.permissions = [...role.permissions, ...newPermissions];
+      }
+    }
+
+    try {
+      return await this.roleRepository.save(role);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while adding permissions to the role',
+      );
+    }
+}
+
 
   async addPermission(roleId: string, permissionId: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
