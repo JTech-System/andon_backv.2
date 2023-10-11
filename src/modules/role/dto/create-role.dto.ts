@@ -27,7 +27,6 @@ export class CreateRoleDto {
     isArray: true,
   })
   @IsArray({ message: 'Permissions should be an array' })
-  @ArrayNotEmpty({ message: 'Permissions should not be empty' })
   @IsString({ each: true, message: 'Each permission should be a string identifier' })
   @ArrayUnique({ message: 'Permissions should be unique' })
   permissions: string[];
