@@ -43,7 +43,7 @@ describe('AuthService', () => {
 
       it('should throw an error', async () => {
         await expect(
-          service.login({ email: 'test@test.com', password: 'test' }),
+          service.logIn({ email: 'test@test.com', password: 'test' }),
         ).rejects.toThrow();
       });
     });
@@ -57,7 +57,7 @@ describe('AuthService', () => {
 
       it('should throw an error', async () => {
         await expect(
-          service.login({ email: 'test@test.com', password: 'test' }),
+          service.logIn({ email: 'test@test.com', password: 'test' }),
         ).rejects.toThrow();
       });
     });
@@ -73,7 +73,7 @@ describe('AuthService', () => {
 
       it('should return a user object', async () => {
         const loginData = { email: 'test@test.com', password: 'test' };
-        await expect(service.login(loginData)).resolves.toBeDefined();
+        await expect(service.logIn(loginData)).resolves.toBeDefined();
       });
     });
   });

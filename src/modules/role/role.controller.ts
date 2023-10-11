@@ -66,7 +66,7 @@ export class RoleController {
     return this.roleService.update(id, updateRoleDto);
   }
 
-  @Put('/permissions:id')
+  @Put('/permissions/:id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a Role Permissions' })
   @ApiResponse({ status: 200, description: 'Role updated successfully.' })

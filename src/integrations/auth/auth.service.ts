@@ -57,43 +57,46 @@ export class AuthService {
   }
 
   async evaluateUserPermissions(userId: string): Promise<any> {
-    const user = await this.usersService.findOne(userId, {
-      relations: ['roles', 'roles.permissions',  'roles.permissions.resources']
-    });
+  const user = await this.usersService.findOne(userId, {
+    relations: ['roles', 'roles.permissions', 'roles.permissions.resources']
+  });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
+  if (!user) {
+    throw new NotFoundException(`User with ID ${userId} not found`);
+  }
 
-    const permissions = {
+  const permissions = {
+    permissions: {
       routes: {},
       fields: {},
       actions: {},
-    };
-    console.log(user.roles);
-    for (const role of user.roles) {
-      console.log(role.permissions);
-      for (const permission of role.permissions) {
-        console.log(permission.resources);
-        for (const resource of permission.resources) {
-          if (resource.type === 'route') {
-            permissions.routes[resource.name] = {
-              canAccess: permission.action.includes('canAccess'),
-            };
-          } else if (resource.type === 'field') {
-            permissions.fields[resource.name] = {
-              canRead: permission.action.includes('canRead'),
-              canWrite: permission.action.includes('canWrite'),
-            };
-          } else if (resource.type === 'action') {
-            permissions.actions[resource.name] = {
-              canExecute: permission.action.includes('canExecute'),
-            };
+    }
+  };
+
+  for (const role of user.roles) {
+    for (const permission of role.permissions) {
+      for (const resource of permission.resources) {
+        if (resource.type === 'route') {
+          if (!permissions.permissions.routes[resource.name]) {
+            permissions.permissions.routes[resource.name] = {};
           }
+          permissions.permissions.routes[resource.name][permission.action] = true;
+        } else if (resource.type === 'field') {
+          if (!permissions.permissions.fields[resource.name]) {
+            permissions.permissions.fields[resource.name] = {};
+          }
+          permissions.permissions.fields[resource.name][permission.action] = true;
+        } else if (resource.type === 'action') {
+          if (!permissions.permissions.actions[resource.name]) {
+            permissions.permissions.actions[resource.name] = {};
+          }
+          permissions.permissions.actions[resource.name][permission.action] = true;
         }
       }
     }
-
-    return permissions;
   }
+
+  return permissions.permissions;
+}
+
 }
