@@ -131,10 +131,18 @@ export class IncidentsService {
         updatedBy: true,
         category: true,
         productionLine: true,
-        comments: true,
+        comments: {
+          createdBy: true,
+        },
+        closedBy: true,
       },
     });
-    if (incident) return incident;
+    if (incident) {
+      incident.comments = incident.comments.sort((a, b) => {
+        return a.createdOn.getTime() - b.createdOn.getTime();
+      });
+      return incident;
+    }
     throw new NotFoundException('Incident not found');
   }
 
@@ -258,6 +266,7 @@ export class IncidentsService {
   }
 
   // Incident Comments
+  
   async createComment(
     createIncidentCommentDto: CreateIncidentCommentDto,
     currentUser: User,

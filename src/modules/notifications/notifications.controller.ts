@@ -17,7 +17,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Notification } from './entities/notification.entity';
-import { NotificationType } from './enums/notification-type.enum';
 import { NotificationOperation } from './enums/notification-operation.enum';
 
 @ApiTags('Notifications')
@@ -31,8 +30,10 @@ export class NotificationsController {
     await this.notificationsService.send(
       'incident',
       NotificationOperation.create,
-      { email: ['leonel@leonel.com'], push: [] },
-      {},
+      { email: ['leonel-leonel-1@hotmail.com', 'leonel.leonel.fernandezcarrillo@gmail.com'], push: [] },
+      {
+        number: 'INC0001'
+      },
     );
   }
 

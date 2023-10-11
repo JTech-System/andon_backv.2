@@ -7,6 +7,9 @@ import { Notification } from './entities/notification.entity';
 import { NotificationOperation } from './enums/notification-operation.enum';
 import { RecipientsInterface } from './interfaces/recipients.interface';
 import { NotificationType } from './enums/notification-type.enum';
+import * as nodemailer from 'nodemailer';
+import * as smtpTransport from 'nodemailer-smtp-transport';
+import axios from 'axios';
 
 @Injectable()
 export class NotificationsService {
@@ -52,8 +55,8 @@ export class NotificationsService {
     const fields = content.match(/<<([^>>]+)>>/g);
 
     if (fields) {
-      fields.forEach(field => {
-        const fieldName = field.slice(2, -2); // Remove << and >>
+      fields.forEach((field) => {
+        const fieldName = field.slice(2, -2);
         if (record[fieldName] !== undefined) {
           parsedContent = parsedContent.replace(field, record[fieldName]);
         }
@@ -63,27 +66,74 @@ export class NotificationsService {
     return parsedContent;
   }
 
+  async send_email(
+    notification: Notification,
+    emails: string[],
+    records: object,
+  ): Promise<void> {
+    let subject: string | undefined;
+    if (notification.subject) {
+      subject = this.parseContent(notification.subject, records);
+    }
+    const body = this.parseContent(notification.subject, records);
+    const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
+
+    const requestBody = new URLSearchParams();
+    requestBody.append('grant_type', 'client_credentials');
+    requestBody.append('client_id', process.env.CLIENT_ID);
+    requestBody.append('client_secret', process.env.CLIENT_SECRET);
+    requestBody.append('scope', 'https://graph.microsoft.com/.default');
+
+    try {
+      let response = await axios.post(tokenEndpoint, requestBody, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      response = await axios.post(
+        `https://graph.microsoft.com/v1.0/users/${process.env.EMAIL_HOST}/sendMail`,
+        {
+          message: {
+            subject: subject,
+            body: {
+              contentType: 'HTML',
+              content: body,
+            },
+            toRecipients: emails.map((email) => {
+              return { emailAddress: { address: email } };
+            }),
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${response.data.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+    } catch (error) {
+      throw new Error(`Failed to send the emails: ${error.message}`);
+    }
+  }
+
   async send(
     entity: string,
     operation: NotificationOperation,
     recipients: RecipientsInterface,
     records: object,
   ): Promise<void> {
-    (await this.notificationsRepository.find({
-      where: {
-        entity,
-        operations: Like(`%${operation}%`) as any,
-        types: Like(`%${NotificationType.email}%`) as any,
-      },
-    })).map((notification) => {
-      let subject: string | undefined;
-      if(notification.subject) {
-        subject = this.parseContent(notification.subject, records);
-        console.log(subject);
-      }
-    })
-    
-    
+    (
+      await this.notificationsRepository.find({
+        where: {
+          entity,
+          operations: Like(`%${operation}%`) as any,
+          types: Like(`%${NotificationType.email}%`) as any,
+        },
+      })
+    ).map(async (notification) => {
+      this.send_email(notification, recipients.email, records);
+    });
+
     const pushNotifications = await this.notificationsRepository.find({
       where: {
         entity,
