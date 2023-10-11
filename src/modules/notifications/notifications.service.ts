@@ -7,8 +7,6 @@ import { Notification } from './entities/notification.entity';
 import { NotificationOperation } from './enums/notification-operation.enum';
 import { RecipientsInterface } from './interfaces/recipients.interface';
 import { NotificationType } from './enums/notification-type.enum';
-import * as nodemailer from 'nodemailer';
-import * as smtpTransport from 'nodemailer-smtp-transport';
 import axios from 'axios';
 
 @Injectable()
