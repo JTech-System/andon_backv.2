@@ -56,7 +56,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of roles associated with the user.',
   })
-  @ManyToMany(() => Role, (role) => role.users, { eager: true,})
+  @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable()
   roles: Role[];
 
@@ -65,8 +65,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of groups associated with the user.',
   })
-  @ManyToMany(() => Group, (group) => group.users, { eager: true,})
+  @ManyToMany(() => Group, (group) => group.users, { eager: true })
   @JoinTable()
   groups: Group[];
-
 }
