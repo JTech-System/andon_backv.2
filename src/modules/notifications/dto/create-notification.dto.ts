@@ -7,7 +7,17 @@ import {
   NotificationOperation,
   NotificationOperationsArray,
 } from '../enums/notification-operation.enum';
-import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateNotificationUpdateFieldDto } from './create-notification-update-field.dto';
+import { CreateNotificationCloseFieldDto } from './create-notification-close-field.dto';
 
 export class CreateNotificationDto {
   @ApiProperty({
@@ -49,4 +59,36 @@ export class CreateNotificationDto {
   @ApiProperty()
   @IsString()
   body: string;
+
+  @ApiProperty()
+  @IsArray()
+  @IsString({
+    each: true,
+  })
+  recipientsId: string[];
+
+  @ApiProperty({
+    type: [CreateNotificationUpdateFieldDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateNotificationUpdateFieldDto)
+  updateFields: CreateNotificationUpdateFieldDto[];
+
+  @ApiProperty({
+    type: [CreateNotificationCloseFieldDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateNotificationCloseFieldDto)
+  closeFields: CreateNotificationCloseFieldDto[];
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  @Matches(/^((((\d+,)+\d+|(\d+(\/|-)\d+)|\d+|\*) ?){5,7})$/, {
+    message:
+      'Invalid cron time, more information: https://en.wikipedia.org/wiki/Cron',
+  })
+  cronTime?: string;
 }

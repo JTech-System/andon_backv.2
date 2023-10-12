@@ -34,6 +34,7 @@ import { IncidentStatusValidationPipe } from './pipes/incident-status-validation
 import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 import { DateValidationPipe } from '@utils/pipes/date-validation.pipe';
 import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
+import { NotificationFieldsDto } from '@utils/dto/notification-fields.dto';
 
 @ApiTags('Incidents')
 @Controller('incidents')
@@ -110,6 +111,54 @@ export class IncidentsController {
       createIncidentCommentDto,
       currentUser,
     );
+  }
+
+  // Notifications
+  @Get('notifications')
+  @ApiOkResponse({
+    type: NotificationFieldsDto,
+  })
+  @ApiBearerAuth()
+  notifications(): NotificationFieldsDto {
+    return {
+      status: [
+        {
+          name: 'Sin asignar',
+          value: 'UNASSIGNED',
+        },
+        {
+          name: 'Asignado',
+          value: 'ASSIGNED',
+        },
+        {
+          name: 'En progreso',
+          value: 'IN PROGRESS',
+        },
+        {
+          name: 'Cerrado',
+          value: 'CLOSED',
+        },
+        {
+          name: 'Cancelado',
+          value: 'CANCELED',
+        },
+      ],
+      priority: [
+        {
+          name: 'P1',
+          value: 'P1',
+        },
+        {
+          name: 'P2',
+          value: 'P2',
+        },
+        {
+          name: 'P3',
+          value: 'P3',
+        },
+      ],
+      description: [],
+    };
   }
 
   // Incidents

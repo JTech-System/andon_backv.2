@@ -28,6 +28,22 @@ export class IncidentsService {
     private machinesService: MachinesService,
   ) {}
 
+  private async createNumber(): Promise<string> {
+    const incidents = await this.incidentsRepository.find({
+      order: { number: 'DESC' },
+      take: 1,
+    });
+    if (incidents.length > 0) {
+      const match = incidents[0].number.match(/\d+/)[0];
+      return (
+        'INC' +
+        ('0'.repeat(Math.max(0, 5 - (+match + 1).toString().length)) +
+          (+match + 1).toString())
+      );
+    }
+    return 'INC00001';
+  }
+
   async create(
     createIncidentDto: CreateIncidentDto,
     currentUser: User,
@@ -39,7 +55,7 @@ export class IncidentsService {
 
     const incident = await this.incidentsRepository.save({
       ...createIncidentDto,
-      number: 'INC0000',
+      number: await this.createNumber(),
       createdBy: currentUser,
       updatedBy: currentUser,
       status: IncidentStatus.UNASSIGNED,
@@ -131,6 +147,7 @@ export class IncidentsService {
         updatedBy: true,
         category: true,
         productionLine: true,
+        machine: true,
         comments: {
           createdBy: true,
         },
@@ -186,12 +203,22 @@ export class IncidentsService {
     ) {
       updateIncidentDto['closedBy'] = currentUser;
       updateIncidentDto['closedOn'] = new Date();
+      if (lastIncident.timeLapsed && lastIncident.closedOn) {
+        updateIncidentDto['timeLapsed'] =
+          lastIncident.timeLapsed +
+          updateIncidentDto['closedOn'].getTime() -
+          new Date(lastIncident.closedOn).getTime();
+      } else {
+        updateIncidentDto['timeLapsed'] =
+          updateIncidentDto['closedOn'].getTime() -
+          new Date(lastIncident.createdOn).getTime();
+      }
     } else if (
       lastIncident.status != updateIncidentDto.status &&
       lastIncident.status == IncidentStatus.CLOSED
     ) {
       updateIncidentDto['closedBy'] = null;
-      updateIncidentDto['closedOn'] = null;
+      updateIncidentDto['closedOn'] = new Date();
     }
 
     // Set undefined to null
@@ -266,7 +293,7 @@ export class IncidentsService {
   }
 
   // Incident Comments
-  
+
   async createComment(
     createIncidentCommentDto: CreateIncidentCommentDto,
     currentUser: User,

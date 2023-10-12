@@ -30,9 +30,9 @@ export class NotificationsController {
     await this.notificationsService.send(
       'incident',
       NotificationOperation.create,
-      { email: ['leonel-leonel-1@hotmail.com', 'leonel.leonel.fernandezcarrillo@gmail.com'], push: [] },
       {
-        number: 'INC0001'
+        id: 'b3c9549b-2091-4c34-afcb-aeb1c4d6d22b',
+        status: 'Unassigned',
       },
     );
   }

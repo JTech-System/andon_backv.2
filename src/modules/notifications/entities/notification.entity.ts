@@ -5,12 +5,16 @@ import {
   NotificationTypesArray,
   NotificationTypesArrayTransformer,
 } from '../enums/notification-type.enum';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import {
   NotificationOperation,
   NotificationOperationsArray,
   NotificationOperationsArrayTransformer,
 } from '../enums/notification-operation.enum';
+import { ResponseUserDto } from '@users/dto/response-user.dto';
+import { User } from '@users/entities/user.entity';
+import { NotificationUpdateField } from './notification-update-field.entity';
+import { NotificationCloseField } from './notification-close-field.entity';
 
 @Entity()
 export class Notification extends BaseEntity {
@@ -57,4 +61,32 @@ export class Notification extends BaseEntity {
     type: 'text',
   })
   body: string;
+
+  @ApiProperty({
+    type: [ResponseUserDto],
+  })
+  @ManyToMany(() => User)
+  @JoinTable()
+  recipients: User[];
+
+  @ApiProperty({
+    type: [NotificationUpdateField],
+  })
+  @OneToMany(() => NotificationUpdateField, (field) => field.notification)
+  updateFields: NotificationUpdateField[];
+
+  @ApiProperty({
+    type: [NotificationCloseField],
+  })
+  @OneToMany(() => NotificationCloseField, (field) => field.notification)
+  closeFields: NotificationCloseField[];
+
+  @ApiProperty({
+    required: false,
+  })
+  @Column({
+    length: 32,
+    nullable: true,
+  })
+  cronTime?: string;
 }

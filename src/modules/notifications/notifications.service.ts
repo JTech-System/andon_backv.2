@@ -2,24 +2,59 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
-import { NotificationOperation } from './enums/notification-operation.enum';
-import { RecipientsInterface } from './interfaces/recipients.interface';
-import { NotificationType } from './enums/notification-type.enum';
 import axios from 'axios';
+import { NotificationOperation } from './enums/notification-operation.enum';
+import { NotificationType } from './enums/notification-type.enum';
+import { UsersService } from '@users/users.service';
+import { User } from '@users/entities/user.entity';
+import { NotificationUpdateField } from './entities/notification-update-field.entity';
+import { NotificationCloseField } from './entities/notification-close-field.entity';
+import { CronJob } from 'cron';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationsRepository: Repository<Notification>,
+    @InjectRepository(NotificationUpdateField)
+    private notificationUpdateFieldsRepository: Repository<NotificationUpdateField>,
+    @InjectRepository(NotificationCloseField)
+    private notificationCloseFieldsRepository: Repository<NotificationCloseField>,
+    private usersService: UsersService, // private schedulerRegistry: SchedulerRegistry
   ) {}
 
   async create(
     createNotificationDto: CreateNotificationDto,
   ): Promise<Notification> {
-    return await this.notificationsRepository.save(createNotificationDto);
+    const recipients: User[] = [];
+    await Promise.all(
+      createNotificationDto.recipientsId.map(async (recipient) => {
+        recipients.push(await this.usersService.findOne(recipient));
+      }),
+    );
+    const notification = await this.notificationsRepository.save({
+      recipients,
+      ...createNotificationDto,
+    });
+    await Promise.all(
+      createNotificationDto.updateFields.map(async (field) => {
+        await this.notificationUpdateFieldsRepository.save({
+          notification,
+          ...field,
+        });
+      }),
+    );
+    await Promise.all(
+      createNotificationDto.closeFields.map(async (field) => {
+        await this.notificationCloseFieldsRepository.save({
+          notification,
+          ...field,
+        });
+      }),
+    );
+    return await this.findOne(notification.id);
   }
 
   async findAll(): Promise<Notification[]> {
@@ -64,16 +99,16 @@ export class NotificationsService {
     return parsedContent;
   }
 
-  async send_email(
+  private async sendEmail(
     notification: Notification,
     emails: string[],
-    records: object,
+    record: object,
   ): Promise<void> {
     let subject: string | undefined;
     if (notification.subject) {
-      subject = this.parseContent(notification.subject, records);
+      subject = this.parseContent(notification.subject, record);
     }
-    const body = this.parseContent(notification.subject, records);
+    const body = this.parseContent(notification.subject, record);
     const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
 
     const requestBody = new URLSearchParams();
@@ -114,11 +149,49 @@ export class NotificationsService {
     }
   }
 
+  private async stopCronTime(
+    entity: string,
+    recordId: string,
+    notificationId: string,
+    job: CronJob,
+  ): Promise<void> {
+    const appDataSource = new DataSource({
+      type: 'mysql',
+      host: process.env.DB_HOST,
+      port: +process.env.DB_PORT,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: 'andon',
+    });
+    await appDataSource.initialize();
+    const records = (await appDataSource.query(
+      `SELECT * FROM ${entity} WHERE id='${recordId}'`,
+    )) as object[];
+    const notifications = (await appDataSource.query(
+      `SELECT * FROM notification WHERE id='${notificationId}'`,
+    )) as Notification[];
+    if (records.length > 0 && notifications.length > 0) {
+      const notification = notifications[0];
+      const record = records[0];
+      if (notification.cronTime) {
+        const closeFields = (await appDataSource.query(
+          `SELECT * FROM notification_close_field WHERE notificationId='${notification.id}'`,
+        )) as NotificationCloseField[];
+        let stop = true;
+        closeFields.map((field) => {
+          if (record[field.name] != field.value) stop = false;
+        });
+        if (!stop) return;
+      }
+    }
+    job.stop();
+  }
+
   async send(
     entity: string,
     operation: NotificationOperation,
-    recipients: RecipientsInterface,
-    records: object,
+    record: object,
+    lastRecord?: object,
   ): Promise<void> {
     (
       await this.notificationsRepository.find({
@@ -127,17 +200,52 @@ export class NotificationsService {
           operations: Like(`%${operation}%`) as any,
           types: Like(`%${NotificationType.email}%`) as any,
         },
+        relations: {
+          recipients: true,
+          updateFields: true,
+          closeFields: true,
+        },
       })
     ).map(async (notification) => {
-      this.send_email(notification, recipients.email, records);
-    });
+      const recipients = notification.recipients.map(
+        (recipient) => recipient.email,
+      );
+      // Missing role and group
 
-    const pushNotifications = await this.notificationsRepository.find({
-      where: {
-        entity,
-        operations: Like(`%${operation}%`) as any,
-        types: Like(`%${NotificationType.push}%`) as any,
-      },
+      let send = false;
+      if (operation == NotificationOperation.update) {
+        if (lastRecord) {
+          send = true;
+          notification.updateFields.map((field) => {
+            if (!record[field.name] || !lastRecord[field.name])
+              throw new Error(
+                `Send Notification: field '${field.name}' does not exit in the records`,
+              );
+            if (
+              lastRecord[field.name] == record[field.name] ||
+              (field.value && record[field.name] != field.value)
+            )
+              send = false;
+          });
+        }
+      } else send = true;
+
+      if (send) {
+        // this.sendEmail(notification, recipients, record);
+        if (notification.cronTime) {
+          const job = new CronJob(notification.cronTime, () => {
+            this.stopCronTime(entity, record['id'], notification.id, job);
+          });
+          job.start();
+        }
+      }
     });
+    // const pushNotifications = await this.notificationsRepository.find({
+    //   where: {
+    //     entity,
+    //     operations: Like(`%${operation}%`) as any,
+    //     types: Like(`%${NotificationType.push}%`) as any,
+    //   },
+    // });
   }
 }
