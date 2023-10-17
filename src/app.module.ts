@@ -19,6 +19,8 @@ import { PermissionModule } from './modules/permission/permission.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ResourceModule } from './modules/resource/resource.module';
 import { GroupsModule } from './modules/groups/group.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 
 
@@ -40,6 +42,10 @@ import { GroupsModule } from './modules/groups/group.module';
       synchronize: process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.env.CLIENT_PATH),
+    }),
+
     //Modules
     UsersModule,
     AuthModule,

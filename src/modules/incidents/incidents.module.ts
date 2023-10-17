@@ -8,12 +8,14 @@ import { ProductionLinesModule } from '@production-lines/production-lines.module
 import { IncidentStatusValidationPipe } from './pipes/incident-status-validation.pipe';
 import { MachinesModule } from '@machines/machines.module';
 import { IncidentComment } from './entities/incident-comment.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Incident, IncidentCategory, IncidentComment]),
     ProductionLinesModule,
     MachinesModule,
+    NotificationsModule,
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],

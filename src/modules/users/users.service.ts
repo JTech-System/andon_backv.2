@@ -33,8 +33,6 @@ export class UsersService {
     if (createUserDto.roles && createUserDto.roles.length > 0) {
       if (createUserDto.roles && createUserDto.roles.length > 0) {
         roles = await this.roleService.findRolesByIds(createUserDto.roles);
-
-        console.log('Roles before saving:', roles);
       }
 
       if (roles.length !== createUserDto.roles.length) {
@@ -44,15 +42,12 @@ export class UsersService {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(createUserDto.password, salt);
-    console.log('Roles before saving:', roles);
 
     const user = this.usersRepository.create({
       ...createUserDto,
       passwordHash,
       roles, // Assigning the roles to the user entity
     });
-
-    console.log('Roles before saving:', roles);
 
     return await this.usersRepository.save(user);
   }

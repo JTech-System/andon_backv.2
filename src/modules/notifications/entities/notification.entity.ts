@@ -14,7 +14,7 @@ import {
 import { ResponseUserDto } from '@users/dto/response-user.dto';
 import { User } from '@users/entities/user.entity';
 import { NotificationUpdateField } from './notification-update-field.entity';
-import { NotificationCloseField } from './notification-close-field.entity';
+import { NotificationStopField } from './notification-stop-field.entity';
 
 @Entity()
 export class Notification extends BaseEntity {
@@ -76,10 +76,10 @@ export class Notification extends BaseEntity {
   updateFields: NotificationUpdateField[];
 
   @ApiProperty({
-    type: [NotificationCloseField],
+    type: [NotificationStopField],
   })
-  @OneToMany(() => NotificationCloseField, (field) => field.notification)
-  closeFields: NotificationCloseField[];
+  @OneToMany(() => NotificationStopField, (field) => field.notification)
+  stopFields: NotificationStopField[];
 
   @ApiProperty({
     required: false,

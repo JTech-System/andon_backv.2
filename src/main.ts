@@ -3,18 +3,17 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger/dist';
-import { HttpExceptionFilter } from './utils/filters/http-exception.filter';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  //app.useGlobalFilters(new HttpExceptionFilter());
-  
-  app.useGlobalPipes(new ValidationPipe({
-    // transform: true,
-    // whitelist: true,
-    // forbidNonWhitelisted: true,
-  }));
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions: {
+      cert: fs.readFileSync('./cert.pem'),
+      key: fs.readFileSync('./key.pem'),
+    },
+  });
+
+  app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS.split(','),
@@ -31,7 +30,6 @@ async function bootstrap() {
     customSiteTitle: 'Andon API',
   });
 
-  // Make the port configurable
   await app.listen(process.env.APP_PORT || 3000);
 }
 

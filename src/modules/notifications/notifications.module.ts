@@ -6,19 +6,22 @@ import { Notification } from './entities/notification.entity';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '@users/users.module';
 import { NotificationUpdateField } from './entities/notification-update-field.entity';
-import { NotificationCloseField } from './entities/notification-close-field.entity';
+import { NotificationPush } from './entities/notification-push.entity';
+import { NotificationStopField } from './entities/notification-stop-field.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Notification,
       NotificationUpdateField,
-      NotificationCloseField,
+      NotificationStopField,
+      NotificationPush,
     ]),
     ConfigModule.forRoot(),
     UsersModule,
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

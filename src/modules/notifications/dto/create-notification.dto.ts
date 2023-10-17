@@ -17,7 +17,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateNotificationUpdateFieldDto } from './create-notification-update-field.dto';
-import { CreateNotificationCloseFieldDto } from './create-notification-close-field.dto';
+import { CreateNotificationStopFieldDto } from './create-notification-stop-field.dto';
 
 export class CreateNotificationDto {
   @ApiProperty({
@@ -76,12 +76,12 @@ export class CreateNotificationDto {
   updateFields: CreateNotificationUpdateFieldDto[];
 
   @ApiProperty({
-    type: [CreateNotificationCloseFieldDto],
+    type: [CreateNotificationStopFieldDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateNotificationCloseFieldDto)
-  closeFields: CreateNotificationCloseFieldDto[];
+  @Type(() => CreateNotificationStopFieldDto)
+  stopFields: CreateNotificationStopFieldDto[];
 
   @ApiProperty()
   @IsString()

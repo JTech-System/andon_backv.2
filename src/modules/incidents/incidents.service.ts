@@ -14,6 +14,8 @@ import { UpdateIncidentDto } from './dto/update-incident.dto';
 import { MachinesService } from '@machines/machines.service';
 import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
 import { IncidentComment } from './entities/incident-comment.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationOperation } from '../notifications/enums/notification-operation.enum';
 
 @Injectable()
 export class IncidentsService {
@@ -26,6 +28,7 @@ export class IncidentsService {
     private incidentCommentsRepository: Repository<IncidentComment>,
     private productionLinesService: ProductionLinesService,
     private machinesService: MachinesService,
+    private notificationsService: NotificationsService,
   ) {}
 
   private async createNumber(): Promise<string> {
@@ -62,6 +65,12 @@ export class IncidentsService {
       category,
       productionLine,
     });
+
+    await this.notificationsService.send(
+      'incident',
+      NotificationOperation.create,
+      incident,
+    );
 
     return await this.findOne(incident.id);
   }

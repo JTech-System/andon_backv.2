@@ -4,7 +4,7 @@ import { Notification } from './notification.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 
 @Entity()
-export class NotificationCloseField extends BaseEntity {
+export class NotificationStopField extends BaseEntity {
   @ApiProperty()
   @Column({
     length: 64,

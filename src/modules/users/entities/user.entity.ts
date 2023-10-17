@@ -1,8 +1,9 @@
-import { Entity, Column, JoinTable, ManyToMany } from 'typeorm';
+import { Entity, Column, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { Group } from 'src/modules/groups/entities/group.entity';
+import { NotificationPush } from 'src/modules/notifications/entities/notification-push.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -68,4 +69,10 @@ export class User extends BaseEntity {
   @ManyToMany(() => Group, (group) => group.users, { eager: true })
   @JoinTable()
   groups: Group[];
+
+  @OneToMany(
+    () => NotificationPush,
+    (notificationPush) => notificationPush.user,
+  )
+  notificationPush: NotificationPush[];
 }

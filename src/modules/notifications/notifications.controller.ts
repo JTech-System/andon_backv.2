@@ -18,11 +18,24 @@ import {
 } from '@nestjs/swagger';
 import { Notification } from './entities/notification.entity';
 import { NotificationOperation } from './enums/notification-operation.enum';
+import { CurrentUser } from '@auth/auth.decorator';
+import { User } from '@users/entities/user.entity';
+import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  // Push
+
+  @Post('push')
+  @ApiBearerAuth()
+  async createPush(@Body() createNotificationPushDto: CreateNotificationPushDto, @CurrentUser() currentUser: User) : Promise<void> {
+    return await this.notificationsService.createPush(createNotificationPushDto, currentUser);
+  }
+
+  // Base
 
   @Get('test')
   @ApiBearerAuth()

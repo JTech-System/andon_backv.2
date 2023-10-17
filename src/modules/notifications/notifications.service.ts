@@ -6,12 +6,21 @@ import { DataSource, Like, Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import axios from 'axios';
 import { NotificationOperation } from './enums/notification-operation.enum';
-import { NotificationType } from './enums/notification-type.enum';
 import { UsersService } from '@users/users.service';
 import { User } from '@users/entities/user.entity';
 import { NotificationUpdateField } from './entities/notification-update-field.entity';
-import { NotificationCloseField } from './entities/notification-close-field.entity';
 import { CronJob } from 'cron';
+import * as webPush from 'web-push';
+import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
+import { NotificationPush } from './entities/notification-push.entity';
+import { NotificationType } from './enums/notification-type.enum';
+import { NotificationStopField } from './entities/notification-stop-field.entity';
+
+webPush.setVapidDetails(
+  'mailto:leonel-leonel-1@hotmail.com',
+  'BNjeAEyk0Op0Qhj4nSeyT2GOEdqum3Lm82ZNsFdMpMh8l9XDl4E0hvS9YirdQL3idD8VbZHBae5aXahc2jfPvlo',
+  'A9i_UF455oXD-oBWtUyqT9dC-xyKc4iqTB7qmMeP944',
+);
 
 @Injectable()
 export class NotificationsService {
@@ -20,8 +29,10 @@ export class NotificationsService {
     private notificationsRepository: Repository<Notification>,
     @InjectRepository(NotificationUpdateField)
     private notificationUpdateFieldsRepository: Repository<NotificationUpdateField>,
-    @InjectRepository(NotificationCloseField)
-    private notificationCloseFieldsRepository: Repository<NotificationCloseField>,
+    @InjectRepository(NotificationStopField)
+    private notificationStopFieldsRepository: Repository<NotificationStopField>,
+    @InjectRepository(NotificationPush)
+    private notificationPushRepository: Repository<NotificationPush>,
     private usersService: UsersService, // private schedulerRegistry: SchedulerRegistry
   ) {}
 
@@ -47,8 +58,8 @@ export class NotificationsService {
       }),
     );
     await Promise.all(
-      createNotificationDto.closeFields.map(async (field) => {
-        await this.notificationCloseFieldsRepository.save({
+      createNotificationDto.stopFields.map(async (field) => {
+        await this.notificationStopFieldsRepository.save({
           notification,
           ...field,
         });
@@ -149,12 +160,76 @@ export class NotificationsService {
     }
   }
 
+  private async sendPush(
+    notification: Notification,
+    push: NotificationPush[],
+    record: object,
+  ): Promise<void> {
+    let subject: string | undefined;
+    if (notification.subject) {
+      subject = this.parseContent(notification.subject, record);
+    }
+    const body = this.parseContent(notification.subject, record);
+    push.map(async (notificationPush) => {
+      try {
+        await webPush.sendNotification(
+          {
+            endpoint: notificationPush.endpoint,
+            keys: {
+              p256dh: notificationPush.p256dh,
+              auth: notificationPush.auth,
+            },
+          },
+          JSON.stringify({
+            notification: {
+              title: subject,
+              body: body,
+              icon: '/assets/images/icon.png',
+            },
+            data: {
+              url: 'https://example.com/notification-details',
+            },
+          }),
+        );
+      } catch {
+        this.removePush(notificationPush.id);
+      }
+    });
+  }
+
+  private checkIfSend(
+    operation: NotificationOperation,
+    notification: Notification,
+    record: object,
+    lastRecord?: object,
+  ): boolean {
+    let send = false;
+    if (operation == NotificationOperation.update) {
+      if (lastRecord) {
+        send = true;
+        notification.updateFields.map((field) => {
+          if (!record[field.name] || !lastRecord[field.name])
+            throw new Error(
+              `Send Notification: field '${field.name}' does not exit in the records`,
+            );
+          if (
+            lastRecord[field.name] == record[field.name] ||
+            (field.value && record[field.name] != field.value)
+          )
+            send = false;
+        });
+      }
+    } else send = true;
+
+    return send;
+  }
+
   private async stopCronTime(
     entity: string,
     recordId: string,
     notificationId: string,
     job: CronJob,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const appDataSource = new DataSource({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -174,17 +249,18 @@ export class NotificationsService {
       const notification = notifications[0];
       const record = records[0];
       if (notification.cronTime) {
-        const closeFields = (await appDataSource.query(
-          `SELECT * FROM notification_close_field WHERE notificationId='${notification.id}'`,
-        )) as NotificationCloseField[];
+        const stopFields = (await appDataSource.query(
+          `SELECT * FROM notification_stop_field WHERE notificationId='${notification.id}'`,
+        )) as NotificationStopField[];
         let stop = true;
-        closeFields.map((field) => {
+        stopFields.map((field) => {
           if (record[field.name] != field.value) stop = false;
         });
-        if (!stop) return;
+        if (!stop) return false;
       }
     }
     job.stop();
+    return true;
   }
 
   async send(
@@ -203,7 +279,7 @@ export class NotificationsService {
         relations: {
           recipients: true,
           updateFields: true,
-          closeFields: true,
+          stopFields: true,
         },
       })
     ).map(async (notification) => {
@@ -211,41 +287,91 @@ export class NotificationsService {
         (recipient) => recipient.email,
       );
       // Missing role and group
-
-      let send = false;
-      if (operation == NotificationOperation.update) {
-        if (lastRecord) {
-          send = true;
-          notification.updateFields.map((field) => {
-            if (!record[field.name] || !lastRecord[field.name])
-              throw new Error(
-                `Send Notification: field '${field.name}' does not exit in the records`,
-              );
-            if (
-              lastRecord[field.name] == record[field.name] ||
-              (field.value && record[field.name] != field.value)
-            )
-              send = false;
-          });
-        }
-      } else send = true;
-
-      if (send) {
-        // this.sendEmail(notification, recipients, record);
+      if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
-          const job = new CronJob(notification.cronTime, () => {
-            this.stopCronTime(entity, record['id'], notification.id, job);
+          const job = new CronJob(notification.cronTime, async () => {
+            if (
+              !(await this.stopCronTime(
+                entity,
+                record['id'],
+                notification.id,
+                job,
+              ))
+            )
+              await this.sendEmail(notification, recipients, record);
           });
           job.start();
+        } else {
+          await this.sendEmail(notification, recipients, record);
         }
       }
     });
-    // const pushNotifications = await this.notificationsRepository.find({
-    //   where: {
-    //     entity,
-    //     operations: Like(`%${operation}%`) as any,
-    //     types: Like(`%${NotificationType.push}%`) as any,
-    //   },
-    // });
+
+    (
+      await this.notificationsRepository.find({
+        where: {
+          entity,
+          operations: Like(`%${operation}%`) as any,
+          types: Like(`%${NotificationType.push}%`) as any,
+        },
+        relations: {
+          recipients: {
+            notificationPush: true,
+          },
+          updateFields: true,
+          stopFields: true,
+        },
+      })
+    ).map(async (notification) => {
+      const push: NotificationPush[] = [];
+      notification.recipients.map((recipient) => {
+        recipient.notificationPush.map((notificationPush) =>
+          push.push(notificationPush),
+        );
+      });
+      // Missing role and group
+      if (this.checkIfSend(operation, notification, record, lastRecord)) {
+        if (notification.cronTime) {
+          const job = new CronJob(notification.cronTime, async () => {
+            if (
+              !(await this.stopCronTime(
+                entity,
+                record['id'],
+                notification.id,
+                job,
+              ))
+            )
+              await this.sendPush(notification, push, record);
+          });
+          job.start();
+        } else {
+          await this.sendPush(notification, push, record);
+        }
+      }
+    });
+  }
+
+  // Push
+
+  async createPush(
+    createNotificationPushDto: CreateNotificationPushDto,
+    currentUser: User,
+  ): Promise<void> {
+    if (
+      !(await this.notificationPushRepository.findOne({
+        where: {
+          auth: createNotificationPushDto.auth,
+          p256dh: createNotificationPushDto.p256dh,
+        },
+      }))
+    )
+      await this.notificationPushRepository.save({
+        user: currentUser,
+        ...createNotificationPushDto,
+      });
+  }
+
+  private async removePush(id: string): Promise<void> {
+    await this.notificationPushRepository.delete({ id });
   }
 }
