@@ -21,6 +21,13 @@ import { CreateNotificationStopFieldDto } from './create-notification-stop-field
 
 export class CreateNotificationDto {
   @ApiProperty({
+    maxLength: 64,
+  })
+  @IsString()
+  @MaxLength(64)
+  name: string;
+
+  @ApiProperty({
     enum: NotificationTypesArray,
     type: [NotificationType],
   })

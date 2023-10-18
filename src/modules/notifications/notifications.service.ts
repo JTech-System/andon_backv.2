@@ -69,12 +69,17 @@ export class NotificationsService {
   }
 
   async findAll(): Promise<Notification[]> {
-    return await this.notificationsRepository.find();
+    return await this.notificationsRepository.find({ order: { name: 'ASC' } });
   }
 
   async findOne(id: string): Promise<Notification> {
     const notification = await this.notificationsRepository.findOne({
       where: { id },
+      relations: {
+        recipients: true,
+        updateFields: true,
+        stopFields: true,
+      },
     });
     if (notification) return notification;
     throw new NotFoundException('Notification not found');
@@ -85,8 +90,12 @@ export class NotificationsService {
     updateNotificationDto: UpdateNotificationDto,
   ): Promise<Notification> {
     await this.findOne(id);
-    await this.notificationsRepository.update({ id }, updateNotificationDto);
-    return await this.findOne(id);
+    // await this.notificationsRepository.update({ id }, updateNotificationDto);
+    await this.remove(id);
+    const notification = await this.create(
+      updateNotificationDto as unknown as any,
+    );
+    return await this.findOne(notification.id);
   }
 
   async remove(id: string): Promise<void> {
@@ -204,7 +213,7 @@ export class NotificationsService {
     lastRecord?: object,
   ): boolean {
     let send = false;
-    if (operation == NotificationOperation.update) {
+    if (operation == NotificationOperation.UPDATE) {
       if (lastRecord) {
         send = true;
         notification.updateFields.map((field) => {
@@ -274,7 +283,7 @@ export class NotificationsService {
         where: {
           entity,
           operations: Like(`%${operation}%`) as any,
-          types: Like(`%${NotificationType.email}%`) as any,
+          types: Like(`%${NotificationType.EMAIL}%`) as any,
         },
         relations: {
           recipients: true,
@@ -312,7 +321,7 @@ export class NotificationsService {
         where: {
           entity,
           operations: Like(`%${operation}%`) as any,
-          types: Like(`%${NotificationType.push}%`) as any,
+          types: Like(`%${NotificationType.PUSH}%`) as any,
         },
         relations: {
           recipients: {

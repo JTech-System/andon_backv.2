@@ -19,6 +19,14 @@ import { NotificationStopField } from './notification-stop-field.entity';
 @Entity()
 export class Notification extends BaseEntity {
   @ApiProperty({
+    maxLength: 64,
+  })
+  @Column({
+    length: 64,
+  })
+  name: string;
+
+  @ApiProperty({
     enum: NotificationTypesArray,
     type: [NotificationType],
   })
@@ -65,7 +73,7 @@ export class Notification extends BaseEntity {
   @ApiProperty({
     type: [ResponseUserDto],
   })
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, { onDelete: 'CASCADE' })
   @JoinTable()
   recipients: User[];
 

@@ -122,40 +122,16 @@ export class IncidentsController {
   notifications(): NotificationFieldsDto {
     return {
       status: [
-        {
-          name: 'Sin asignar',
-          value: 'UNASSIGNED',
-        },
-        {
-          name: 'Asignado',
-          value: 'ASSIGNED',
-        },
-        {
-          name: 'En progreso',
-          value: 'IN PROGRESS',
-        },
-        {
-          name: 'Cerrado',
-          value: 'CLOSED',
-        },
-        {
-          name: 'Cancelado',
-          value: 'CANCELED',
-        },
+        'Unassigned',
+        'Assigned',
+        'In progress',
+        'Closed',
+        'Canceled',
       ],
       priority: [
-        {
-          name: 'P1',
-          value: 'P1',
-        },
-        {
-          name: 'P2',
-          value: 'P2',
-        },
-        {
-          name: 'P3',
-          value: 'P3',
-        },
+        'P1',
+        'P2',
+        'P3'
       ],
       description: [],
     };

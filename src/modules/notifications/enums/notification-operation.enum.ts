@@ -1,10 +1,10 @@
 import { ValueTransformer } from 'typeorm';
 
 export enum NotificationOperation {
-  create = 'create',
-  update = 'update',
-  delete = 'delete',
-  event = 'event',
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  EVENT = 'event',
 }
 
 export const NotificationOperationsArray = Object.values(NotificationOperation);

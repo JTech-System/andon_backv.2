@@ -66,9 +66,9 @@ export class IncidentsService {
       productionLine,
     });
 
-    await this.notificationsService.send(
+    this.notificationsService.send(
       'incident',
-      NotificationOperation.create,
+      NotificationOperation.CREATE,
       incident,
     );
 
@@ -247,11 +247,23 @@ export class IncidentsService {
       { id },
       { updatedBy: currentUser, ...updateIncidentDto },
     );
-    return await this.findOne(id);
+
+    const incident = await this.findOne(id);
+    this.notificationsService.send(
+      'incident',
+      NotificationOperation.UPDATE,
+      lastIncident,
+      incident,
+    );
+    return incident;
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
+    this.notificationsService.send(
+      'incident',
+      NotificationOperation.DELETE,
+      await this.findOne(id),
+    );
     await this.incidentsRepository.delete({ id });
   }
 

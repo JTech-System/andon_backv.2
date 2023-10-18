@@ -42,7 +42,7 @@ export class NotificationsController {
   async test(): Promise<void> {
     await this.notificationsService.send(
       'incident',
-      NotificationOperation.create,
+      NotificationOperation.CREATE,
       {
         id: 'b3c9549b-2091-4c34-afcb-aeb1c4d6d22b',
         status: 'Unassigned',

@@ -1,8 +1,8 @@
 import { ValueTransformer } from 'typeorm';
 
 export enum NotificationType {
-  email = 'email',
-  push = 'push',
+  EMAIL = 'email',
+  PUSH = 'push',
   // whatsapp = 'whatsapp',
 }
 
