@@ -9,6 +9,8 @@ import { IncidentStatusValidationPipe } from './pipes/incident-status-validation
 import { MachinesModule } from '@machines/machines.module';
 import { IncidentComment } from './entities/incident-comment.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { GroupsModule } from '@groups/group.module';
+import { UsersModule } from '@users/users.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ProductionLinesModule,
     MachinesModule,
     NotificationsModule,
+    GroupsModule,
+    UsersModule,
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],

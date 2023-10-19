@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -8,12 +13,11 @@ import { UsersService } from '@users/users.service';
 import { AddUserGroupDto } from './dto/add-user-group.dto';
 
 @Injectable()
-export class GroupService {
-  
+export class GroupsService {
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
-    private roleService: RoleService, 
+    private roleService: RoleService,
     private userService: UsersService,
   ) {}
 
@@ -62,7 +66,10 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    const group = await this.groupRepository.findOne({where: {id: id}});
+    const group = await this.groupRepository.findOne({
+      where: { id: id },
+      relations: { users: true },
+    });
 
     if (!group) {
       throw new NotFoundException(`Group with ID ${id} not found`);
@@ -72,53 +79,58 @@ export class GroupService {
   }
 
   async update(id: string, updateGroupDto: CreateGroupDto): Promise<Group> {
-    const group = await this.findOne(id);  
+    const group = await this.findOne(id);
 
     if (!updateGroupDto.name) {
-        throw new BadRequestException('Name is required');
+      throw new BadRequestException('Name is required');
     }
 
-    Object.assign(group, updateGroupDto);  
+    Object.assign(group, updateGroupDto);
     await this.groupRepository.save(group);
     return group;
-}
-
-async removeUserFromGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
-  const group = await this.groupRepository.findOne({where: {id:updateGroupDto.group_id}, relations: ['roles'] });
-  const user = await this.userService.findOne(updateGroupDto.user_id);
-
-  if (!group || !user) {
-      throw new NotFoundException('Group or User not found');
   }
 
-  user.roles = user.roles.filter(role => !group.roles.includes(role));
-  await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
-  return group;
-}
+  async removeUserFromGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
+    const group = await this.groupRepository.findOne({
+      where: { id: updateGroupDto.group_id },
+      relations: ['roles'],
+    });
+    const user = await this.userService.findOne(updateGroupDto.user_id);
 
-async addUserToGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
-  const group = await this.groupRepository.findOne({
-      where: {id: updateGroupDto.group_id}, 
-      relations: ['roles']
-  });
-  const user = await this.userService.findOne(updateGroupDto.user_id);
-
-  if (!group || !user) {
+    if (!group || !user) {
       throw new NotFoundException('Group or User not found');
+    }
+
+    user.roles = user.roles.filter((role) => !group.roles.includes(role));
+    await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
+    return group;
   }
 
-  user.roles = [...new Set([...user.roles, ...group.roles])];  // Ensure uniqueness
-  await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
-  return group;
-}
+  async addUserToGroup(updateGroupDto: AddUserGroupDto): Promise<Group> {
+    const group = await this.groupRepository.findOne({
+      where: { id: updateGroupDto.group_id },
+      relations: ['roles'],
+    });
+    const user = await this.userService.findOne(updateGroupDto.user_id);
 
-async remove(id: string): Promise<void> {
-  const group = await this.findOne(id);
+    if (!group || !user) {
+      throw new NotFoundException('Group or User not found');
+    }
 
-  try {
+    user.roles = [...new Set([...user.roles, ...group.roles])]; // Ensure uniqueness
+    await this.userService.updateUserRoles(updateGroupDto.user_id, user.roles);
+    return group;
+  }
+
+  async remove(id: string): Promise<void> {
+    const group = await this.findOne(id);
+
+    try {
       await this.groupRepository.remove(group);
-  } catch (error) {
-      throw new ConflictException(`Error deleting group with ID ${id}: ${error.message}`);
+    } catch (error) {
+      throw new ConflictException(
+        `Error deleting group with ID ${id}: ${error.message}`,
+      );
+    }
   }
-}
 }

@@ -121,18 +121,8 @@ export class IncidentsController {
   @ApiBearerAuth()
   notifications(): NotificationFieldsDto {
     return {
-      status: [
-        'Unassigned',
-        'Assigned',
-        'In progress',
-        'Closed',
-        'Canceled',
-      ],
-      priority: [
-        'P1',
-        'P2',
-        'P3'
-      ],
+      status: ['Unassigned', 'Assigned', 'In progress', 'Closed', 'Canceled'],
+      priority: ['P1', 'P2', 'P3'],
       description: [],
     };
   }
@@ -193,7 +183,7 @@ export class IncidentsController {
     required: false,
   })
   @ApiQuery({
-    name: 'groupId',
+    name: 'assignedGroupId',
     type: String,
     required: false,
   })
@@ -215,8 +205,8 @@ export class IncidentsController {
     startCreatedOn?: Date,
     @Query('endCreatedOn', new DateValidationPipe({ optional: true }))
     endCreatedOn?: Date,
-    @Query('groupId', new UUIDValidationPipe({ optional: true }))
-    groupId?: string,
+    @Query('assignedGroupId', new UUIDValidationPipe({ optional: true }))
+    assignedGroupId?: string,
   ): Promise<PaginationIncidentDto> {
     return await this.incidentsService.findAll(
       pageSize ?? 25,
@@ -226,7 +216,7 @@ export class IncidentsController {
       categoryId,
       startCreatedOn,
       endCreatedOn,
-      groupId,
+      assignedGroupId,
     );
   }
 

@@ -8,6 +8,7 @@ import { UsersModule } from '@users/users.module';
 import { NotificationUpdateField } from './entities/notification-update-field.entity';
 import { NotificationPush } from './entities/notification-push.entity';
 import { NotificationStopField } from './entities/notification-stop-field.entity';
+import { GroupsModule } from '@groups/group.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { NotificationStopField } from './entities/notification-stop-field.entity
     ]),
     ConfigModule.forRoot(),
     UsersModule,
+    GroupsModule,
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService],

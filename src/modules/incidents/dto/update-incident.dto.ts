@@ -44,7 +44,7 @@ export class UpdateIncidentDto {
   @IsString()
   @IsUUID()
   @IsOptional()
-  groupId?: string;
+  assignedGroupId?: string;
 
   @ApiProperty({
     required: false,

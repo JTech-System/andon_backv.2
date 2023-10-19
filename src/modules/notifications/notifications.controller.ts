@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -14,6 +15,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Notification } from './entities/notification.entity';
@@ -21,6 +23,7 @@ import { NotificationOperation } from './enums/notification-operation.enum';
 import { CurrentUser } from '@auth/auth.decorator';
 import { User } from '@users/entities/user.entity';
 import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
+import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -31,11 +34,17 @@ export class NotificationsController {
 
   @Post('push')
   @ApiBearerAuth()
-  async createPush(@Body() createNotificationPushDto: CreateNotificationPushDto, @CurrentUser() currentUser: User) : Promise<void> {
-    return await this.notificationsService.createPush(createNotificationPushDto, currentUser);
+  async createPush(
+    @Body() createNotificationPushDto: CreateNotificationPushDto,
+    @CurrentUser() currentUser: User,
+  ): Promise<void> {
+    return await this.notificationsService.createPush(
+      createNotificationPushDto,
+      currentUser,
+    );
   }
 
-  // Base
+  // Test
 
   @Get('test')
   @ApiBearerAuth()
@@ -49,6 +58,8 @@ export class NotificationsController {
       },
     );
   }
+
+  // Base
 
   @Post()
   @ApiCreatedResponse({
@@ -65,9 +76,17 @@ export class NotificationsController {
   @ApiOkResponse({
     type: [Notification],
   })
+  @ApiQuery({
+    name: 'groupId',
+    type: String,
+    required: false,
+  })
   @ApiBearerAuth()
-  async findAll(): Promise<Notification[]> {
-    return await this.notificationsService.findAll();
+  async findAll(
+    @Query('groupId', new UUIDValidationPipe({ optional: true }))
+    groupId?: string,
+  ): Promise<Notification[]> {
+    return await this.notificationsService.findAll(groupId);
   }
 
   @Get(':id')

@@ -16,6 +16,8 @@ import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
 import { IncidentComment } from './entities/incident-comment.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationOperation } from '../notifications/enums/notification-operation.enum';
+import { GroupsService } from '@groups/group.service';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class IncidentsService {
@@ -28,6 +30,8 @@ export class IncidentsService {
     private incidentCommentsRepository: Repository<IncidentComment>,
     private productionLinesService: ProductionLinesService,
     private machinesService: MachinesService,
+    private groupsService: GroupsService,
+    private usersService: UsersService,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -83,7 +87,7 @@ export class IncidentsService {
     categoryId?: string,
     startCreatedOn?: Date,
     endCreatedOn?: Date,
-    groupId?: string,
+    assignedGroupId?: string,
   ): Promise<PaginationIncidentDto> {
     let where: FindOptionsWhere<Incident>[] = [];
     if (search) {
@@ -101,7 +105,11 @@ export class IncidentsService {
     }
     if (
       where.length == 0 &&
-      (status || categoryId || startCreatedOn || endCreatedOn || groupId)
+      (status ||
+        categoryId ||
+        startCreatedOn ||
+        endCreatedOn ||
+        assignedGroupId)
     )
       where.push({});
     where.map((field) => {
@@ -117,7 +125,11 @@ export class IncidentsService {
         endCreatedOn.setHours(23, 59, 59, 999);
         field.createdOn = Between(startCreatedOn, endCreatedOn);
       }
-      //GroupId
+      if (assignedGroupId) {
+        field.assignedGroup = {
+          id: assignedGroupId,
+        };
+      }
     });
 
     const length = await this.incidentsRepository.count({ where });
@@ -136,6 +148,7 @@ export class IncidentsService {
           createdBy: true,
           assignedTo: true,
           closedBy: true,
+          assignedGroup: true,
         },
         skip: min,
         take: pageSize,
@@ -161,6 +174,8 @@ export class IncidentsService {
           createdBy: true,
         },
         closedBy: true,
+        assignedGroup: true,
+        assignedTo: true,
       },
     });
     if (incident) {
@@ -190,12 +205,16 @@ export class IncidentsService {
       );
     delete updateIncidentDto['productionLineId'];
 
-    if (updateIncidentDto.groupId) {
-      // group service
-      delete updateIncidentDto['groupId'];
+    if (updateIncidentDto.assignedGroupId) {
+      updateIncidentDto['assignedGroup'] = await this.groupsService.findOne(
+        updateIncidentDto.assignedGroupId,
+      );
+      delete updateIncidentDto['assignedGroupId'];
     }
     if (updateIncidentDto.assignedToId) {
-      // user service
+      updateIncidentDto['assignedTo'] = await this.usersService.findOne(
+        updateIncidentDto.assignedToId,
+      );
       delete updateIncidentDto['assignedToId'];
     }
     if (updateIncidentDto.machineId) {
@@ -238,6 +257,8 @@ export class IncidentsService {
       'resolutionTimeInMinutes',
       'proposedSolution',
       'closeNotes',
+      'assignedGroup',
+      'assignedTo',
     ].map((field) => {
       if (updateIncidentDto[field] == undefined)
         updateIncidentDto[field] = null;

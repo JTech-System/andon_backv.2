@@ -15,6 +15,7 @@ import { IncidentCategory } from './incident-category.entity';
 import { ProductionLine } from '@production-lines/entities/production-line.entity';
 import { Machine } from '@machines/entities/machine.entity';
 import { IncidentComment } from './incident-comment.entity';
+import { Group } from '@groups/entities/group.entity';
 
 @Entity()
 export class Incident extends BaseEntity {
@@ -162,6 +163,13 @@ export class Incident extends BaseEntity {
     nullable: true,
   })
   timeLapsed?: number;
+
+  @ApiProperty({
+    type: Group,
+    required: false,
+  })
+  @ManyToOne(() => Group, (group) => group.id)
+  assignedGroup: Group;
 
   //   "assigned_group": "",
 

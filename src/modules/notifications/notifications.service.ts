@@ -15,6 +15,8 @@ import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
 import { NotificationPush } from './entities/notification-push.entity';
 import { NotificationType } from './enums/notification-type.enum';
 import { NotificationStopField } from './entities/notification-stop-field.entity';
+import { Group } from '../groups/entities/group.entity';
+import { GroupsService } from '../groups/group.service';
 
 webPush.setVapidDetails(
   'mailto:leonel-leonel-1@hotmail.com',
@@ -33,7 +35,8 @@ export class NotificationsService {
     private notificationStopFieldsRepository: Repository<NotificationStopField>,
     @InjectRepository(NotificationPush)
     private notificationPushRepository: Repository<NotificationPush>,
-    private usersService: UsersService, // private schedulerRegistry: SchedulerRegistry
+    private usersService: UsersService,
+    private groupsService: GroupsService,
   ) {}
 
   async create(
@@ -45,8 +48,15 @@ export class NotificationsService {
         recipients.push(await this.usersService.findOne(recipient));
       }),
     );
+    const groups: Group[] = [];
+    await Promise.all(
+      createNotificationDto.groupsId.map(async (group) => {
+        groups.push(await this.groupsService.findOne(group));
+      }),
+    );
     const notification = await this.notificationsRepository.save({
       recipients,
+      groups,
       ...createNotificationDto,
     });
     await Promise.all(
@@ -68,8 +78,16 @@ export class NotificationsService {
     return await this.findOne(notification.id);
   }
 
-  async findAll(): Promise<Notification[]> {
-    return await this.notificationsRepository.find({ order: { name: 'ASC' } });
+  async findAll(groupId?: string): Promise<Notification[]> {
+    return await this.notificationsRepository.find({
+      order: { name: 'ASC' },
+      relations: { groups: true },
+      where: {
+        groups: {
+          id: groupId,
+        },
+      },
+    });
   }
 
   async findOne(id: string): Promise<Notification> {
@@ -77,6 +95,7 @@ export class NotificationsService {
       where: { id },
       relations: {
         recipients: true,
+        groups: true,
         updateFields: true,
         stopFields: true,
       },
@@ -128,7 +147,7 @@ export class NotificationsService {
     if (notification.subject) {
       subject = this.parseContent(notification.subject, record);
     }
-    const body = this.parseContent(notification.subject, record);
+    const body = this.parseContent(notification.body, record);
     const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
 
     const requestBody = new URLSearchParams();
@@ -178,7 +197,7 @@ export class NotificationsService {
     if (notification.subject) {
       subject = this.parseContent(notification.subject, record);
     }
-    const body = this.parseContent(notification.subject, record);
+    const body = this.parseContent(notification.body, record);
     push.map(async (notificationPush) => {
       try {
         await webPush.sendNotification(
@@ -287,6 +306,9 @@ export class NotificationsService {
         },
         relations: {
           recipients: true,
+          groups: {
+            users: true,
+          },
           updateFields: true,
           stopFields: true,
         },
@@ -295,7 +317,12 @@ export class NotificationsService {
       const recipients = notification.recipients.map(
         (recipient) => recipient.email,
       );
-      // Missing role and group
+      notification.groups.map((group) => {
+        group.users.map((user) => {
+          if (!recipients.find((recipient) => recipient == user.email))
+            recipients.push(user.email);
+        });
+      });
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
           const job = new CronJob(notification.cronTime, async () => {
@@ -327,6 +354,11 @@ export class NotificationsService {
           recipients: {
             notificationPush: true,
           },
+          groups: {
+            users: {
+              notificationPush: true,
+            },
+          },
           updateFields: true,
           stopFields: true,
         },
@@ -338,7 +370,19 @@ export class NotificationsService {
           push.push(notificationPush),
         );
       });
-      // Missing role and group
+      notification.groups.map((group) => {
+        group.users.map((user) => {
+          user.notificationPush.map((notificationPush) => {
+            if (
+              !push.find(
+                (findNotificationPush) =>
+                  findNotificationPush.id == notificationPush.id,
+              )
+            )
+              push.push(notificationPush);
+          });
+        });
+      });
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
           const job = new CronJob(notification.cronTime, async () => {

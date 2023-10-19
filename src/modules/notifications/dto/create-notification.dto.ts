@@ -74,6 +74,13 @@ export class CreateNotificationDto {
   })
   recipientsId: string[];
 
+  @ApiProperty()
+  @IsArray()
+  @IsString({
+    each: true,
+  })
+  groupsId: string[];
+
   @ApiProperty({
     type: [CreateNotificationUpdateFieldDto],
   })

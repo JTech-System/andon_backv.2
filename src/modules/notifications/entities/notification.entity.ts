@@ -15,6 +15,7 @@ import { ResponseUserDto } from '@users/dto/response-user.dto';
 import { User } from '@users/entities/user.entity';
 import { NotificationUpdateField } from './notification-update-field.entity';
 import { NotificationStopField } from './notification-stop-field.entity';
+import { Group } from 'src/modules/groups/entities/group.entity';
 
 @Entity()
 export class Notification extends BaseEntity {
@@ -76,6 +77,13 @@ export class Notification extends BaseEntity {
   @ManyToMany(() => User, { onDelete: 'CASCADE' })
   @JoinTable()
   recipients: User[];
+
+  @ApiProperty({
+    type: [Group],
+  })
+  @ManyToMany(() => Group, { onDelete: 'CASCADE' })
+  @JoinTable()
+  groups: Group[];
 
   @ApiProperty({
     type: [NotificationUpdateField],

@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../role/entities/role.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -71,10 +78,10 @@ export class Group extends BaseEntity {
   /** @users */
   @ApiProperty({
     description: 'Array of user identifiers associated with the group',
-    type: User,
+    type: [User],
     isArray: true,
   })
   @ManyToMany(() => User)
+  @JoinTable()
   users: User[];
 }
-
