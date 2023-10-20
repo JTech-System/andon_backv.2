@@ -273,8 +273,8 @@ export class IncidentsService {
     this.notificationsService.send(
       'incident',
       NotificationOperation.UPDATE,
-      lastIncident,
       incident,
+      lastIncident,
     );
     return incident;
   }

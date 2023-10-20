@@ -20,6 +20,15 @@ export class NotificationUpdateField extends BaseEntity {
   })
   value?: string;
 
+  @ApiProperty({
+    required: false,
+  })
+  @Column({
+    length: 64,
+    nullable: true,
+  })
+  relation?: string;
+
   @ManyToOne(() => Notification, (notification) => notification.id, {
     onDelete: 'CASCADE',
   })

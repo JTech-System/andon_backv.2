@@ -215,7 +215,7 @@ export class NotificationsService {
               icon: '/assets/images/icon.png',
             },
             data: {
-              url: 'https://example.com/notification-details',
+              url: 'http://localhost:4200',
             },
           }),
         );
@@ -231,33 +231,52 @@ export class NotificationsService {
     record: object,
     lastRecord?: object,
   ): boolean {
-    let send = false;
     if (operation == NotificationOperation.UPDATE) {
       if (lastRecord) {
-        send = true;
-        notification.updateFields.map((field) => {
-          if (!record[field.name] || !lastRecord[field.name])
-            throw new Error(
-              `Send Notification: field '${field.name}' does not exit in the records`,
-            );
-          if (
-            lastRecord[field.name] == record[field.name] ||
-            (field.value && record[field.name] != field.value)
-          )
-            send = false;
-        });
+        for (let field of notification.updateFields) {
+          if (field.relation) {
+            switch (field.relation) {
+              case 'group':
+                if (record[field.name] && lastRecord[field.name]) {
+                  if (
+                    record[field.name].name == lastRecord[field.name].name ||
+                    record[field.name].name != field.value
+                  )
+                    return false;
+                } else if (record[field.name]) {
+                  if (record[field.name].name != field.value) return false;
+                } else return false;
+                break;
+            }
+          } else {
+            if (record[field.name] && lastRecord[field.name]) {
+              if (record[field.name] == lastRecord[field.name]) return false;
+              else if (field.value && record[field.name] != field.value)
+                return false;
+            } else if (record[field.name]) {
+              if (field.value && record[field.name] != field.value)
+                return false;
+            } else {
+              if (field.value) return false;
+            }
+          }
+        }
+      } else {
+        throw Error(
+          'Send notification when update is missing the last record.',
+        );
       }
-    } else send = true;
-
-    return send;
+    }
+    return true;
   }
 
-  private async stopCronTime(
+  private async stoppedCronTime(
     entity: string,
     recordId: string,
     notificationId: string,
     job: CronJob,
   ): Promise<boolean> {
+    let stop = true;
     const appDataSource = new DataSource({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -280,15 +299,33 @@ export class NotificationsService {
         const stopFields = (await appDataSource.query(
           `SELECT * FROM notification_stop_field WHERE notificationId='${notification.id}'`,
         )) as NotificationStopField[];
-        let stop = true;
-        stopFields.map((field) => {
-          if (record[field.name] != field.value) stop = false;
-        });
-        if (!stop) return false;
+        if (stopFields.length > 0) stop = false;
+        for (let field of stopFields) {
+          if (field.relation) {
+            switch (field.relation) {
+              case 'group':
+                if (record[field.name + 'Id']) {
+                  const groups = (await appDataSource.query(
+                    `SELECT * FROM \`group\` WHERE id='${
+                      record[field.name + 'Id']
+                    }'`,
+                  )) as Group[];
+                  if (groups.length > 0) {
+                    if (groups[0].name != field.value) stop = true;
+                  } else stop = true;
+                } else stop = true;
+                break;
+            }
+          } else {
+            if (record[field.name]) {
+              if (record[field.name] != field.value) stop = true;
+            } else stop = true;
+          }
+        }
       }
     }
-    job.stop();
-    return true;
+    if (stop) job.stop();
+    return stop;
   }
 
   async send(
@@ -327,7 +364,7 @@ export class NotificationsService {
         if (notification.cronTime) {
           const job = new CronJob(notification.cronTime, async () => {
             if (
-              !(await this.stopCronTime(
+              !(await this.stoppedCronTime(
                 entity,
                 record['id'],
                 notification.id,
@@ -387,7 +424,7 @@ export class NotificationsService {
         if (notification.cronTime) {
           const job = new CronJob(notification.cronTime, async () => {
             if (
-              !(await this.stopCronTime(
+              !(await this.stoppedCronTime(
                 entity,
                 record['id'],
                 notification.id,
