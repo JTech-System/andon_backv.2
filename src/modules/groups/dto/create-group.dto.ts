@@ -59,7 +59,6 @@ export class CreateGroupDto {
     isArray: true,
   })
   @IsArray({ message: 'Permissions should be an array' })
-  @ArrayNotEmpty({ message: 'Permissions should not be empty' })
   @IsString({ each: true, message: 'Each roles should be a string identifier' })
   @ArrayUnique({ message: 'Permissions should be unique' })
   roles: string[];
@@ -71,7 +70,6 @@ export class CreateGroupDto {
     isArray: true,
   })
   @IsArray({ message: 'Permissions should be an array' })
-  @ArrayNotEmpty({ message: 'Permissions should not be empty' })
   @IsString({ each: true, message: 'Each roles should be a string identifier' })
   @ArrayUnique({ message: 'Permissions should be unique' })
   users: string[];
