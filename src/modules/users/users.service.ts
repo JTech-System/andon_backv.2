@@ -17,7 +17,8 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(User) 
+    private usersRepository: Repository<User>,
     private roleService: RoleService,
   ) {}
 
@@ -26,7 +27,7 @@ export class UsersService {
       where: { email: createUserDto.email },
     });
     if (existingUser) {
-      throw new BadRequestException(`Account already exists.`);
+      throw new BadRequestException(`User already exists.`);
     }
 
     let roles = [];
@@ -141,7 +142,17 @@ export class UsersService {
     }
     return user.roles;
   }
+  async remove(id: string) {
+    const user = await this.findOne(id);
 
+    try {
+        await this.usersRepository.remove(user);
+    } catch (error) {
+        throw new InternalServerErrorException(`Error deleting the user: ${error.message}`);
+    }
+
+    return `User with ID ${id} has been deleted successfully`;
+  }
   async getUserPermissions(userId: string): Promise<Role[]> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -152,4 +163,22 @@ export class UsersService {
     }
     return user.roles;
   }
-}
+  
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User>{
+    const { roles, ...updateData} = updateUserDto;
+    const user = await this.usersRepository.preload({
+      id: id, 
+      ...updateData
+  });    
+    if(!user){
+     throw new NotFoundException (`User with ID ${id} not found`)  
+
+    }
+    try {
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while updating the user',
+      );
+    }
+  }}
