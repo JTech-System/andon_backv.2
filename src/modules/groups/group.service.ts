@@ -25,33 +25,29 @@ export class GroupsService {
     const existingGroup = await this.groupRepository.findOne({
       where: { name: createGroupDto.name },
     });
-
     if (existingGroup) {
       throw new ConflictException('Group with this name already exists');
     }
-
     let roles = [];
     if (createGroupDto.roles && createGroupDto.roles.length > 0) {
       roles = await this.roleService.findRolesByIds(createGroupDto.roles);
-
       if (roles.length !== createGroupDto.roles.length) {
         throw new BadRequestException('One or more roles were not found.');
       }
     }
-
     let users = [];
     if (createGroupDto.users && createGroupDto.users.length > 0) {
       users = await this.userService.findUsersByIds(createGroupDto.users);
-
       if (users.length !== createGroupDto.users.length) {
         throw new BadRequestException('One or more users were not found.');
       }
     }
-
+    const manager = await this.userService.findOne(createGroupDto.managerId);
     const group = this.groupRepository.create({
       ...createGroupDto,
       roles,
       users,
+      manager,
     });
 
     try {

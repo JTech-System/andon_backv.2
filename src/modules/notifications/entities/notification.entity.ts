@@ -86,6 +86,13 @@ export class Notification extends BaseEntity {
   groups: Group[];
 
   @ApiProperty({
+    type: [Group],
+  })
+  @ManyToMany(() => Group, { onDelete: 'CASCADE' })
+  @JoinTable()
+  managerGroups: Group[];
+
+  @ApiProperty({
     type: [NotificationUpdateField],
   })
   @OneToMany(() => NotificationUpdateField, (field) => field.notification)

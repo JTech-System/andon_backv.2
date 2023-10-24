@@ -19,9 +19,9 @@ import { Group } from '../groups/entities/group.entity';
 import { GroupsService } from '../groups/group.service';
 
 webPush.setVapidDetails(
-  'mailto:leonel-leonel-1@hotmail.com',
-  'BNjeAEyk0Op0Qhj4nSeyT2GOEdqum3Lm82ZNsFdMpMh8l9XDl4E0hvS9YirdQL3idD8VbZHBae5aXahc2jfPvlo',
-  'A9i_UF455oXD-oBWtUyqT9dC-xyKc4iqTB7qmMeP944',
+  process.env.SERVER_WORKER_SUBJECT,
+  process.env.SERVER_WORKER_PUBLIC_KEY,
+  process.env.SERVER_WORKER_PRIVATE_KEY,
 );
 
 @Injectable()
@@ -37,7 +37,9 @@ export class NotificationsService {
     private notificationPushRepository: Repository<NotificationPush>,
     private usersService: UsersService,
     private groupsService: GroupsService,
-  ) {}
+  ) {
+    console.log(process.env.DB_HOST);
+  }
 
   async create(
     createNotificationDto: CreateNotificationDto,
@@ -54,9 +56,16 @@ export class NotificationsService {
         groups.push(await this.groupsService.findOne(group));
       }),
     );
+    const managerGroups: Group[] = [];
+    await Promise.all(
+      createNotificationDto.managerGroupsId.map(async (group) => {
+        managerGroups.push(await this.groupsService.findOne(group));
+      }),
+    );
     const notification = await this.notificationsRepository.save({
       recipients,
       groups,
+      managerGroups,
       ...createNotificationDto,
     });
     await Promise.all(
@@ -96,6 +105,7 @@ export class NotificationsService {
       relations: {
         recipients: true,
         groups: true,
+        managerGroups: true,
         updateFields: true,
         stopFields: true,
       },
@@ -346,6 +356,9 @@ export class NotificationsService {
           groups: {
             users: true,
           },
+          managerGroups: {
+            manager: true,
+          },
           updateFields: true,
           stopFields: true,
         },
@@ -359,6 +372,10 @@ export class NotificationsService {
           if (!recipients.find((recipient) => recipient == user.email))
             recipients.push(user.email);
         });
+      });
+      notification.managerGroups.map((group) => {
+        if (!recipients.find((recipient) => recipient == group.manager.email))
+          recipients.push(group.manager.email);
       });
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
@@ -396,6 +413,11 @@ export class NotificationsService {
               notificationPush: true,
             },
           },
+          managerGroups: {
+            manager: {
+              notificationPush: true,
+            },
+          },
           updateFields: true,
           stopFields: true,
         },
@@ -418,6 +440,17 @@ export class NotificationsService {
             )
               push.push(notificationPush);
           });
+        });
+      });
+      notification.managerGroups.map((group) => {
+        group.manager.notificationPush.map((notificationPush) => {
+          if (
+            !push.find(
+              (findNotificationPush) =>
+                findNotificationPush.id == notificationPush.id,
+            )
+          )
+            push.push(notificationPush);
         });
       });
       if (this.checkIfSend(operation, notification, record, lastRecord)) {

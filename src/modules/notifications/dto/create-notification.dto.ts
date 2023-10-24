@@ -81,6 +81,13 @@ export class CreateNotificationDto {
   })
   groupsId: string[];
 
+  @ApiProperty()
+  @IsArray()
+  @IsString({
+    each: true,
+  })
+  managerGroupsId: string[];
+
   @ApiProperty({
     type: [CreateNotificationUpdateFieldDto],
   })

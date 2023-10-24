@@ -5,6 +5,7 @@ import {
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../role/entities/role.entity';
@@ -24,14 +25,10 @@ export class Group extends BaseEntity {
   name: string;
 
   @ApiProperty({
-    maxLength: 128,
-    description: 'Table name the group is',
-    example: 'Attachments',
+    type: Group,
   })
-  @Column({
-    length: 128,
-  })
-  manager: string;
+  @ManyToOne(() => User, (user) => user.id)
+  manager: User;
 
   @ApiProperty({
     maxLength: 256,
