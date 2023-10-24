@@ -12,7 +12,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { PermissionService } from '../permission/permission.service';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RolesResponseDto } from './dto/roles-list.dto';
-import { AddRolePermissionsDto } from './dto/add-role-permissions.dto';
+import { RolePermissionsDto } from './dto/role-permissions.dto';
 
 @Injectable()
 export class RoleService {
@@ -99,17 +99,31 @@ export class RoleService {
     }
   }
 
-  async addRolePermissions(id: string, addRolePermissionsDto: AddRolePermissionsDto): Promise<Role> {
+  async removeRolePermissions(id: string, rolePermissionsDto: RolePermissionsDto): Promise<Role> {
+    let role = await this.roleRepository.findOne({ where: { id: id }, relations: ['permissions'] });
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${id} not found`);
+    }
+    if (rolePermissionsDto.permissions && rolePermissionsDto.permissions.length > 0) {
+      
+      for (const existingPermissionId of rolePermissionsDto.permissions) {
+        console.log(`Permission with ID ${existingPermissionId}`);
+        this.removePermission(id, existingPermissionId);
+      }        
+    }
+    return role;
+  }
+  async addRolePermissions(id: string, rolePermissionsDto: RolePermissionsDto): Promise<Role> {
     const role = await this.roleRepository.findOne({ where: { id: id }, relations: ['permissions'] });
     if (!role) {
       throw new NotFoundException(`Role with ID ${id} not found`);
     }
 
-    if (addRolePermissionsDto.permissions && addRolePermissionsDto.permissions.length > 0) {
+    if (rolePermissionsDto.permissions && rolePermissionsDto.permissions.length > 0) {
       const existingPermissionIds = role.permissions.map(permission => permission.id);
       
       // Filter out permissions that are already associated with the role
-      const newPermissionIds = addRolePermissionsDto.permissions.filter(
+      const newPermissionIds = rolePermissionsDto.permissions.filter(
         id => !existingPermissionIds.includes(id),
       );
 

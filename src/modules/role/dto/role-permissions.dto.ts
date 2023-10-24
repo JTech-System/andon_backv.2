@@ -6,7 +6,7 @@ import {
   ArrayUnique,
 } from 'class-validator';
 
-export class AddRolePermissionsDto {
+export class RolePermissionsDto {
   /** @permissions */
   @ApiProperty({
     description: 'Array of permission identifiers associated with the role',
