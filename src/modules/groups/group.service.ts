@@ -64,7 +64,11 @@ export class GroupsService {
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: id },
-      relations: { users: true },
+      relations: {
+        users: {
+          notificationPush: true,
+        },
+      },
     });
 
     if (!group) {

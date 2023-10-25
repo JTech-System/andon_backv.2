@@ -165,24 +165,6 @@ export class Incident extends BaseEntity {
   closedOn?: Date;
 
   @ApiProperty({
-    required: false,
-  })
-  @Column({
-    type: 'int',
-    nullable: true,
-  })
-  inProgressTimeLapsed?: number;
-
-  @ApiProperty({
-    required: false,
-  })
-  @Column({
-    type: 'int',
-    nullable: true,
-  })
-  closeTimeLapsed?: number;
-
-  @ApiProperty({
     type: [IncidentComment],
   })
   @OneToMany(() => IncidentComment, (comment) => comment.incident)

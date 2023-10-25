@@ -37,37 +37,54 @@ export class NotificationsService {
     private notificationPushRepository: Repository<NotificationPush>,
     private usersService: UsersService,
     private groupsService: GroupsService,
-  ) {
-    console.log(process.env.DB_HOST);
-  }
+  ) {}
 
+  /**
+   * Creates a new notification based on the provided data.
+   *
+   * @param {CreateNotificationDto} createNotificationDto - The data for creating the notification.
+   * @returns {Promise<Notification>} A promise that resolves to the created notification.
+   * @throws {NotFoundException} If the notification creation fails or the notification is not found.
+   */
   async create(
     createNotificationDto: CreateNotificationDto,
   ): Promise<Notification> {
+    // Initialize an empty array to store recipients.
     const recipients: User[] = [];
+
+    // Fetch user data for each recipient ID in the input DTO.
     await Promise.all(
       createNotificationDto.recipientsId.map(async (recipient) => {
         recipients.push(await this.usersService.findOne(recipient));
       }),
     );
+
+    // Initialize empty arrays to store groups and manager groups.
     const groups: Group[] = [];
+    const managerGroups: Group[] = [];
+
+    // Fetch group data for each group and manager group ID in the input DTO.
     await Promise.all(
       createNotificationDto.groupsId.map(async (group) => {
         groups.push(await this.groupsService.findOne(group));
       }),
     );
-    const managerGroups: Group[] = [];
+
     await Promise.all(
       createNotificationDto.managerGroupsId.map(async (group) => {
         managerGroups.push(await this.groupsService.findOne(group));
       }),
     );
+
+    // Create a notification using the provided data in the DTO.
     const notification = await this.notificationsRepository.save({
       recipients,
       groups,
       managerGroups,
       ...createNotificationDto,
     });
+
+    // Save update fields associated with the notification.
     await Promise.all(
       createNotificationDto.updateFields.map(async (field) => {
         await this.notificationUpdateFieldsRepository.save({
@@ -76,6 +93,8 @@ export class NotificationsService {
         });
       }),
     );
+
+    // Save stop fields associated with the notification.
     await Promise.all(
       createNotificationDto.stopFields.map(async (field) => {
         await this.notificationStopFieldsRepository.save({
@@ -84,14 +103,27 @@ export class NotificationsService {
         });
       }),
     );
+
+    // Return the newly created notification by looking it up in the database.
     return await this.findOne(notification.id);
   }
 
+  /**
+   * Retrieves a list of notifications from the database.
+   *
+   * @param {string} [groupId] - An optional group ID to filter notifications by.
+   * @returns {Promise<Notification[]>} A promise that resolves to an array of notifications.
+   */
   async findAll(groupId?: string): Promise<Notification[]> {
+    // Retrieve notifications from the database.
+    // If a 'groupId' is provided, only fetch notifications associated with that group.
     return await this.notificationsRepository.find({
+      // Specify the sorting order for notifications.
       order: { name: 'ASC' },
+      // Include related group information in the query result.
       relations: { groups: true },
       where: {
+        // Define a filter condition to fetch notifications belonging to a specific group.
         groups: {
           id: groupId,
         },
@@ -99,9 +131,18 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * Finds a notification in the database by its unique identifier.
+   *
+   * @param {string} id - The unique identifier of the notification to retrieve.
+   * @returns {Promise<Notification>} A promise that resolves to the retrieved notification.
+   * @throws {NotFoundException} If the notification is not found in the database.
+   */
   async findOne(id: string): Promise<Notification> {
+    // Attempt to find a notification in the database by its unique ID.
     const notification = await this.notificationsRepository.findOne({
       where: { id },
+      // Include related data when fetching the notification.
       relations: {
         recipients: true,
         groups: true,
@@ -110,41 +151,71 @@ export class NotificationsService {
         stopFields: true,
       },
     });
+
+    // If a notification with the provided ID is found, return it.
     if (notification) return notification;
+
+    // If no notification is found, throw a "Not Found" exception.
     throw new NotFoundException('Notification not found');
   }
 
+  /**
+   * Updates an existing notification with the provided changes.
+   *
+   * @param {string} id - The unique identifier of the notification to update.
+   * @param {UpdateNotificationDto} updateNotificationDto - The data for updating the notification.
+   * @returns {Promise<Notification>} A promise that resolves to the updated notification.
+   * @throws {NotFoundException} If the specified notification is not found in the database.
+   */
   async update(
     id: string,
     updateNotificationDto: UpdateNotificationDto,
   ): Promise<Notification> {
+    // Attempt to find an existing notification with the provided ID.
     await this.findOne(id);
-    // await this.notificationsRepository.update({ id }, updateNotificationDto);
+
+    // Remove the existing notification with the provided ID.
     await this.remove(id);
+
+    // Create a new notification using the data from the 'updateNotificationDto'.
     const notification = await this.create(
       updateNotificationDto as unknown as any,
     );
+
+    // Return the newly created notification by looking it up in the database.
     return await this.findOne(notification.id);
   }
 
   async remove(id: string): Promise<void> {
+    // Attempt to find an existing notification with the provided ID to ensure it exists.
     await this.findOne(id);
+
+    // Delete the notification with the provided ID from the database.
     await this.notificationsRepository.delete({ id });
   }
 
   private parseContent(content: string, record: object): string {
+    // Initialize the 'parsedContent' variable with the original content.
     let parsedContent = content;
+
+    // Find all field placeholders in the 'content' string enclosed within '<< >>'.
     const fields = content.match(/<<([^>>]+)>>/g);
 
+    // If field placeholders are found, process and replace them with actual values.
     if (fields) {
       fields.forEach((field) => {
+        // Extract the field name from the placeholder by removing '<<' and '>>'.
         const fieldName = field.slice(2, -2);
+
+        // Check if the 'record' object contains a value for the 'fieldName'.
         if (record[fieldName] !== undefined) {
+          // Replace the field placeholder in 'parsedContent' with the corresponding value.
           parsedContent = parsedContent.replace(field, record[fieldName]);
         }
       });
     }
 
+    // Return the 'parsedContent' with field placeholders replaced by actual values.
     return parsedContent;
   }
 
@@ -153,13 +224,21 @@ export class NotificationsService {
     emails: string[],
     record: object,
   ): Promise<void> {
+    // Initialize a variable to store the email subject.
     let subject: string | undefined;
+
+    // If the notification has a subject, parse and store it using the 'parseContent' method.
     if (notification.subject) {
       subject = this.parseContent(notification.subject, record);
     }
+
+    // Parse the email body using the 'parseContent' method.
     const body = this.parseContent(notification.body, record);
+
+    // Define the token endpoint for authentication with Microsoft Graph API.
     const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
 
+    // Create a request body for obtaining an access token.
     const requestBody = new URLSearchParams();
     requestBody.append('grant_type', 'client_credentials');
     requestBody.append('client_id', process.env.CLIENT_ID);
@@ -167,11 +246,14 @@ export class NotificationsService {
     requestBody.append('scope', 'https://graph.microsoft.com/.default');
 
     try {
+      // Send a request to the token endpoint to obtain an access token.
       let response = await axios.post(tokenEndpoint, requestBody, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+
+      // Compose and send the email using the obtained access token.
       response = await axios.post(
         `https://graph.microsoft.com/v1.0/users/${process.env.EMAIL_HOST}/sendMail`,
         {
@@ -194,6 +276,7 @@ export class NotificationsService {
         },
       );
     } catch (error) {
+      // If an error occurs during email sending, throw an error.
       throw new Error(`Failed to send the emails: ${error.message}`);
     }
   }
@@ -203,13 +286,21 @@ export class NotificationsService {
     push: NotificationPush[],
     record: object,
   ): Promise<void> {
+    // Initialize a variable to store the push notification subject.
     let subject: string | undefined;
+
+    // If the notification has a subject, parse and store it using the 'parseContent' method.
     if (notification.subject) {
       subject = this.parseContent(notification.subject, record);
     }
+
+    // Parse the push notification body using the 'parseContent' method.
     const body = this.parseContent(notification.body, record);
+
+    // Iterate over the 'push' array to send push notifications to multiple recipients.
     push.map(async (notificationPush) => {
       try {
+        // Send a push notification using webPush library and data provided.
         await webPush.sendNotification(
           {
             endpoint: notificationPush.endpoint,
@@ -230,6 +321,7 @@ export class NotificationsService {
           }),
         );
       } catch {
+        // If an error occurs while sending the push notification, remove the corresponding push record.
         this.removePush(notificationPush.id);
       }
     });
@@ -243,40 +335,51 @@ export class NotificationsService {
   ): boolean {
     if (operation == NotificationOperation.UPDATE) {
       if (lastRecord) {
+        // Iterate through each update field in the notification.
         for (let field of notification.updateFields) {
+          // Check if the update field is related to a 'group.'
           if (field.relation) {
             switch (field.relation) {
               case 'group':
+                // Check if both the current record and the last record have the 'group' field.
                 if (record[field.name] && lastRecord[field.name]) {
+                  // Compare the group names or the field value to determine if a notification should be sent.
                   if (
                     record[field.name].name == lastRecord[field.name].name ||
                     record[field.name].name != field.value
                   )
                     return false;
                 } else if (record[field.name]) {
+                  // Check if the current record's 'group' field is different from the update field value.
                   if (record[field.name].name != field.value) return false;
                 } else return false;
                 break;
             }
           } else {
+            // Handle non-related update fields.
             if (record[field.name] && lastRecord[field.name]) {
+              // Compare the current record's field to the last record's field.
               if (record[field.name] == lastRecord[field.name]) return false;
               else if (field.value && record[field.name] != field.value)
                 return false;
             } else if (record[field.name]) {
+              // Check if the field value is provided and differs from the current record's field.
               if (field.value && record[field.name] != field.value)
                 return false;
             } else {
+              // If the field value is provided but the field in the current record is missing.
               if (field.value) return false;
             }
           }
         }
       } else {
+        // If 'lastRecord' is not provided, throw an error as it's required for updates.
         throw Error(
           'Send notification when update is missing the last record.',
         );
       }
     }
+    // Return 'true' if the conditions for sending a notification are met.
     return true;
   }
 
@@ -286,7 +389,10 @@ export class NotificationsService {
     notificationId: string,
     job: CronJob,
   ): Promise<boolean> {
+    // Initialize a variable to determine if the job should be stopped.
     let stop = true;
+
+    // Create a new data source for accessing the application's database.
     const appDataSource = new DataSource({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -295,55 +401,145 @@ export class NotificationsService {
       password: process.env.DB_PASSWORD,
       database: 'andon',
     });
+
+    // Initialize the data source.
     await appDataSource.initialize();
+
+    // Query the database to retrieve the relevant record and notification data.
     const records = (await appDataSource.query(
       `SELECT * FROM ${entity} WHERE id='${recordId}'`,
     )) as object[];
+
     const notifications = (await appDataSource.query(
       `SELECT * FROM notification WHERE id='${notificationId}'`,
     )) as Notification[];
+
+    // Check if records and notifications are found in the database.
     if (records.length > 0 && notifications.length > 0) {
       const notification = notifications[0];
       const record = records[0];
+
+      // Check if the notification has a cronTime defined.
       if (notification.cronTime) {
         const stopFields = (await appDataSource.query(
           `SELECT * FROM notification_stop_field WHERE notificationId='${notification.id}'`,
         )) as NotificationStopField[];
-        if (stopFields.length > 0) stop = false;
+
+        // Check if there are stop fields associated with the notification.
+        if (stopFields.length > 0) {
+          // Set 'stop' to false, indicating the job should be stopped.
+          stop = true;
+        }
+
+        // Iterate through the stop fields to check if the job should be stopped.
         for (let field of stopFields) {
           if (field.relation) {
             switch (field.relation) {
               case 'group':
+                // Check if the record has a related group ID.
                 if (record[field.name + 'Id']) {
                   const groups = (await appDataSource.query(
                     `SELECT * FROM \`group\` WHERE id='${
                       record[field.name + 'Id']
                     }'`,
                   )) as Group[];
+
+                  // Check if the group with the specified ID exists in the database.
                   if (groups.length > 0) {
+                    // Check if the group name does not match the field value, indicating the job should be stopped.
                     if (groups[0].name != field.value) stop = true;
-                  } else stop = true;
-                } else stop = true;
+                  } else {
+                    // If the group is not found, stop the job.
+                    stop = true;
+                  }
+                } else {
+                  // If the related group ID is missing in the record, stop the job.
+                  stop = true;
+                }
                 break;
             }
           } else {
+            // Handle non-related stop fields.
             if (record[field.name]) {
+              // Check if the record's field does not match the field value, indicating the job should be stopped.
               if (record[field.name] != field.value) stop = true;
-            } else stop = true;
+            } else {
+              // If the record's field is missing, stop the job.
+              stop = true;
+            }
           }
         }
       }
     }
+
+    // If 'stop' is still true, stop the job.
     if (stop) job.stop();
+
+    // Return the 'stop' value to indicate whether the job should be stopped.
     return stop;
   }
 
+  private async getRecipients(
+    notification: Notification,
+    record: object,
+  ): Promise<User[]> {
+    // Initialize an array to store recipients, initially populated with the recipients from the notification.
+    const recipients = notification.recipients;
+
+    // Iterate through groups associated with the notification to add their users as recipients.
+    notification.groups.map((group) => {
+      group.users.map((user) => {
+        // Check if the user is not already in the recipients list and add them if not.
+        if (!recipients.find((recipient) => recipient.id == user.id)) {
+          recipients.push(user);
+        }
+      });
+    });
+
+    // Iterate through manager groups to add their managers as recipients.
+    notification.managerGroups.map((group) => {
+      if (!recipients.find((recipient) => recipient.id == group.manager.id)) {
+        recipients.push(group.manager);
+      }
+    });
+
+    // Check if the notification has a recipient group defined.
+    if (notification.recipientGroup) {
+      if (record[notification.recipientGroup]) {
+        // Find the group associated with the record using the provided service and ID.
+        (
+          await this.groupsService.findOne(
+            record[notification.recipientGroup]['id'],
+          )
+        ).users.map((user) => {
+          // Check if the user is not already in the recipients list and add them if not.
+          if (!recipients.find((recipient) => recipient.id == user.id)) {
+            recipients.push(user);
+          }
+        });
+      }
+    }
+
+    // Return the list of recipients, including those added from groups and manager groups.
+    return recipients;
+  }
+
+  /**
+   * Sends notifications based on the provided entity, operation, and record data.
+   *
+   * @param {string} entity - The entity for which notifications are being sent.
+   * @param {NotificationOperation} operation - The type of operation that triggered the notifications.
+   * @param {object} record - The data related to the operation that triggered the notifications.
+   * @param {object} [lastRecord] - The data related to the previous state of the record, if applicable.
+   * @returns {Promise<void>} A promise that resolves when notifications are sent.
+   */
   async send(
     entity: string,
     operation: NotificationOperation,
     record: object,
     lastRecord?: object,
   ): Promise<void> {
+    // Retrieve notifications related to the entity, operation, and email type.
     (
       await this.notificationsRepository.find({
         where: {
@@ -364,21 +560,15 @@ export class NotificationsService {
         },
       })
     ).map(async (notification) => {
-      const recipients = notification.recipients.map(
-        (recipient) => recipient.email,
-      );
-      notification.groups.map((group) => {
-        group.users.map((user) => {
-          if (!recipients.find((recipient) => recipient == user.email))
-            recipients.push(user.email);
-        });
-      });
-      notification.managerGroups.map((group) => {
-        if (!recipients.find((recipient) => recipient == group.manager.email))
-          recipients.push(group.manager.email);
-      });
+      // Get recipient emails based on the notification and the provided record.
+      const recipientEmails = (
+        await this.getRecipients(notification, record)
+      ).map((recipient) => recipient.email);
+
+      // Check if the notification should be sent based on the criteria.
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
+          // Schedule a cron job to send the email if a cronTime is defined.
           const job = new CronJob(notification.cronTime, async () => {
             if (
               !(await this.stoppedCronTime(
@@ -388,15 +578,17 @@ export class NotificationsService {
                 job,
               ))
             )
-              await this.sendEmail(notification, recipients, record);
+              await this.sendEmail(notification, recipientEmails, record);
           });
           job.start();
         } else {
-          await this.sendEmail(notification, recipients, record);
+          // Send the email immediately if no cronTime is defined.
+          await this.sendEmail(notification, recipientEmails, record);
         }
       }
     });
 
+    // Retrieve notifications related to the entity, operation, and push type.
     (
       await this.notificationsRepository.find({
         where: {
@@ -424,37 +616,25 @@ export class NotificationsService {
       })
     ).map(async (notification) => {
       const push: NotificationPush[] = [];
-      notification.recipients.map((recipient) => {
-        recipient.notificationPush.map((notificationPush) =>
-          push.push(notificationPush),
-        );
-      });
-      notification.groups.map((group) => {
-        group.users.map((user) => {
-          user.notificationPush.map((notificationPush) => {
-            if (
-              !push.find(
-                (findNotificationPush) =>
-                  findNotificationPush.id == notificationPush.id,
-              )
-            )
-              push.push(notificationPush);
-          });
-        });
-      });
-      notification.managerGroups.map((group) => {
-        group.manager.notificationPush.map((notificationPush) => {
+
+      // Collect unique push notifications based on recipients.
+      (await this.getRecipients(notification, record)).map((recipient) => {
+        recipient.notificationPush.map((notificationPush) => {
           if (
             !push.find(
               (findNotificationPush) =>
                 findNotificationPush.id == notificationPush.id,
             )
-          )
+          ) {
             push.push(notificationPush);
+          }
         });
       });
+
+      // Check if the notification should be sent based on the criteria.
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
         if (notification.cronTime) {
+          // Schedule a cron job to send push notifications if a cronTime is defined.
           const job = new CronJob(notification.cronTime, async () => {
             if (
               !(await this.stoppedCronTime(
@@ -468,6 +648,7 @@ export class NotificationsService {
           });
           job.start();
         } else {
+          // Send push notifications immediately if no cronTime is defined.
           await this.sendPush(notification, push, record);
         }
       }
@@ -476,10 +657,18 @@ export class NotificationsService {
 
   // Push
 
+  /**
+   * Creates a new push notification if a notification with the same 'auth' and 'p256dh' values doesn't already exist.
+   *
+   * @param {CreateNotificationPushDto} createNotificationPushDto - The data for creating the push notification.
+   * @param {User} currentUser - The user associated with the push notification.
+   * @returns {Promise<void>} A promise that resolves when the push notification is created.
+   */
   async createPush(
     createNotificationPushDto: CreateNotificationPushDto,
     currentUser: User,
   ): Promise<void> {
+    // Check if a notification push with the same 'auth' and 'p256dh' values exists in the database.
     if (
       !(await this.notificationPushRepository.findOne({
         where: {
@@ -487,14 +676,17 @@ export class NotificationsService {
           p256dh: createNotificationPushDto.p256dh,
         },
       }))
-    )
+    ) {
+      // If no matching notification push is found, save the new push notification.
       await this.notificationPushRepository.save({
         user: currentUser,
         ...createNotificationPushDto,
       });
+    }
   }
 
   private async removePush(id: string): Promise<void> {
+    // Delete a notification push from the database based on its ID.
     await this.notificationPushRepository.delete({ id });
   }
 }

@@ -112,4 +112,13 @@ export class Notification extends BaseEntity {
     nullable: true,
   })
   cronTime?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @Column({
+    length: 32,
+    nullable: true,
+  })
+  recipientGroup?: string;
 }
