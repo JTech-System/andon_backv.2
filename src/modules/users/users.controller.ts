@@ -11,6 +11,7 @@ import {
   NotFoundException,
   Put,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiCreatedResponse, ApiBadRequestResponse, ApiConflictResponse, ApiBearerAuth, ApiOperation, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -22,6 +23,7 @@ import { ResponseUserDto } from './dto/response-user.dto';
 import { CurrentUser } from '@auth/auth.decorator';
 import { UserRole } from '@utils/enums/user-role.enum';
 import { Roles } from '@utils/decorators/roles.decorator';
+import { FindOneOptions } from 'typeorm';
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -56,6 +58,10 @@ export class UsersController {
       throw new NotFoundException ('No roles found.');
     }
     return users;
+  }
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Query() options: FindOneOptions<User>): Promise<User> {
+    return this.usersService.findOne(id, options);
   }
 
   @Get('/roles')

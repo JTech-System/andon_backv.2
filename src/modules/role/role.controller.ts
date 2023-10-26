@@ -57,14 +57,24 @@ export class RoleController {
     return role;
   }
 
-  @Put(':id')
+  @Put('/relations/:id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a Role' })
+  @ApiOperation({ summary: 'Update a Role with Relations' })
   @ApiResponse({ status: 200, description: 'Role updated successfully.' })
   @ApiResponse({ status: 404, description: 'Role not found.' })
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.roleService.update(id, updateRoleDto);
   }
+
+  @Put(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a Role without Relations' })
+  @ApiResponse({ status: 200, description: 'Role updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Role not found.' })
+  updateRecord(@Param('id') id: string, @Body() updateRoleDto: CreateRoleDto) {
+    return this.roleService.updateName(id, updateRoleDto);
+  }
+
 
   @Put('/permissions/:id')
   @Roles(UserRole.ADMIN)

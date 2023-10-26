@@ -21,6 +21,7 @@ export class CreateRoleDto {
   name: string;
 
   /** @permissions */
+  /*
   @ApiProperty({
     description: 'Array of permission identifiers associated with the role',
     type: String,
@@ -30,4 +31,5 @@ export class CreateRoleDto {
   @IsString({ each: true, message: 'Each permission should be a string identifier' })
   @ArrayUnique({ message: 'Permissions should be unique' })
   permissions: string[];
+  */
 }

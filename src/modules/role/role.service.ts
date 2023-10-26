@@ -32,7 +32,7 @@ export class RoleService {
       if (existingRole) {
         throw new ConflictException('Role with this name already exists');
       }
-
+      /*
       const permissions = await this.permissionService.findPermissionsByIds(createRoleDto.permissions);
 
       if (permissions.length !== createRoleDto.permissions.length) {
@@ -43,11 +43,11 @@ export class RoleService {
         throw new NotFoundException(
           `Permissions with IDs ${notFoundPermissions.join(', ')} not found`,
         );
-      }
+      }*/
 
       const role = this.roleRepository.create({
         name: createRoleDto.name,
-        permissions: permissions,
+        //permissions: permissions,
       });
 
       try {
@@ -88,6 +88,31 @@ export class RoleService {
         );
       }
       role.permissions = permissions;
+    }
+
+    try {
+      return await this.roleRepository.save(role);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while updating the role',
+      );
+    }
+  }
+
+  async updateName(id: string, updateRoleDto: CreateRoleDto): Promise<Role> {
+    const role = await this.roleRepository.findOne({where: { id: id}, relations: ['permissions'] });
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${id} not found`);
+    }
+
+    if (updateRoleDto.name) {
+      const existingRole = await this.roleRepository.findOne({
+        where: { name: updateRoleDto.name },
+      });
+      if (existingRole && existingRole.id !== id) {
+        throw new ConflictException('Role with this name already exists');
+      }
+      role.name = updateRoleDto.name;
     }
 
     try {
