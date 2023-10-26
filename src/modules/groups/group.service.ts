@@ -68,6 +68,9 @@ export class GroupsService {
         users: {
           notificationPush: true,
         },
+        manager: {
+          notificationPush: true,
+        }
       },
     });
 

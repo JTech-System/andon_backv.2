@@ -115,10 +115,21 @@ export class Notification extends BaseEntity {
 
   @ApiProperty({
     required: false,
+    maxLength: 32
   })
   @Column({
     length: 32,
     nullable: true,
   })
   recipientGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32
+  })
+  @Column({
+    length: 32,
+    nullable: true,
+  })
+  recipientManagerGroup?: string;
 }

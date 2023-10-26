@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import {
@@ -24,11 +23,16 @@ import { CurrentUser } from '@auth/auth.decorator';
 import { User } from '@users/entities/user.entity';
 import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
 import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
+import { NotificationsService } from './services/notifications.service';
+import { NotificationPushService } from './services/notification-push.service';
 
 @ApiTags('Notifications')
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly notificationPushService: NotificationPushService,
+  ) {}
 
   // Push
 
@@ -38,24 +42,9 @@ export class NotificationsController {
     @Body() createNotificationPushDto: CreateNotificationPushDto,
     @CurrentUser() currentUser: User,
   ): Promise<void> {
-    return await this.notificationsService.createPush(
+    return await this.notificationPushService.create(
       createNotificationPushDto,
       currentUser,
-    );
-  }
-
-  // Test
-
-  @Get('test')
-  @ApiBearerAuth()
-  async test(): Promise<void> {
-    await this.notificationsService.send(
-      'incident',
-      NotificationOperation.CREATE,
-      {
-        id: 'b3c9549b-2091-4c34-afcb-aeb1c4d6d22b',
-        status: 'Unassigned',
-      },
     );
   }
 

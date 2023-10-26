@@ -14,10 +14,11 @@ import { UpdateIncidentDto } from './dto/update-incident.dto';
 import { MachinesService } from '@machines/machines.service';
 import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
 import { IncidentComment } from './entities/incident-comment.entity';
-import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationOperation } from '../notifications/enums/notification-operation.enum';
 import { GroupsService } from '@groups/group.service';
 import { UsersService } from '@users/users.service';
+import { NotificationsService } from '@notifications/services/notifications.service';
+import { NotificationSendService } from '@notifications/services/notification-send.service';
 
 @Injectable()
 export class IncidentsService {
@@ -32,7 +33,7 @@ export class IncidentsService {
     private machinesService: MachinesService,
     private groupsService: GroupsService,
     private usersService: UsersService,
-    private notificationsService: NotificationsService,
+    private notificationSendService: NotificationSendService,
   ) {}
 
   private async createNumber(): Promise<string> {
@@ -70,7 +71,7 @@ export class IncidentsService {
       productionLine,
     });
 
-    this.notificationsService.send(
+    this.notificationSendService.send(
       'incident',
       NotificationOperation.CREATE,
       incident,
@@ -309,7 +310,7 @@ export class IncidentsService {
     );
 
     const incident = await this.findOne(id);
-    this.notificationsService.send(
+    this.notificationSendService.send(
       'incident',
       NotificationOperation.UPDATE,
       incident,
@@ -319,7 +320,7 @@ export class IncidentsService {
   }
 
   async remove(id: string): Promise<void> {
-    this.notificationsService.send(
+    this.notificationSendService.send(
       'incident',
       NotificationOperation.DELETE,
       await this.findOne(id),

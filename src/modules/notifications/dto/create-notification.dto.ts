@@ -112,4 +112,22 @@ export class CreateNotificationDto {
       'Invalid cron time, more information: https://en.wikipedia.org/wiki/Cron',
   })
   cronTime?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  recipientGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  recipientManagerGroup?: string;
 }

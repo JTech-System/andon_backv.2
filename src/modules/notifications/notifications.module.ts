@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
@@ -9,6 +8,9 @@ import { NotificationUpdateField } from './entities/notification-update-field.en
 import { NotificationPush } from './entities/notification-push.entity';
 import { NotificationStopField } from './entities/notification-stop-field.entity';
 import { GroupsModule } from '@groups/group.module';
+import { NotificationsService } from './services/notifications.service';
+import { NotificationPushService } from './services/notification-push.service';
+import { NotificationSendService } from './services/notification-send.service';
 
 @Module({
   imports: [
@@ -23,7 +25,11 @@ import { GroupsModule } from '@groups/group.module';
     GroupsModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
-  exports: [NotificationsService],
+  providers: [
+    NotificationsService,
+    NotificationPushService,
+    NotificationSendService,
+  ],
+  exports: [NotificationsService, NotificationSendService],
 })
 export class NotificationsModule {}
