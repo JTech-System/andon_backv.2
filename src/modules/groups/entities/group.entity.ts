@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../role/entities/role.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,19 +17,22 @@ export class Group extends BaseEntity {
   name: string;
 
   @ApiProperty({
-    maxLength: 128,
-    description: 'Table name the group is',
-    example: 'Attachments',
+    description: 'manager of the group',
+    example: 'manager',
+    type: () => User
   })
-  @Column({
-    length: 128,
-  })
-  manager: string;
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'managerId' })
+  manager: User;
+
+  @Column()
+  managerId: string;
+
 
   @ApiProperty({
     maxLength: 256,
     description: 'Description of the group',
-    example: 'A group representing documents in the system',
+    example: 'A group for being for IT Support',
     required: false,
   })
   @Column({
@@ -66,6 +69,7 @@ export class Group extends BaseEntity {
     isArray: true,
   })
   @ManyToMany(() => Role)
+  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
   roles: Role[];
 
   /** @users */

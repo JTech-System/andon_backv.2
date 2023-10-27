@@ -1,25 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@users/entities/user.entity';
 import { IsString, MaxLength, IsOptional, IsBoolean, IsArray, ArrayNotEmpty, ArrayUnique } from 'class-validator';
 
 export class CreateGroupDto {
-  
+
   @ApiProperty({
     maxLength: 128,
     description: 'Name of the group',
-    example: 'document',
+    example: 'IT',
   })
   @IsString({ message: 'Name should be a string' })
   @MaxLength(128, { message: 'Name should not be longer than 128 characters' })
   name: string;
 
   @ApiProperty({
-    maxLength: 128,
-    description: 'Table name the group is ',
-    example: 'Attachments',
+    description: 'Manager of the group',
   })
-  @IsString({ message: 'Table should be a string' })
-  @MaxLength(128, { message: 'Table should not be longer than 128 characters' })
-  manager: string;
+  @IsString({ message: 'manager should be a string' })
+  manager: string; 
 
   @ApiProperty({
     maxLength: 256,
@@ -51,17 +49,6 @@ export class CreateGroupDto {
   @IsBoolean({ message: 'isActive should be a boolean' })
   @IsOptional()
   isActive?: boolean;
-  
-   /** @roles */
-   @ApiProperty({
-    description: 'Array of roles identifiers associated with the role',
-    type: String,
-    isArray: true,
-  })
-  @IsArray({ message: 'Permissions should be an array' })
-  @IsString({ each: true, message: 'Each roles should be a string identifier' })
-  @ArrayUnique({ message: 'Permissions should be unique' })
-  roles: string[];
 
   /** @roles */
   @ApiProperty({
@@ -69,9 +56,10 @@ export class CreateGroupDto {
     type: String,
     isArray: true,
   })
-  @IsArray({ message: 'Permissions should be an array' })
+  @IsArray({ message: 'roles should be an array' })
   @IsString({ each: true, message: 'Each roles should be a string identifier' })
-  @ArrayUnique({ message: 'Permissions should be unique' })
-  users: string[];
-  
+  @ArrayUnique({ message: 'roles should be unique' })
+  roles: string[];
+
+
 }

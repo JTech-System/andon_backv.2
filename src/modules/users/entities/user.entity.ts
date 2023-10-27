@@ -1,4 +1,4 @@
-import { Entity, Column, JoinTable, ManyToMany } from 'typeorm';
+import { Entity, Column, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
@@ -6,6 +6,22 @@ import { Group } from 'src/modules/groups/entities/group.entity';
 
 @Entity()
 export class User extends BaseEntity {
+  @ApiProperty({
+    maxLength: 128,
+  })
+  @Column({
+    length: 128,
+  })
+  name: string;
+
+  @ApiProperty({
+    maxLength: 128,
+  })
+  @Column({
+    length: 128,
+  })
+  user_id: string;
+
   @ApiProperty({
     maxLength: 128,
   })
@@ -56,7 +72,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of roles associated with the user.',
   })
-  @ManyToMany(() => Role, (role) => role.users, { eager: true,})
+  @ManyToMany(() => Role, (role) => role.users, { eager: true, })
   @JoinTable()
   roles: Role[];
 
@@ -65,8 +81,12 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of groups associated with the user.',
   })
-  @ManyToMany(() => Group, (group) => group.users, { eager: true,})
+  @ManyToMany(() => Group, (group) => group.users)
   @JoinTable()
   groups: Group[];
+
+  @OneToMany(() => Group, group => group.manager)
+  groupsManaged: Group[];
+
 
 }

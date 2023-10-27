@@ -34,35 +34,31 @@ export class Role extends BaseEntity {
   })
   permissions: Permission[];
 
-  /** @users 
+  /** @users */
   @ApiProperty({
     type: () => User,
     isArray: true,
     description: 'A list of users associated with the role.',
   })
-  */
   @ManyToMany(() => User, (user) => user.roles)
   users: User[];
 
-  /** @policies 
+  /** @policies */
   @ApiProperty({
     type: () => Policy,
     isArray: true,
     description: 'A list of policies associated with the role.',
   })
-  */
+  
   @ManyToMany(() => Policy, (policy) => policy.roles)
   policies: Policy[];
 
-  /** @groups 
+  /** @groups */
   @ApiProperty({
     type: () => Group,
     isArray: true,
     description: 'A list of groups associated with the role.',
-  })
-  */
-  
+  })  
   @ManyToMany(() => Group, (group) => group.roles)
-  @JoinTable() // Add JoinTable if you want a join table for the ManyToMany relationship
   groups: Group[];
 }

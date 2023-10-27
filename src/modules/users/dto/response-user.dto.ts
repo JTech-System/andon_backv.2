@@ -8,6 +8,16 @@ export class ResponseUserDto extends BaseDto {
   @ApiProperty({
     maxLength: 128,
   })
+  name: string;
+
+  @ApiProperty({
+    maxLength: 128,
+  })
+  user_id: string;
+
+  @ApiProperty({
+    maxLength: 128,
+  })
   firstName: string;
 
   @ApiProperty({

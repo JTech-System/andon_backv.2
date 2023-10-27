@@ -84,6 +84,7 @@ export class RoleController {
   addPermissions(@Param('id') id: string, @Body() rolePermissionsDto: RolePermissionsDto) {
     return this.roleService.addRolePermissions(id, rolePermissionsDto);
   }
+  
   @Delete('/permissions/:id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove Permissions from a Role' })

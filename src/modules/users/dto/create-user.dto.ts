@@ -9,6 +9,26 @@ import {
 } from 'class-validator';
 
 export class CreateUserDto {
+  
+  @ApiProperty({
+    maxLength: 128,
+  })
+  @IsString({ message: 'Name should be a string' })
+  @MaxLength(128, {
+    message: 'Name should not be longer than 128 characters',
+  })
+  name: string;
+
+  @ApiProperty({
+    maxLength: 128,
+  })
+  @IsString({ message: 'User ID should be a string' })
+  @MaxLength(128, {
+    message: 'User ID should not be longer than 128 characters',
+  })
+  user_id: string;
+
+
   @ApiProperty({
     maxLength: 128,
   })
@@ -55,6 +75,5 @@ export class CreateUserDto {
 
   @ApiProperty({ type: [String], description: 'Array of role IDs' })
   @IsArray()
-  @IsUUID('4', { each: true })
   roles: string[];
 }

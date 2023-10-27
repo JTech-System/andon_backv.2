@@ -73,23 +73,4 @@ export class GroupController {
   async remove(@Param('id') id: string): Promise<void> {
     await this.groupService.remove(id);
   }
-
-
-  @Put('/add_user')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a group' })
-  @ApiResponse({ status: 200, description: 'Group updated successfully.' })
-  @ApiResponse({ status: 404, description: 'Group not found.' })
-  async addUserToGroup(@Body() updateGroupDto: AddUserGroupDto): Promise<Group> {
-    return await this.groupService.addUserToGroup(updateGroupDto);
-  }
-
-  @Put('/remove_user')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a group' })
-  @ApiResponse({ status: 200, description: 'Group updated successfully.' })
-  @ApiResponse({ status: 404, description: 'Group not found.' })
-  async removeUserFromGroup(@Body() updateGroupDto: AddUserGroupDto): Promise<Group> {
-    return await this.groupService.removeUserFromGroup(updateGroupDto);
-  }
 }

@@ -18,7 +18,7 @@ export class AuthService {
   async logIn(logInDto: LogInDto): Promise<ResponseLogInDto> {
     let user = await this.usersService.findOneBy({
       where: {
-        email: logInDto.email,
+        user_id: logInDto.user_id,
       },
       select: {
         id: true,
