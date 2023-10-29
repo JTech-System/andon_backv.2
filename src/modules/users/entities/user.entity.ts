@@ -81,7 +81,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of groups associated with the user.',
   })
-  @ManyToMany(() => Group, (group) => group.users)
+  @ManyToMany(() => Group, (group) => group.users,)
   @JoinTable()
   groups: Group[];
 

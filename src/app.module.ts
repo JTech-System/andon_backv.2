@@ -36,7 +36,7 @@ import { GroupsModule } from './modules/groups/group.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'andon',
-      synchronize: process.env.APP_ENV !== 'production',
+      synchronize: false,//process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
     //Modules

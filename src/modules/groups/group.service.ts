@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -8,13 +15,12 @@ import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class GroupService {
-
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
     private roleService: RoleService,
     @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
-  ) { }
+  ) {}
 
   async create(createGroupDto: CreateGroupDto): Promise<Group> {
     const existingGroup = await this.groupRepository.findOne({
@@ -33,12 +39,18 @@ export class GroupService {
         throw new BadRequestException('One or more roles were not found.');
       }
     }
-    const manager = await this.usersService.findOne(createGroupDto.manager);
+    let manager;
+    if (createGroupDto.manager) {
+      try {
+        manager = await this.usersService.findOne(createGroupDto.manager);
+      } catch (error) {
+        console.error('Error while fetching manager:', error);
+      }
 
-    if (!manager) {
-      throw new NotFoundException(`Manager with ID ${createGroupDto.manager} not found`);
+      if (!manager) {
+        createGroupDto.manager = null;
+      }
     }
-
     const group = this.groupRepository.create({
       ...createGroupDto,
       manager,
@@ -48,7 +60,8 @@ export class GroupService {
     try {
       return await this.groupRepository.save(group);
     } catch (error) {
-      throw new ConflictException('Could not save group');
+      console.log(error);
+      throw new ConflictException('Could not save group', error);
     }
   }
 
@@ -59,7 +72,7 @@ export class GroupService {
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: id },
-      relations: ['roles']
+      relations: ['roles'],
     });
 
     if (!group) {
@@ -86,7 +99,9 @@ export class GroupService {
     try {
       await this.groupRepository.remove(group);
     } catch (error) {
-      throw new ConflictException(`Error deleting group with ID ${id}: ${error.message}`);
+      throw new ConflictException(
+        `Error deleting group with ID ${id}: ${error.message}`,
+      );
     }
   }
 }

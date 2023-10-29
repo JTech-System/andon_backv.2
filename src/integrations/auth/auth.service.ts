@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@users/entities/user.entity';
 import { PermissionService } from 'src/modules/permission/permission.service';
+import { group } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +28,8 @@ export class AuthService {
     });
     if (user) {
       if (await bcrypt.compare(logInDto.password, user.passwordHash)) {
-        user = await this.usersService.findOne(user.id);        
+        user = await this.usersService.findOne(user.id, {relations: ['groups']});
+        console.log(user);
         let permissions = {permissions: await this.evaluateUserPermissions(user.id)};
         const payload = {
           user,
@@ -49,7 +51,8 @@ export class AuthService {
       const user = await this.usersService.findOneBy({
         where: {
           id: payload.id,
-        },
+        },        
+        relations: ['groups'],
       });
       if (user) return user;
     } catch {}
@@ -58,7 +61,7 @@ export class AuthService {
 
   async evaluateUserPermissions(userId: string): Promise<any> {
   const user = await this.usersService.findOne(userId, {
-    relations: ['roles', 'roles.permissions', 'roles.permissions.resources']
+    relations: ['roles', 'roles.permissions', 'roles.permissions.resources', 'groups']
   });
 
   if (!user) {

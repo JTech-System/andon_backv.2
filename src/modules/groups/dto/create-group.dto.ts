@@ -17,6 +17,7 @@ export class CreateGroupDto {
     description: 'Manager of the group',
   })
   @IsString({ message: 'manager should be a string' })
+  @IsOptional()
   manager: string; 
 
   @ApiProperty({

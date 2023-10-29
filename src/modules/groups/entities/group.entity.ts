@@ -21,11 +21,16 @@ export class Group extends BaseEntity {
     example: 'manager',
     type: () => User
   })
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'managerId' })
   manager: User;
 
-  @Column()
+  @ApiProperty({
+    maxLength: 128,
+    description: 'managerId of the group',
+    example: '',
+  })
+  @Column({nullable: true})
   managerId: string;
 
 

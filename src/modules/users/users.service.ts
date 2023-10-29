@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, In } from 'typeorm';
+import { Repository, FindOneOptions, In, Like } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -16,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { GroupService } from '../groups/group.service';
 import { UpdateUserRolesDto } from './dto/update-roles.dto';
+import { UserAPIListDto } from './dto/response-api.dto';
 
 @Injectable()
 export class UsersService {
@@ -65,6 +66,40 @@ export class UsersService {
   async findAll(): Promise<User[]> {
     return await this.usersRepository.find();
   }
+  
+  async findAllFilters(
+    skip = 0,
+    take = 10,
+    sortField = 'id',
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+    search: string
+  ): Promise<UserAPIListDto> {
+    
+    console.log(take);
+    
+    let whereCondition = {};
+  
+    if (search) {
+      whereCondition = {
+        name: Like(`%${search}%`)
+      };
+    }
+  
+    const [result, total] = await this.usersRepository.findAndCount({
+      where: whereCondition,
+      order: { [sortField]: sortOrder },
+      skip,
+      take,
+    });
+  
+    if (total === 0) {
+      // You can either return an empty result or throw an exception based on your requirements
+    }
+    return {
+      row_count: total,
+      rows: result,
+    };
+  }
 
   async findOne(id: string, options?: FindOneOptions<User>): Promise<User> {
     const findOptions = {
@@ -84,7 +119,12 @@ export class UsersService {
   async findOneBy(options: FindOneOptions<User>): Promise<User | null> {
     return await this.usersRepository.findOne(options);
   }
-
+  async findOneByID(id: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['roles', 'groups'],
+    });
+  }
   // update(id: number, updateUserDto: UpdateUserDto) {
   //   return `This action updates a #${id} user`;
   // }
@@ -118,7 +158,7 @@ export class UsersService {
   async addUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['roles'],
+      relations: ['roles', 'groups'],
     });
 
     if (!user) {
@@ -144,7 +184,7 @@ export class UsersService {
 async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): Promise<User> {
   const user = await this.usersRepository.findOne({
     where: { id: userId },
-    relations: ['roles'],
+    relations: ['roles', 'groups'],
   });
 
   if (!user) {

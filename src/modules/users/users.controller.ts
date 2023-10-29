@@ -26,6 +26,8 @@ import { Roles } from '@utils/decorators/roles.decorator';
 import { FindOneOptions } from 'typeorm';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { UpdateUserRolesDto } from './dto/update-roles.dto';
+import { UserAPIListDto } from './dto/response-api.dto';
+import { IsOptional } from 'class-validator';
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -55,15 +57,34 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all Users' })
   @ApiOkResponse({ type: [User], description: 'Returned all users.' })
   async findAll(): Promise<User[]> {
-    const users = await this.usersService.findAll();
-    if (users.length === 0) {
-      throw new NotFoundException('No roles found.');
+    const users = await this.usersService.findAllFilters(0,5,"id","DESC","");
+    if (users.row_count === 0) {
+      throw new NotFoundException('No users found.');
+    }
+    return users.rows;
+  }
+  
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Filter Users' })
+  @ApiOkResponse({ type: [User], description: 'Returning users filtered.' })
+  async findAllQuery(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC', 
+    @Query('search') search: string | null
+  ): Promise<UserAPIListDto> {
+    const users = await this.usersService.findAllFilters(skip,take,sortField,sortOrder,search);
+    if (users.row_count === 0) {
+      throw new NotFoundException('No users found.');
     }
     return users;
   }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Query() options: FindOneOptions<User>): Promise<User> {
-    return this.usersService.findOne(id, options);
+    return this.usersService.findOneByID(id);
   }
 
   @Get('/roles')
@@ -123,7 +144,8 @@ export class UsersController {
     return await this.usersService.addUserRoles(id, updaterolesDto);
   }
 
-  @Delete('/roles/:id') @Roles(UserRole.ADMIN)
+  @Delete('/roles/:id') 
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove roles from user' })
   @ApiResponse({ status: 200, description: 'User roles updated successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
