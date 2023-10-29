@@ -408,9 +408,11 @@ export class NotificationSendService {
       })
     ).map(async (notification) => {
       // Get recipient emails based on the notification and the provided record.
-      const recipientEmails = (
-        await this.getRecipients(notification, record)
-      ).map((recipient) => recipient.email);
+      const recipients = await this.getRecipients(notification, record);
+      const recipientEmails = [];
+      for (const user of recipients) {
+        if (user.email) recipientEmails.push(user.email);
+      }
 
       // Check if the notification should be sent based on the criteria.
       if (this.checkIfSend(operation, notification, record, lastRecord)) {

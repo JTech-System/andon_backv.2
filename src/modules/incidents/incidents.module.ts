@@ -23,5 +23,6 @@ import { UsersModule } from '@users/users.module';
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],
+  exports: [IncidentsService]
 })
 export class IncidentsModule {}

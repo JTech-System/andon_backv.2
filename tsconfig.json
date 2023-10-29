@@ -26,6 +26,7 @@
       "@machines/*": ["./src/modules/machines/*"],
       "@notifications/*": ["./src/modules/notifications/*"],
       "@groups/*": ["./src/modules/groups/*"],
+      "@statistics/*": ["./src/modules/statistics/*"]
     }
   }
 }

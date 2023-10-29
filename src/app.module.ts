@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './integrations/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { AuthMiddleware } from '@auth/auth.middleware';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
@@ -21,8 +21,7 @@ import { ResourceModule } from './modules/resource/resource.module';
 import { GroupsModule } from './modules/groups/group.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-
-
+import { StatisticsModule } from './modules/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -47,8 +46,8 @@ import { join } from 'path';
     }),
 
     //Modules
-    UsersModule,
     AuthModule,
+    UsersModule,
     IncidentsModule,
     ProductionLinesModule,
     MachinesModule,
@@ -57,7 +56,8 @@ import { join } from 'path';
     PermissionModule,
     NotificationsModule,
     ResourceModule,
-    GroupsModule
+    GroupsModule,
+    StatisticsModule,
   ],
   controllers: [],
   providers: [],

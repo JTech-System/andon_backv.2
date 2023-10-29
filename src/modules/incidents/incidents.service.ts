@@ -3,7 +3,13 @@ import { CreateIncidentDto } from './dto/create-incident.dto';
 import { Incident } from './entities/incident.entity';
 import { User } from '@users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere, Between } from 'typeorm';
+import {
+  Repository,
+  Like,
+  FindOptionsWhere,
+  Between,
+  FindManyOptions,
+} from 'typeorm';
 import { IncidentCategory } from './entities/incident-category.entity';
 import { CreateIncidentCategoryDto } from './dto/create-incident-category.dto';
 import { UpdateIncidentCategoryDto } from './dto/update-incident-category.dto';
@@ -35,6 +41,10 @@ export class IncidentsService {
     private usersService: UsersService,
     private notificationSendService: NotificationSendService,
   ) {}
+
+  async count(options?: FindManyOptions<Incident>): Promise<number> {
+    return await this.incidentsRepository.count(options);
+  }
 
   private async createNumber(): Promise<string> {
     const incidents = await this.incidentsRepository.find({
@@ -158,6 +168,10 @@ export class IncidentsService {
       pages,
       length,
     };
+  }
+
+  async findBy(options?: FindManyOptions<Incident>): Promise<Incident[]> {
+    return await this.incidentsRepository.find(options);
   }
 
   async findOne(id: string): Promise<Incident> {
