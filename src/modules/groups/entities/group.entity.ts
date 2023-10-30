@@ -84,6 +84,7 @@ export class Group extends BaseEntity {
     isArray: true,
   })
   @ManyToMany(() => User)
+  @JoinTable()
   users: User[];
 }
 

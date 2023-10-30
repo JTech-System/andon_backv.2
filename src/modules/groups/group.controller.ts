@@ -20,6 +20,7 @@ import { Roles } from '@utils/decorators/roles.decorator';
 import { UserRole } from '@utils/enums/user-role.enum'; // Adjust the path according to your project structure
 import { AddUserGroupDto } from './dto/add-user-group.dto';
 import { GroupAPIListDto } from './dto/group-api.dto';
+import { GroupRolesDto } from './dto/add-roles-group.dto';
 
 @ApiTags('Groups')
 @Controller('groups')
@@ -92,4 +93,23 @@ export class GroupController {
   async remove(@Param('id') id: string): Promise<void> {
     await this.groupService.remove(id);
   }
+  
+  @Put('/roles/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add Roles to a group' })
+  @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Group not found.' })
+  async addRolesToGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
+    return await this.groupService.addGroupRoles(id, updaterolesDto);
+  }
+
+  @Delete('/roles/:id') 
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Remove roles from group' })
+  @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Group not found.' })
+  async removeRolesFromGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
+    return await this.groupService.removeGroupRoles(id, updaterolesDto);
+  }
+
 }
