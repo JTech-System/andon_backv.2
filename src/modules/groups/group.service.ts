@@ -7,11 +7,12 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { Group } from './entities/group.entity';
 import { RoleService } from '../role/role.service';
 import { UsersService } from '@users/users.service';
+import { GroupAPIListDto } from './dto/group-api.dto';
 
 @Injectable()
 export class GroupService {
@@ -69,6 +70,38 @@ export class GroupService {
     return await this.groupRepository.find();
   }
 
+  async findAllFilters(
+    skip = 0,
+    take = 10,
+    sortField = 'id',
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+    search: string
+  ): Promise<GroupAPIListDto> {
+    
+    let whereCondition = {};
+  
+    if (search) {
+      whereCondition = {
+        name: Like(`%${search}%`)
+      };
+    }
+  
+    const [result, total] = await this.groupRepository.findAndCount({
+      where: whereCondition,
+      order: { [sortField]: sortOrder },
+      skip,
+      take,
+    });
+  
+    if (total === 0) {
+      // You can either return an empty result or throw an exception based on your requirements
+    }
+    return {
+      row_count: total,
+      rows: result,
+    };
+  }
+
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: id },
@@ -95,6 +128,10 @@ export class GroupService {
   }
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
+    group.users = [];
+    group.roles = [];
+    group.manager = null;
+    await this.groupRepository.save(group);
 
     try {
       await this.groupRepository.remove(group);

@@ -17,6 +17,7 @@ import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { GroupService } from '../groups/group.service';
 import { UpdateUserRolesDto } from './dto/update-roles.dto';
 import { UserAPIListDto } from './dto/response-api.dto';
+import { ResponseUserDto } from './dto/response-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +28,7 @@ export class UsersService {
     private groupService: GroupService,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
     const existingUser = await this.findOneBy({
       where: { email: createUserDto.email },
     });
@@ -39,8 +40,6 @@ export class UsersService {
     if (createUserDto.roles && createUserDto.roles.length > 0) {
       if (createUserDto.roles && createUserDto.roles.length > 0) {
         roles = await this.roleService.findRolesByIds(createUserDto.roles);
-
-        console.log('Roles before saving:', roles);
       }
 
       if (roles.length !== createUserDto.roles.length) {
@@ -50,17 +49,34 @@ export class UsersService {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(createUserDto.password, salt);
-    console.log('Roles before saving:', roles);
+    
 
     const user = this.usersRepository.create({
       ...createUserDto,
       passwordHash,
-      roles, // Assigning the roles to the user entity
+      roles,
     });
 
-    console.log('Roles before saving:', roles);
+    // Save the user in the database
+    const savedUser = await this.usersRepository.save(user);
 
-    return await this.usersRepository.save(user);
+    // Create a response object without the password hash
+    const responseUser: ResponseUserDto = {
+      name: savedUser.name,
+      user_id: savedUser.user_id,
+      firstName: savedUser.firstName,
+      lastName: savedUser.lastName,
+      email: savedUser.email,
+      phone: savedUser.phone,
+      roles: savedUser.roles,
+      groups: savedUser.groups,
+      id: savedUser.id,
+      createdOn: savedUser.createdOn,
+      updatedOn: savedUser.updatedOn,
+      isActive: savedUser.isActive,
+    };
+
+    return responseUser;
   }
 
   async findAll(): Promise<User[]> {
@@ -74,8 +90,6 @@ export class UsersService {
     sortOrder: 'ASC' | 'DESC' = 'ASC',
     search: string
   ): Promise<UserAPIListDto> {
-    
-    console.log(take);
     
     let whereCondition = {};
   

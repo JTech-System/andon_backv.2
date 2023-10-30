@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseDto } from '@utils/dto/base.dto';
-import { IsArray, IsUUID } from 'class-validator';
+import { Exclude } from 'class-transformer';
+import { IsArray, IsUUID, isBoolean } from 'class-validator';
 import { Group } from 'src/modules/groups/entities/group.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
 
@@ -42,4 +43,7 @@ export class ResponseUserDto extends BaseDto {
   @ApiProperty({ type: [Group], description: 'Array of groups IDs' })
   @IsArray()
   groups: Group[];
+
+  @ApiProperty()
+  isActive: boolean;
 }

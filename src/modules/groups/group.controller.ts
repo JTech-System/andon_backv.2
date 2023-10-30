@@ -8,7 +8,8 @@ import {
   Put,
   Delete,
   HttpCode,
-  NotFoundException
+  NotFoundException,
+  Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiOkResponse } from '@nestjs/swagger';
 import { GroupService } from './group.service';
@@ -18,6 +19,7 @@ import { RolesGuard } from '@utils/guards/roles.guard';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { UserRole } from '@utils/enums/user-role.enum'; // Adjust the path according to your project structure
 import { AddUserGroupDto } from './dto/add-user-group.dto';
+import { GroupAPIListDto } from './dto/group-api.dto';
 
 @ApiTags('Groups')
 @Controller('groups')
@@ -40,6 +42,23 @@ export class GroupController {
   @ApiOkResponse({ type: [Group] })
   findAll(): Promise<Group[]> {
     return this.groupService.findAll();
+  }
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Filter Groups' })
+  @ApiOkResponse({ type: [Group], description: 'Returning groups filtered.' })
+  async findAllQuery(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC', 
+    @Query('search') search: string | null
+  ): Promise<GroupAPIListDto> {
+    const users = await this.groupService.findAllFilters(skip,take,sortField,sortOrder,search);
+    if (users.row_count === 0) {
+      throw new NotFoundException('No groups found.');
+    }
+    return users;
   }
 
   @Get(':id')

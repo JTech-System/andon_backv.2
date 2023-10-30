@@ -29,7 +29,6 @@ export class AuthService {
     if (user) {
       if (await bcrypt.compare(logInDto.password, user.passwordHash)) {
         user = await this.usersService.findOne(user.id, {relations: ['groups']});
-        console.log(user);
         let permissions = {permissions: await this.evaluateUserPermissions(user.id)};
         const payload = {
           user,

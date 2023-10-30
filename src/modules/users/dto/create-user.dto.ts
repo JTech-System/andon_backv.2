@@ -6,6 +6,7 @@ import {
   Matches,
   IsArray,
   IsUUID,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -50,8 +51,9 @@ export class CreateUserDto {
   })
   @IsString()
   @IsEmail({}, { message: 'Invalid email format' })
-  @MaxLength(128, { message: 'Email should not be longer than 128 characters' })
-  email: string;
+  @MaxLength(128, { message: 'Email should not be longer than 128 characters' })  
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     maxLength: 13,
@@ -59,8 +61,9 @@ export class CreateUserDto {
   })
   @IsString()
   @Matches(/^(?:\+\d{2})?\d{10}$/)
+  @IsOptional()
   @MaxLength(128)
-  phone: string;
+  phone?: string;
 
   @ApiProperty({
     description:
@@ -75,5 +78,10 @@ export class CreateUserDto {
 
   @ApiProperty({ type: [String], description: 'Array of role IDs' })
   @IsArray()
-  roles: string[];
+  @IsOptional()
+  roles?: string[];
+  
+  @ApiProperty()
+  @IsOptional()
+  isActive?: boolean;
 }
