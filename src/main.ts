@@ -3,15 +3,9 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger/dist';
-import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    httpsOptions: {
-      cert: fs.readFileSync('./cert.pem'),
-      key: fs.readFileSync('./key.pem'),
-    },
-  });
+  const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ValidationPipe());
 
@@ -30,7 +24,7 @@ async function bootstrap() {
     customSiteTitle: 'Andon API',
   });
 
-  await app.listen(process.env.APP_PORT || 3000);
+  await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 
 bootstrap();
