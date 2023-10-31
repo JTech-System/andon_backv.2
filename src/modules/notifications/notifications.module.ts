@@ -11,6 +11,8 @@ import { GroupsModule } from '@groups/group.module';
 import { NotificationsService } from './services/notifications.service';
 import { NotificationPushService } from './services/notification-push.service';
 import { NotificationSendService } from './services/notification-send.service';
+import { NotificationLog } from './entities/notification-log.entity';
+import { NotificationLogService } from './services/notification-log.service';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { NotificationSendService } from './services/notification-send.service';
       NotificationUpdateField,
       NotificationStopField,
       NotificationPush,
+      NotificationLog,
     ]),
     ConfigModule.forRoot(),
     UsersModule,
@@ -29,6 +32,7 @@ import { NotificationSendService } from './services/notification-send.service';
     NotificationsService,
     NotificationPushService,
     NotificationSendService,
+    NotificationLogService,
   ],
   exports: [NotificationsService, NotificationSendService],
 })
