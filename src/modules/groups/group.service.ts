@@ -33,15 +33,6 @@ export class GroupService {
     if (existingGroup) {
       throw new ConflictException('Group with this name already exists');
     }
-
-    let roles = [];
-    if (createGroupDto.roles && createGroupDto.roles.length > 0) {
-      roles = await this.roleService.findRolesByIds(createGroupDto.roles);
-
-      if (roles.length !== createGroupDto.roles.length) {
-        throw new BadRequestException('One or more roles were not found.');
-      }
-    }
     let manager;
     if (createGroupDto.manager) {
       try {
@@ -56,8 +47,7 @@ export class GroupService {
     }
     const group = this.groupRepository.create({
       ...createGroupDto,
-      manager,
-      roles,
+      manager,      
     });
 
     try {
@@ -123,10 +113,32 @@ export class GroupService {
       throw new BadRequestException('Name is required');
     }
 
-    Object.assign(group, updateGroupDto);
+    let manager;
+    if (updateGroupDto.manager) {
+      try {
+        manager = await this.usersService.findOne(updateGroupDto.manager);
+      } catch (error) {
+        console.error('Error while fetching manager:', error);
+      }      
+    }
+    if (!manager) {
+      let managerId = null;
+      Object.assign(group, {
+        ...updateGroupDto,
+        manager,  
+        managerId   
+      });
+    }else{
+      Object.assign(group, {
+        ...updateGroupDto,
+        manager,      
+      });
+    }
     await this.groupRepository.save(group);
     return group;
   }
+
+
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
     group.users = [];

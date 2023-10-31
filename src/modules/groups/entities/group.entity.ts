@@ -23,7 +23,7 @@ export class Group extends BaseEntity {
   })
   @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'managerId' })
-  manager: User;
+  manager: User | null;
 
   @ApiProperty({
     maxLength: 128,
@@ -31,7 +31,7 @@ export class Group extends BaseEntity {
     example: '',
   })
   @Column({nullable: true})
-  managerId: string;
+  managerId: string | null;
 
 
   @ApiProperty({

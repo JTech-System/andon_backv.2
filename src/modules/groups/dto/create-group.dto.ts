@@ -51,16 +51,4 @@ export class CreateGroupDto {
   @IsOptional()
   isActive?: boolean;
 
-  /** @roles */
-  @ApiProperty({
-    description: 'Array of roles identifiers associated with the role',
-    type: String,
-    isArray: true,
-  })
-  @IsArray({ message: 'roles should be an array' })
-  @IsString({ each: true, message: 'Each roles should be a string identifier' })
-  @ArrayUnique({ message: 'roles should be unique' })
-  roles: string[];
-
-
 }
