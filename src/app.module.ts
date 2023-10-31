@@ -42,7 +42,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
       autoLoadEntities: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.env.CLIENT_PATH),
+      rootPath: join(__dirname, process.env.CLIENT_PATH),
     }),
 
     //Modules
