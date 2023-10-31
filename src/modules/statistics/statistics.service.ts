@@ -7,7 +7,7 @@ import { Between } from 'typeorm';
 
 @Injectable()
 export class StatisticsService {
-  constructor(private incidentsService: IncidentsService) {}
+  constructor(private incidentsService: IncidentsService) { }
 
   async incidentsCount(startOn: Date, endOn: Date): Promise<number> {
     return await this.incidentsService.count({
@@ -91,11 +91,14 @@ export class StatisticsService {
     });
     const assignedGroupsIncidentsValues: string[] = [];
     for (const incident of incidents)
-      if (!assignedGroupsIncidentsValues.includes(incident.assignedGroup.name))
-        assignedGroupsIncidentsValues.push(incident.assignedGroup.name);
+      if (incident.assignedGroup)
+        if (
+          !assignedGroupsIncidentsValues.includes(incident.assignedGroup.name)
+        )
+          assignedGroupsIncidentsValues.push(incident.assignedGroup.name);
     assignedGroupsIncidentsValues.map((value) => {
       const assignedGroupIncidents = incidents.filter(
-        (incident) => incident.assignedGroup.name == value,
+        (incident) => incident.assignedGroup && incident.assignedGroup.name == value,
       );
       statisticsIncidentAssignedGroups.push({
         value,

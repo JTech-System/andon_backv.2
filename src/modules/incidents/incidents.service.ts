@@ -160,6 +160,7 @@ export class IncidentsService {
           assignedTo: true,
           closedBy: true,
           assignedGroup: true,
+          productionLine: true,
         },
         skip: min,
         take: pageSize,
