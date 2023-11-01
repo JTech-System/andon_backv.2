@@ -84,6 +84,7 @@ export class IncidentsService {
     this.notificationSendService.send(
       'incident',
       NotificationOperation.CREATE,
+      `/incidents/${incident.id}`,
       incident,
     );
 
@@ -328,6 +329,7 @@ export class IncidentsService {
     this.notificationSendService.send(
       'incident',
       NotificationOperation.UPDATE,
+      `/incidents/${incident.id}`,
       incident,
       lastIncident,
     );
@@ -338,6 +340,7 @@ export class IncidentsService {
     this.notificationSendService.send(
       'incident',
       NotificationOperation.DELETE,
+      '/incidents',
       await this.findOne(id),
     );
     await this.incidentsRepository.delete({ id });

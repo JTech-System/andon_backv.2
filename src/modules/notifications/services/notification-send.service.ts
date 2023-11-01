@@ -28,7 +28,7 @@ export class NotificationSendService {
     private groupsService: GroupsService,
   ) {}
 
-  private parseContent(content: string, record: object): string {
+  private parseContent(content: string, record: object, url: string): string {
     // Initialize the 'parsedContent' variable with the original content.
     let parsedContent = content;
 
@@ -41,8 +41,20 @@ export class NotificationSendService {
         // Extract the field name from the placeholder by removing '<<' and '>>'.
         const fieldName = field.slice(2, -2);
 
+        if (fieldName == 'url') {
+          parsedContent = parsedContent.replace(
+            field,
+            `${process.env.CLIENT_URL}${url}`,
+          );
+        } else if (fieldName.indexOf('.') != -1) {
+          const names = fieldName.split('.');
+          parsedContent = parsedContent.replace(
+            field,
+            record[names[0]][names[1]],
+          );
+        }
         // Check if the 'record' object contains a value for the 'fieldName'.
-        if (record[fieldName] !== undefined) {
+        else if (record[fieldName] !== undefined) {
           // Replace the field placeholder in 'parsedContent' with the corresponding value.
           parsedContent = parsedContent.replace(field, record[fieldName]);
         }
@@ -57,17 +69,18 @@ export class NotificationSendService {
     notification: Notification,
     emails: string[],
     record: object,
+    url: string,
   ): Promise<void> {
     // Initialize a variable to store the email subject.
     let subject: string | undefined;
 
     // If the notification has a subject, parse and store it using the 'parseContent' method.
     if (notification.subject) {
-      subject = this.parseContent(notification.subject, record);
+      subject = this.parseContent(notification.subject, record, url);
     }
 
     // Parse the email body using the 'parseContent' method.
-    const body = this.parseContent(notification.body, record);
+    const body = this.parseContent(notification.body, record, url);
 
     // Define the token endpoint for authentication with Microsoft Graph API.
     const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
@@ -119,17 +132,18 @@ export class NotificationSendService {
     notification: Notification,
     push: NotificationPush[],
     record: object,
+    url: string,
   ): Promise<void> {
     // Initialize a variable to store the push notification subject.
     let subject: string | undefined;
 
     // If the notification has a subject, parse and store it using the 'parseContent' method.
     if (notification.subject) {
-      subject = this.parseContent(notification.subject, record);
+      subject = this.parseContent(notification.subject, record, url);
     }
 
     // Parse the push notification body using the 'parseContent' method.
-    const body = this.parseContent(notification.body, record);
+    const body = this.parseContent(notification.body, record, url);
 
     // Iterate over the 'push' array to send push notifications to multiple recipients.
     push.map(async (notificationPush) => {
@@ -148,9 +162,9 @@ export class NotificationSendService {
               title: subject,
               body: body,
               icon: '/assets/images/icon.png',
-            },
-            data: {
-              url: 'http://localhost:4200',
+              data: {
+                url: `${process.env.CLIENT_URL}${url}`,
+              },
             },
           }),
         );
@@ -224,7 +238,7 @@ export class NotificationSendService {
     job: CronJob,
   ): Promise<boolean> {
     // Initialize a variable to determine if the job should be stopped.
-    let stop = true;
+    let stop = false;
 
     // Create a new data source for accessing the application's database.
     const appDataSource = new DataSource({
@@ -233,7 +247,7 @@ export class NotificationSendService {
       port: +process.env.DB_PORT,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: 'andon',
+      database: process.env.DB_DATABASE,
     });
 
     // Initialize the data source.
@@ -260,7 +274,7 @@ export class NotificationSendService {
         )) as NotificationStopField[];
 
         // Check if there are stop fields associated with the notification.
-        if (stopFields.length > 0) {
+        if (stopFields.length == 0) {
           // Set 'stop' to false, indicating the job should be stopped.
           stop = true;
         }
@@ -304,7 +318,7 @@ export class NotificationSendService {
           }
         }
       }
-    }
+    } else stop = true;
 
     // If 'stop' is still true, stop the job.
     if (stop) job.stop();
@@ -366,7 +380,6 @@ export class NotificationSendService {
         }
       }
     }
-
     // Return the list of recipients, including those added from groups and manager groups.
     return recipients;
   }
@@ -383,6 +396,7 @@ export class NotificationSendService {
   async send(
     entity: string,
     operation: NotificationOperation,
+    url: string,
     record: object,
     lastRecord?: object,
   ): Promise<void> {
@@ -427,12 +441,12 @@ export class NotificationSendService {
                 job,
               ))
             )
-              await this.sendEmail(notification, recipientEmails, record);
+              await this.sendEmail(notification, recipientEmails, record, url);
           });
           job.start();
         } else {
           // Send the email immediately if no cronTime is defined.
-          await this.sendEmail(notification, recipientEmails, record);
+          await this.sendEmail(notification, recipientEmails, record, url);
         }
       }
     });
@@ -493,12 +507,12 @@ export class NotificationSendService {
                 job,
               ))
             )
-              await this.sendPush(notification, push, record);
+              await this.sendPush(notification, push, record, url);
           });
           job.start();
         } else {
           // Send push notifications immediately if no cronTime is defined.
-          await this.sendPush(notification, push, record);
+          await this.sendPush(notification, push, record, url);
         }
       }
     });
