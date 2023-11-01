@@ -24,8 +24,10 @@ import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiOperation,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { PermissionAPIDto } from './dto/permission-api.dto';
+import { ResourcePermissionsDto } from './dto/update-resources.dto';
 
 @ApiTags('Permission')
 @ApiBearerAuth()
@@ -89,6 +91,24 @@ export class PermissionController {
     @Body() updatePermissionDto: CreatePermissionDto,
   ): Promise<Permission> {
     return await this.permissionService.update(id, updatePermissionDto);
+  }
+
+  @Put('/resources/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add Resources to a Permission' })
+  @ApiResponse({ status: 200, description: 'Permission updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Permission not found.' })
+  addResources(@Param('id') id: string, @Body() resourcePermissionsDto: ResourcePermissionsDto) {
+    return this.permissionService.addResources(id, resourcePermissionsDto);
+  }
+  
+  @Delete('/resources/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Remove Resources from a Permission' })
+  @ApiResponse({ status: 200, description: 'Permission updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Permission not found.' })
+  removeResources(@Param('id') id: string, @Body() resourcePermissionsDto: ResourcePermissionsDto) {
+    return this.permissionService.removeResources(id, resourcePermissionsDto);
   }
 
   @Delete(':id')

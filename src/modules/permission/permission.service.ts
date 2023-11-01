@@ -6,6 +6,7 @@ import { CreatePermissionDto } from './dto/create-permission.dto';
 import { ResourceService } from '../resource/resource.service';
 import { Role } from '../role/entities/role.entity';
 import { PermissionAPIDto } from './dto/permission-api.dto';
+import { ResourcePermissionsDto } from './dto/update-resources.dto';
 
 @Injectable()
 export class PermissionService {
@@ -24,20 +25,10 @@ export class PermissionService {
 
     if (existingPermission) {
       throw new ConflictException('Permission with this name already exists');
-    }
-
-    let resources = [];
-    if (createPermissionDto.resources && createPermissionDto.resources.length > 0) {
-      resources = await this.resourceService.findResourcesByIds(createPermissionDto.resources);
-
-      if (resources.length !== createPermissionDto.resources.length) {
-        throw new BadRequestException('One or more resources were not found.');
-      }
-    }
+    }   
 
     const permission = this.permissionRepository.create({
       ...createPermissionDto,
-      resources,
     });
 
     try {
@@ -169,4 +160,57 @@ async remove(id: string): Promise<void> {
 
     return permissions;
   }
+
+  async addResources(permissionID: string, updateResources: ResourcePermissionsDto): Promise<Permission> {
+    const permission = await this.permissionRepository.findOne({ where: { id: permissionID }, relations: ['resources'] }); // Use permissionRepository
+    if (!permission) {
+      throw new NotFoundException('User not found');
+    }
+
+    for (const resourceId of updateResources.resources) {
+      const resource = await this.resourceService.findOne(resourceId);
+
+      if (!resource) {
+        continue; // Skip if resource not found. Alternatively, you can throw an exception.
+      }
+
+      
+      
+      // Add resource to permission.resources if it doesn't exist
+      if (!permission.resources.some(res => res.id === resourceId)) {
+        permission.resources.push(resource);
+      }
+    }
+
+    await this.permissionRepository.save(permission); // Use permissionRepository to save permission
+    return permission;
+  }
+
+  async removeResources(permissionID: string, updateResources: ResourcePermissionsDto): Promise<Permission> {
+    const permission = await this.permissionRepository.findOne({ where: { id: permissionID }, relations: ['resources'] }); // Use permissionRepository
+    if (!permission) {
+      throw new NotFoundException('User not found');
+    }
+
+    for (const resourceId of updateResources.resources) {
+      const resource = await this.resourceService.findOne(resourceId);
+
+      if (!resource) {
+        continue; // Skip if resource not found. Alternatively, you can throw an exception.
+      }
+
+    
+      
+
+      // Remove resource from permission.resources
+      const index = permission.resources.findIndex(res => res.id === resourceId);
+      if (index !== -1) {
+        permission.resources.splice(index, 1);
+      }
+    }
+
+    await this.permissionRepository.save(permission); // Use permissionRepository to save permission
+    return permission;
+  }
+
 }
