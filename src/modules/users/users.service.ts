@@ -187,7 +187,6 @@ export class UsersService {
     try {
       return await this.usersRepository.save(user);
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(
         'An error occurred while adding roles to the user',
       );
@@ -209,11 +208,9 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
 
   // Remove specified roles from the user
   user.roles = user.roles.filter(userRole => !rolesToRemove.some(roleToRemove => roleToRemove.id === userRole.id));
-  console.log(rolesToRemove);
   try {
     return await this.usersRepository.save(user);
   } catch (error) {
-    console.error(error);
     throw new InternalServerErrorException(
       'An error occurred while removing roles from the user',
     );

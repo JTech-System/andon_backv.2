@@ -132,7 +132,7 @@ export class RoleService {
     if (rolePermissionsDto.permissions && rolePermissionsDto.permissions.length > 0) {
       
       for (const existingPermissionId of rolePermissionsDto.permissions) {
-        console.log(`Permission with ID ${existingPermissionId}`);
+        
         this.removePermission(id, existingPermissionId);
       }        
     }

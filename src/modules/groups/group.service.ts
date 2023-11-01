@@ -38,7 +38,6 @@ export class GroupService {
       try {
         manager = await this.usersService.findOne(createGroupDto.manager);
       } catch (error) {
-        console.error('Error while fetching manager:', error);
       }
 
       if (!manager) {
@@ -53,7 +52,6 @@ export class GroupService {
     try {
       return await this.groupRepository.save(group);
     } catch (error) {
-      console.log(error);
       throw new ConflictException('Could not save group', error);
     }
   }
@@ -102,7 +100,6 @@ export class GroupService {
     if (!group) {
       throw new NotFoundException(`Group with ID ${id} not found`);
     }
-    console.log(group.users);
     return group;
   }
 
@@ -118,7 +115,6 @@ export class GroupService {
       try {
         manager = await this.usersService.findOne(updateGroupDto.manager);
       } catch (error) {
-        console.error('Error while fetching manager:', error);
       }      
     }
     if (!manager) {
@@ -184,7 +180,6 @@ export class GroupService {
     try {
       return await this.groupRepository.save(group);
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(
         'An error occurred while adding roles to the group',
       );
@@ -221,7 +216,6 @@ export class GroupService {
     try {
       return await this.groupRepository.save(group);
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(
         'An error occurred while removing roles from the group',
       );
