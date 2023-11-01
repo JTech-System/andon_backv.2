@@ -63,46 +63,74 @@ export class AuthService {
   }
 
   async evaluateUserPermissions(userId: string): Promise<any> {
-  const user = await this.usersService.findOne(userId, {
-    relations: ['roles', 'roles.permissions', 'roles.permissions.resources', 'groups']
-  });
-
-  if (!user) {
-    throw new NotFoundException(`User with ID ${userId} not found`);
-  }
-
-  const permissions = {
-    permissions: {
-      routes: {},
-      fields: {},
-      actions: {},
+    const user = await this.usersService.findOne(userId, {
+      relations: ['roles', 'roles.permissions', 'roles.permissions.resources', 'groups']
+    });
+  
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
-  };
-
-  for (const role of user.roles) {
-    for (const permission of role.permissions) {
-      for (const resource of permission.resources) {
-        if (resource.type === 'route') {
-          if (!permissions.permissions.routes[resource.name]) {
-            permissions.permissions.routes[resource.name] = {};
+  
+    const permissions = {
+      permissions: {
+        routes: {},
+        fields: {},
+        buttons: {},
+        files: {},
+        data: {},
+        actions: {},
+      }
+    };
+  
+    for (const role of user.roles) {
+      for (const permission of role.permissions) {
+        for (const resource of permission.resources) {
+          switch (resource.type) {
+            case 'route':
+              if (!permissions.permissions.routes[resource.name]) {
+                permissions.permissions.routes[resource.name] = {};
+              }
+              permissions.permissions.routes[resource.name][permission.action] = true;
+              break;
+            case 'field':
+              if (!permissions.permissions.fields[resource.name]) {
+                permissions.permissions.fields[resource.name] = {};
+              }
+              permissions.permissions.fields[resource.name][permission.action] = true;
+              break;
+            case 'button':
+              if (!permissions.permissions.buttons[resource.name]) {
+                permissions.permissions.buttons[resource.name] = {};
+              }
+              permissions.permissions.buttons[resource.name][permission.action] = true;
+              break;
+            case 'file':
+              if (!permissions.permissions.files[resource.name]) {
+                permissions.permissions.files[resource.name] = {};
+              }
+              permissions.permissions.files[resource.name][permission.action] = true;
+              break;
+            case 'data':
+              if (!permissions.permissions.data[resource.name]) {
+                permissions.permissions.data[resource.name] = {};
+              }
+              permissions.permissions.data[resource.name][permission.action] = true;
+              break;
+            case 'action':
+              if (!permissions.permissions.actions[resource.name]) {
+                permissions.permissions.actions[resource.name] = {};
+              }
+              permissions.permissions.actions[resource.name][permission.action] = true;
+              break;
+            default:
+              // Handle unknown resource types or log an error
+              console.error(`Unknown resource type: ${resource.type}`);
           }
-          permissions.permissions.routes[resource.name][permission.action] = true;
-        } else if (resource.type === 'field') {
-          if (!permissions.permissions.fields[resource.name]) {
-            permissions.permissions.fields[resource.name] = {};
-          }
-          permissions.permissions.fields[resource.name][permission.action] = true;
-        } else if (resource.type === 'action') {
-          if (!permissions.permissions.actions[resource.name]) {
-            permissions.permissions.actions[resource.name] = {};
-          }
-          permissions.permissions.actions[resource.name][permission.action] = true;
         }
       }
     }
+  
+    return permissions.permissions;
   }
-
-  return permissions.permissions;
-}
-
+  
 }
