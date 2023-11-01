@@ -23,7 +23,10 @@
       "@auth/*": ["./src/integrations/auth/*"],
       "@incidents/*": ["./src/modules/incidents/*"],
       "@production-lines/*": ["./src/modules/production-lines/*"],
-      "@machines/*": ["./src/modules/machines/*"]
+      "@machines/*": ["./src/modules/machines/*"],
+      "@notifications/*": ["./src/modules/notifications/*"],
+      "@groups/*": ["./src/modules/groups/*"],
+      "@statistics/*": ["./src/modules/statistics/*"]
     }
   }
 }

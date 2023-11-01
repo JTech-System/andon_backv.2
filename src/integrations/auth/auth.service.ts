@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LogInDto } from './dto/log-in.dto';
 import { ResponseLogInDto } from './dto/response-log-in.dto';
 import { UsersService } from '@users/users.service';
@@ -32,12 +36,12 @@ export class AuthService {
         let permissions = {permissions: await this.evaluateUserPermissions(user.id)};
         const payload = {
           user,
-          permissions
+          permissions,
         };
         return {
           token: await this.jwtService.signAsync(payload),
           user,
-          permissions
+          permissions,
         };
       }
     }

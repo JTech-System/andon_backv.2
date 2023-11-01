@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { Group } from 'src/modules/groups/entities/group.entity';
+import { NotificationPush } from 'src/modules/notifications/entities/notification-push.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -85,8 +86,9 @@ export class User extends BaseEntity {
   @JoinTable()
   groups: Group[];
 
-  @OneToMany(() => Group, group => group.manager)
-  groupsManaged: Group[];
-
-
+  @OneToMany(
+    () => NotificationPush,
+    (notificationPush) => notificationPush.user,
+  )
+  notificationPush: NotificationPush[];
 }

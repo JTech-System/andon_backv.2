@@ -29,7 +29,6 @@ export class GroupService {
     const existingGroup = await this.groupRepository.findOne({
       where: { name: createGroupDto.name },
     });
-
     if (existingGroup) {
       throw new ConflictException('Group with this name already exists');
     }
@@ -132,6 +131,7 @@ export class GroupService {
     }
     await this.groupRepository.save(group);
     return group;
+  }
   }
 
 

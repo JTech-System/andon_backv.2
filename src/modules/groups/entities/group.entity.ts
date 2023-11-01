@@ -80,11 +80,10 @@ export class Group extends BaseEntity {
   /** @users */
   @ApiProperty({
     description: 'Array of user identifiers associated with the group',
-    type: User,
+    type: [User],
     isArray: true,
   })
   @ManyToMany(() => User)
   @JoinTable()
   users: User[];
 }
-

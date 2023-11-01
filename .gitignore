@@ -37,3 +37,6 @@ lerna-debug.log*
 
 # Enviroments
 .env
+
+# Certificates
+*.pem

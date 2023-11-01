@@ -2,12 +2,12 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  RequestMethod
+  RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './integrations/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { AuthMiddleware } from '@auth/auth.middleware';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { ProductionLinesModule } from './modules/production-lines/production-lines.module';
@@ -16,10 +16,12 @@ import { RoleModule } from './modules/role/role.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { PolicyModule } from './modules/policy/policy.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ResourceModule } from './modules/resource/resource.module';
 import { GroupsModule } from './modules/groups/group.module';
-
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { StatisticsModule } from './modules/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -35,24 +37,31 @@ import { GroupsModule } from './modules/groups/group.module';
       port: +process.env.DB_PORT,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: 'andon',
-      synchronize: false,//process.env.APP_ENV !== 'production',
+      database: process.env.DB_DATABASE,
+      synchronize: process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, process.env.CLIENT_PATH),
+    }),
+
     //Modules
-    UsersModule,
     AuthModule,
+    UsersModule,
     IncidentsModule,
     ProductionLinesModule,
     MachinesModule,
     RoleModule,
     PolicyModule,
     PermissionModule,
+    NotificationsModule,
     ResourceModule,
-    GroupsModule
+    GroupsModule,
+    StatisticsModule,
   ],
   controllers: [],
   providers: [],
+  exports: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

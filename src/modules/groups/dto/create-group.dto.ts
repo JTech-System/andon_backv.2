@@ -28,7 +28,9 @@ export class CreateGroupDto {
   })
   @IsString({ message: 'Description should be a string' })
   @IsOptional()
-  @MaxLength(256, { message: 'Description should not be longer than 256 characters' })
+  @MaxLength(256, {
+    message: 'Description should not be longer than 256 characters',
+  })
   description?: string;
 
   @ApiProperty({
