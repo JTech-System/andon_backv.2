@@ -224,7 +224,7 @@ export class NotificationSendService {
     job: CronJob,
   ): Promise<boolean> {
     // Initialize a variable to determine if the job should be stopped.
-    let stop = true;
+    let stop = false;
 
     // Create a new data source for accessing the application's database.
     const appDataSource = new DataSource({
@@ -260,7 +260,8 @@ export class NotificationSendService {
         )) as NotificationStopField[];
 
         // Check if there are stop fields associated with the notification.
-        if (stopFields.length > 0) {
+        console.log(stopFields);
+        if (stopFields.length == 0) {
           // Set 'stop' to false, indicating the job should be stopped.
           stop = true;
         }
@@ -366,7 +367,6 @@ export class NotificationSendService {
         }
       }
     }
-
     // Return the list of recipients, including those added from groups and manager groups.
     return recipients;
   }
