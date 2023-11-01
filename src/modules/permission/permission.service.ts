@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { ResourceService } from '../resource/resource.service';
 import { Role } from '../role/entities/role.entity';
+import { PermissionAPIDto } from './dto/permission-api.dto';
 
 @Injectable()
 export class PermissionService {
@@ -59,6 +60,37 @@ export class PermissionService {
   async findAll(): Promise<Permission[]> {
     return await this.permissionRepository.find();
   }
+  async findAllFilters(
+    skip = 0,
+    take = 10,
+    sortField = 'id',
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+    search: string,
+  ): Promise<PermissionAPIDto> {
+    let whereCondition = {};
+  
+    if (search) {
+      whereCondition = {
+        name: Like(`%${search}%`),
+      };
+    }
+  
+    const [result, total] = await this.permissionRepository.findAndCount({
+      where: whereCondition,
+      order: { [sortField]: sortOrder },
+      skip,
+      take,
+    });
+  
+    if (total === 0) {
+      // You can either return an empty result or throw an exception based on your requirements
+    }
+    return {
+      row_count: total,
+      rows: result,
+    };
+  }
+  
 
   async update(id: string, updatePermissionDto: CreatePermissionDto): Promise<Permission> {
     const permission = await this.findOne(id);

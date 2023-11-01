@@ -60,7 +60,6 @@ export class Resource extends BaseEntity {
     isArray: true,
   })
   @ManyToMany(() => Permission, (permission) => permission.resources, {
-    eager: true,
     cascade: true,
   })
   permissions: Permission[];  

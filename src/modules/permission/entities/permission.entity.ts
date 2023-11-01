@@ -44,7 +44,7 @@ export class Permission extends BaseEntity {
     isArray: true,
     description: 'A list of resources associated with the permission.',
   })  
-  @ManyToMany(() => Resource, resource => resource.permissions, {})
+  @ManyToMany(() => Resource, resource => resource.permissions, {eager: true})
   @JoinTable()
   resources: Resource[];
 

@@ -1,8 +1,9 @@
 import { Injectable, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { CreateResourceDto } from './dto/create-resource.dto';
 import { Resource } from './entities/resource.entity';
+import { ResourceAPIDto } from './dto/resource-api.dto';
 
 @Injectable()
 export class ResourceService {
@@ -78,6 +79,36 @@ export class ResourceService {
     }
 
     return resource;
+}
+async findAllFilters(
+  skip = 0,
+  take = 10,
+  sortField = 'id',
+  sortOrder: 'ASC' | 'DESC' = 'ASC',
+  search: string,
+): Promise<ResourceAPIDto> {
+  let whereCondition = {};
+
+  if (search) {
+    whereCondition = {
+      name: Like(`%${search}%`),
+    };
+  }
+
+  const [result, total] = await this.resourceRepository.findAndCount({
+    where: whereCondition,
+    order: { [sortField]: sortOrder },
+    skip,
+    take,
+  });
+
+  if (total === 0) {
+    // You can either return an empty result or throw an exception based on your requirements
+  }
+  return {
+    row_count: total,
+    rows: result,
+  };
 }
 
 async remove(id: string): Promise<string> {

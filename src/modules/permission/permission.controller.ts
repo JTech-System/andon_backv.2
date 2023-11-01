@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
@@ -24,6 +25,7 @@ import {
   ApiCreatedResponse,
   ApiOperation,
 } from '@nestjs/swagger';
+import { PermissionAPIDto } from './dto/permission-api.dto';
 
 @ApiTags('Permission')
 @ApiBearerAuth()
@@ -50,7 +52,23 @@ export class PermissionController {
   findAll(): Promise<Permission[]> {
     return this.permissionService.findAll();
   }
-
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  async findAllFilters(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+    @Query('search') search: string,
+  ): Promise<PermissionAPIDto> {
+    return await this.permissionService.findAllFilters(
+      skip,
+      take,
+      sortField,
+      sortOrder,
+      search,
+    );
+  }
   @Get(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get a Permission by ID' })
