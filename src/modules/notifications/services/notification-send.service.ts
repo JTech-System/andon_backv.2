@@ -233,7 +233,7 @@ export class NotificationSendService {
       port: +process.env.DB_PORT,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: 'andon',
+      database: process.env.DB_DATABASE,
     });
 
     // Initialize the data source.
@@ -260,7 +260,6 @@ export class NotificationSendService {
         )) as NotificationStopField[];
 
         // Check if there are stop fields associated with the notification.
-        console.log(stopFields);
         if (stopFields.length == 0) {
           // Set 'stop' to false, indicating the job should be stopped.
           stop = true;
