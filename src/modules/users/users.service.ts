@@ -14,7 +14,7 @@ import { RoleService } from '../role/role.service';
 
 import * as bcrypt from 'bcrypt';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
-import { GroupService } from '../groups/group.service';
+import { GroupsService } from '../groups/group.service';
 import { UpdateUserRolesDto } from './dto/update-roles.dto';
 import { UserAPIListDto } from './dto/response-api.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
@@ -25,7 +25,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private roleService: RoleService,
-    private groupService: GroupService,
+    private groupService: GroupsService,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {

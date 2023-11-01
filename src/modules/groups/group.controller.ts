@@ -64,24 +64,7 @@ export class GroupsController {
     @Query('sortOrder') sortOrder: 'ASC' | 'DESC', 
     @Query('search') search: string | null
   ): Promise<GroupAPIListDto> {
-    const users = await this.groupService.findAllFilters(skip,take,sortField,sortOrder,search);
-    if (users.row_count === 0) {
-      throw new NotFoundException('No groups found.');
-    }
-    return users;
-  }
-  @Get('/filters')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Filter Groups' })
-  @ApiOkResponse({ type: [Group], description: 'Returning groups filtered.' })
-  async findAllQuery(
-    @Query('skip') skip: number,
-    @Query('take') take: number,
-    @Query('sortField') sortField: string,
-    @Query('sortOrder') sortOrder: 'ASC' | 'DESC', 
-    @Query('search') search: string | null
-  ): Promise<GroupAPIListDto> {
-    const users = await this.groupService.findAllFilters(skip,take,sortField,sortOrder,search);
+    const users = await this.groupsService.findAllFilters(skip,take,sortField,sortOrder,search);
     if (users.row_count === 0) {
       throw new NotFoundException('No groups found.');
     }
@@ -129,7 +112,7 @@ export class GroupsController {
   @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
   @ApiResponse({ status: 404, description: 'Group not found.' })
   async addRolesToGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
-    return await this.groupService.addGroupRoles(id, updaterolesDto);
+    return await this.groupsService.addGroupRoles(id, updaterolesDto);
   }
 
   @Delete('/roles/:id') 
@@ -138,7 +121,7 @@ export class GroupsController {
   @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
   @ApiResponse({ status: 404, description: 'Group not found.' })
   async removeRolesFromGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
-    return await this.groupService.removeGroupRoles(id, updaterolesDto);
+    return await this.groupsService.removeGroupRoles(id, updaterolesDto);
   }
 
 }

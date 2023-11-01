@@ -17,7 +17,7 @@ import { GroupAPIListDto } from './dto/group-api.dto';
 import { GroupRolesDto } from './dto/add-roles-group.dto';
 
 @Injectable()
-export class GroupService {
+export class GroupsService {
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
@@ -132,9 +132,6 @@ export class GroupService {
     await this.groupRepository.save(group);
     return group;
   }
-  }
-
-
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
     group.users = [];

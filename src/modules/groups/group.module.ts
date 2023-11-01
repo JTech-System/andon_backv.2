@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Group } from './entities/group.entity';
 import { RoleModule } from '../role/role.module';
 
-import { GroupController } from './group.controller';
-import { GroupService } from './group.service';
+import { GroupsController } from './group.controller';
+import { GroupsService } from './group.service';
 import { UsersModule } from '@users/users.module';
 
 @Module({
@@ -13,8 +13,8 @@ import { UsersModule } from '@users/users.module';
         RoleModule,
         forwardRef(() => UsersModule),
     ],
-    controllers: [GroupController],
-    providers: [GroupService],
-    exports: [GroupService],
+    controllers: [GroupsController],
+    providers: [GroupsService],
+    exports: [GroupsService],
 })
 export class GroupsModule {}
