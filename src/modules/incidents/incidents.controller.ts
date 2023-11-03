@@ -60,7 +60,6 @@ export class IncidentsController {
   @ApiOkResponse({
     type: [IncidentCategory],
   })
-  @ApiBearerAuth()
   async findAllCategories(): Promise<IncidentCategory[]> {
     return await this.incidentsService.findAllCategories();
   }
@@ -134,7 +133,6 @@ export class IncidentsController {
   @ApiCreatedResponse({
     type: Incident,
   })
-  @ApiBearerAuth()
   async create(
     @Body() createIncidentDto: CreateIncidentDto,
     @CurrentUser() currentUser: User,

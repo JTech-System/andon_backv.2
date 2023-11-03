@@ -23,13 +23,13 @@ export class Incident extends BaseEntity {
   @ApiProperty({
     type: ResponseUserDto,
   })
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   createdBy: User;
 
   @ApiProperty({
     type: ResponseUserDto,
   })
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   updatedBy: User;
 
   @ApiProperty({
@@ -58,13 +58,19 @@ export class Incident extends BaseEntity {
   @ApiProperty({
     type: IncidentCategory,
   })
-  @ManyToOne(() => IncidentCategory, (incidentCategory) => incidentCategory.id)
+  @ManyToOne(
+    () => IncidentCategory,
+    (incidentCategory) => incidentCategory.id,
+    { onDelete: 'CASCADE' },
+  )
   category: IncidentCategory;
 
   @ApiProperty({
     type: ProductionLine,
   })
-  @ManyToOne(() => ProductionLine, (productionLine) => productionLine.id)
+  @ManyToOne(() => ProductionLine, (productionLine) => productionLine.id, {
+    onDelete: 'CASCADE',
+  })
   productionLine: ProductionLine;
 
   @ApiProperty({
@@ -81,7 +87,7 @@ export class Incident extends BaseEntity {
     type: Group,
     required: false,
   })
-  @ManyToOne(() => Group, (group) => group.id)
+  @ManyToOne(() => Group, (group) => group.id, { onDelete: 'CASCADE' })
   assignedGroup: Group;
 
   @ApiProperty({
@@ -89,6 +95,7 @@ export class Incident extends BaseEntity {
     required: false,
   })
   @ManyToOne(() => User, (user) => user.id, {
+    onDelete: 'CASCADE',
     nullable: true,
   })
   assignedTo?: User;
@@ -98,6 +105,7 @@ export class Incident extends BaseEntity {
     required: false,
   })
   @ManyToOne(() => Machine, (machine) => machine.id, {
+    onDelete: 'CASCADE',
     nullable: true,
   })
   machine: Machine;
@@ -118,6 +126,7 @@ export class Incident extends BaseEntity {
     required: false,
   })
   @ManyToOne(() => User, (user) => user.id, {
+    onDelete: 'CASCADE',
     nullable: true,
   })
   closedBy?: User;
@@ -165,8 +174,16 @@ export class Incident extends BaseEntity {
   closedOn?: Date;
 
   @ApiProperty({
+    required: false,
+  })
+  @Column({
+    nullable: true,
+  })
+  closeTimeLapsed?: number;
+
+  @ApiProperty({
     type: [IncidentComment],
   })
   @OneToMany(() => IncidentComment, (comment) => comment.incident)
-  comments: IncidentComment[];  
+  comments: IncidentComment[];
 }

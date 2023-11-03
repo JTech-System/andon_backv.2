@@ -40,7 +40,6 @@ export class ProductionLinesController {
   @ApiOkResponse({
     type: [ProductionLine],
   })
-  @ApiBearerAuth()
   async findAll(): Promise<ProductionLine[]> {
     return await this.productionLinesService.findAll();
   }

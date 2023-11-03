@@ -262,48 +262,49 @@ export class IncidentsService {
 
     // const lastStatus = lastIncident.status,
     //   status = updateIncidentDto.status;
-    // const date = new Date();
-    // if (lastStatus != status && status != IncidentStatus.CANCEL) {
-    //   if (status == IncidentStatus.IN_PROGRESS) {
-    //     if (
-    //       lastStatus == IncidentStatus.UNASSIGNED ||
-    //       lastStatus == IncidentStatus.ASSIGNED
-    //     ) {
-    //       if (lastIncident.inProgressTimeLapsed && lastIncident.inProgressOn)
-    //         updateIncidentDto['inProgressTimeLapsed'] =
-    //           date.getTime() -
-    //           new Date(lastIncident.inProgressOn).getTime() +
-    //           lastIncident.inProgressTimeLapsed;
-    //       else
-    //         updateIncidentDto['inProgressTimeLapsed'] =
-    //           date.getTime() - new Date(lastIncident.createdOn).getTime();
-    //     }
-    //     updateIncidentDto['inProgressOn'] = date;
-    //   } else if (lastStatus == IncidentStatus.IN_PROGRESS) {
-    //     updateIncidentDto['inProgressOn'] = date;
-    //   }
-    //   if (status == IncidentStatus.CLOSED) {
-    //     updateIncidentDto['closedBy'] = currentUser;
-    //     if (lastIncident.inProgressOn) {
-    //       if (lastIncident.closeTimeLapsed && lastIncident.closedOn)
-    //         updateIncidentDto['closeTimeLapsed'] =
-    //           date.getTime() -
-    //           new Date(lastIncident.closedOn).getTime() +
-    //           lastIncident.closeTimeLapsed;
-    //       else
-    //         updateIncidentDto['closeTimeLapsed'] =
-    //           date.getTime() - new Date(lastIncident.inProgressOn).getTime();
-    //     } else {
-    //       updateIncidentDto['inProgressOn'] = date;
-    //       updateIncidentDto['inProgressTimeLapsed'] = updateIncidentDto[
-    //         'closeTimeLapsed'
-    //       ] = date.getTime() - new Date(lastIncident.createdOn).getTime();
-    //     }
-    //     updateIncidentDto['closedOn'] = date;
-    //   } else if (lastStatus == IncidentStatus.CLOSED) {
-    //     updateIncidentDto['closedOn'] = date;
-    //   }
-    // }
+    const date = new Date();
+    if (lastStatus != status && status != IncidentStatus.CANCEL) {
+      //   if (status == IncidentStatus.IN_PROGRESS) {
+      //     if (
+      //       lastStatus == IncidentStatus.UNASSIGNED ||
+      //       lastStatus == IncidentStatus.ASSIGNED
+      //     ) {
+      //       if (lastIncident.inProgressTimeLapsed && lastIncident.inProgressOn)
+      //         updateIncidentDto['inProgressTimeLapsed'] =
+      //           date.getTime() -
+      //           new Date(lastIncident.inProgressOn).getTime() +
+      //           lastIncident.inProgressTimeLapsed;
+      //       else
+      //         updateIncidentDto['inProgressTimeLapsed'] =
+      //           date.getTime() - new Date(lastIncident.createdOn).getTime();
+      //     }
+      //     updateIncidentDto['inProgressOn'] = date;
+      //   } else if (lastStatus == IncidentStatus.IN_PROGRESS) {
+      //     updateIncidentDto['inProgressOn'] = date;
+      //   }
+
+      if (status == IncidentStatus.CLOSED) {
+        updateIncidentDto['closedBy'] = currentUser;
+        if (lastIncident.inProgressOn) {
+          if (lastIncident.closeTimeLapsed && lastIncident.closedOn)
+            updateIncidentDto['closeTimeLapsed'] =
+              date.getTime() -
+              new Date(lastIncident.closedOn).getTime() +
+              lastIncident.closeTimeLapsed;
+          else
+            updateIncidentDto['closeTimeLapsed'] =
+              date.getTime() - new Date(lastIncident.inProgressOn).getTime();
+        } else {
+          updateIncidentDto['inProgressOn'] = date;
+          updateIncidentDto['inProgressTimeLapsed'] = updateIncidentDto[
+            'closeTimeLapsed'
+          ] = date.getTime() - new Date(lastIncident.createdOn).getTime();
+        }
+        updateIncidentDto['closedOn'] = date;
+      } else if (lastStatus == IncidentStatus.CLOSED) {
+        updateIncidentDto['closedOn'] = date;
+      }
+    }
 
     // Set undefined to null
     [

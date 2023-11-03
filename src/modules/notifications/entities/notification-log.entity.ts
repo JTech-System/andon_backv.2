@@ -4,7 +4,7 @@ import { BaseEntity } from '@utils/entities/base.entity';
 import { Column, ManyToOne } from 'typeorm';
 
 export class NotificationLog extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   receiver: User;
 
   @ApiProperty({
