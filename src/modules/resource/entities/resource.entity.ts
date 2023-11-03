@@ -1,7 +1,9 @@
 import { Permission } from 'src/modules/permission/entities/permission.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '@utils/entities/base.entity';
+import { type } from 'os';
+import { Policy } from 'src/modules/policy/entities/policy.entity';
 
 @Entity()
 export class Resource extends BaseEntity {
@@ -63,5 +65,14 @@ export class Resource extends BaseEntity {
     cascade: true,
   })
   permissions: Permission[];  
+  @ApiProperty({
+    description: 'The permissions associated with the resource',
+    type: () => Permission,
+    isArray: true,
+  })
+  @OneToMany(() => Policy, (policies) => policies.resource, {
+    cascade: true,
+  })
+  policies: Policy[];
 
 }

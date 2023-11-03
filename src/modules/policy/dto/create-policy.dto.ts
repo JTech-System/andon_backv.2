@@ -14,16 +14,6 @@ export class CreatePolicyDto {
   name: string;
 
   @ApiProperty({
-    maxLength: 128,
-    description: 'Value of the policy',
-    example: 'allow',
-  })
-  @IsString({ message: 'Value should be a string' })
-  @IsNotEmpty({ message: 'Value should not be empty' })
-  @MaxLength(128, { message: 'Value should not be longer than 128 characters' })
-  value: string;
-
-  @ApiProperty({
     description: 'Active status of the policy',
     example: true,
   })
@@ -39,25 +29,7 @@ export class CreatePolicyDto {
   @IsString({ message: 'Type should be a string' })
   @IsNotEmpty({ message: 'Type should not be empty' })
   @MaxLength(128, { message: 'Type should not be longer than 128 characters' })
-  type: string;
-
-  @ApiProperty({
-    type: [String],
-    description: 'Roles associated with the policy',
-    example: ['Admin', 'Editor'],
-  })
-  @IsArray({ message: 'Roles should be an array' })
-  @IsOptional()
-  roles: string[];
-
-  @ApiProperty({
-    type: [String],
-    description: 'Permissions associated with the policy',
-    example: ['read', 'write'],
-  })
-  @IsArray({ message: 'Permissions should be an array' })
-  @IsOptional()
-  permissions: string[];
+  type: string; 
 
   @ApiProperty({
     type: Object,

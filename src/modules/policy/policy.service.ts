@@ -23,29 +23,7 @@ export class PolicyService {
       throw new ConflictException('A policy with this name already exists');
     }
 
-    let roles = [];
-    if (createPolicyDto.roles && createPolicyDto.roles.length > 0) {
-      roles = await this.roleService.findRolesByIds(createPolicyDto.roles);
-
-      if (roles.length !== createPolicyDto.roles.length) {
-        throw new BadRequestException('One or more roles were not found.');
-      }
-    }
-
-    let permissions = [];
-    if (createPolicyDto.permissions && createPolicyDto.permissions.length > 0) {
-      permissions = await this.permissionService.findPermissionsByIds(createPolicyDto.permissions);
-
-      if (permissions.length !== createPolicyDto.permissions.length) {
-        throw new BadRequestException('One or more permissions were not found.');
-      }
-    }
-
-    const policy = this.policyRepository.create({
-      ...createPolicyDto,
-      roles, // Assigning the fetched roles to the policy entity
-      permissions, // Assigning the fetched permissions to the policy entity
-    });
+    const policy = this.policyRepository.create(createPolicyDto);
 
     return await this.policyRepository.save(policy);
   }
@@ -59,9 +37,6 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException(`Policy with ID ${id} not found`);
     }
-
-    // If needed, handle the update of relations like roles and permissions here
-
     Object.assign(policy, updatePolicyDto); // Merge the updates into the found policy entity
     await this.policyRepository.save(policy);  // Save the updated policy entity
 
@@ -117,5 +92,7 @@ private evaluatePolicy(policy: Policy, attributes: Record<string, any>): boolean
         return attributeValue !== undefined && attributeValue === conditionValue;
     });
 }
+
+
 
 }
