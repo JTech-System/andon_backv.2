@@ -12,6 +12,27 @@ export class CreatePolicyDto {
   @IsNotEmpty({ message: 'Name should not be empty' })
   @MaxLength(128, { message: 'Name should not be longer than 128 characters' })
   name: string;
+  
+  @ApiProperty({
+    maxLength: 128,
+    description: 'table of the policy',
+    example: 'incidents',
+  })
+  @IsString({ message: 'table should be a string' })
+  @IsNotEmpty({ message: 'table should not be empty' })
+  @MaxLength(128, { message: 'table should not be longer than 128 characters' })
+  table: string;
+
+  @ApiProperty({
+    maxLength: 128,
+    description: 'description of the policy',
+    example: 'Data filter for agents',
+  })
+  @IsString({ message: 'description should be a string' })
+  @IsNotEmpty({ message: 'description should not be empty' })
+  @MaxLength(128, { message: 'description should not be longer than 128 characters' })
+  description: string;
+
 
   @ApiProperty({
     description: 'Active status of the policy',
@@ -19,7 +40,7 @@ export class CreatePolicyDto {
   })
   @IsBoolean({ message: 'Active should be a boolean' })
   @IsNotEmpty({ message: 'Active should not be empty' })
-  active: boolean;
+  isActive: boolean;
 
   @ApiProperty({
     maxLength: 128,

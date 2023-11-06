@@ -8,6 +8,7 @@ import { ApiTags, ApiBearerAuth, ApiOkResponse, ApiCreatedResponse, ApiNotFoundR
 import { Roles } from '@utils/decorators/roles.decorator';
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { UserRole } from '@utils/enums/user-role.enum';
+import { PolicyAPIDto } from './dto/resource-api.dto';
 
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
@@ -61,6 +62,23 @@ export class PolicyController {
   @ApiNotFoundResponse({ description: 'Not found.' })
   findPoliciesByPermission(@Param('permissionId') permissionId: string): Promise<Policy[]> {
     return this.policyService.findPoliciesByPermission(permissionId);
+  }
+  @Get('/filters')
+  @Roles(UserRole.ADMIN)
+  async findAllFilters(
+    @Query('skip') skip: number,
+    @Query('take') take: number,
+    @Query('sortField') sortField: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+    @Query('search') search: string,
+  ): Promise<PolicyAPIDto> {
+    return await this.policyService.findAllFilters(
+      skip,
+      take,
+      sortField,
+      sortOrder,
+      search,
+    );
   }
   
 }

@@ -15,7 +15,7 @@ export class AuthMiddleware implements NestMiddleware {
     if (
       /^\/api\//.test(req.originalUrl) &&
       req.originalUrl != '/api/auth/log-in'
-      && !(req.originalUrl == '/api/users' && req.method == 'POST')
+      //&& !(req.originalUrl == '/api/users' && req.method == 'POST')
     ) {
       const bearerToken = req.headers.authorization as undefined | string;
       const token = !!bearerToken ? bearerToken.replace('Bearer ', '') : null;

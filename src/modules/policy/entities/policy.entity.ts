@@ -3,13 +3,15 @@ import { Role } from '../../role/entities/role.entity';
 import { Permission } from '../../permission/entities/permission.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsJSON, IsString, IsBoolean, IsInt, IsOptional, IsEnum } from 'class-validator';
+import { IsJSON, IsString, IsInt   } from 'class-validator';
 import { Resource } from 'src/modules/resource/entities/resource.entity';
 
-export enum EnvironmentType {
-  DEVELOPMENT = 'development',
-  QA = 'test',
-  PRODUCTION = 'production'
+export enum PolicyAction {
+  WRITE = 'write',
+  FILTER = 'filter',
+  EXECUTE = 'execute',
+  READ = 'read',
+  VIEW = 'view'
 }
 
 @Entity()
@@ -23,7 +25,27 @@ export class Policy extends BaseEntity {
   @IsString()
   @Column({ type: 'varchar', length: 128 })
   name: string;
-
+  @ApiProperty({
+    maxLength: 128,
+    description: 'Name of the table',
+    example: 'Users',
+  })
+  @Column({
+    length: 128,
+  })
+  table: string;
+  
+  @ApiProperty({
+    maxLength: 256,
+    description: 'Description of the resource',
+    example: 'A resource representing user password field',
+  })
+  @Column({
+    length: 256,
+    nullable: true,
+  })
+  description: string;
+  
   @ApiProperty({
     maxLength: 128,
     description: 'The resource this policy applies to',
@@ -34,13 +56,19 @@ export class Policy extends BaseEntity {
   resource: Resource;
 
   @ApiProperty({
-    maxLength: 128,
+    type: 'enum',
+    enum: PolicyAction,
+    default: PolicyAction.FILTER,
     description: 'The action this policy regulates',
-    example: 'edit',
+    example: 'filter',
   })
-  @IsString()
-  @Column({ type: 'varchar', length: 128 })
-  action: string;
+  @Column({ 
+    
+    type: 'enum',
+    enum: PolicyAction,
+    default: PolicyAction.FILTER,
+   })
+  action: PolicyAction;
 
   @ApiProperty({
     type: 'json',
@@ -48,7 +76,7 @@ export class Policy extends BaseEntity {
     example: '{ "role": "admin", "state": "assigned" }',
   })
   @IsJSON()
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   conditions: any;
 
   @ApiProperty({
