@@ -25,6 +25,7 @@ import { GroupsService } from '@groups/group.service';
 import { UsersService } from '@users/users.service';
 import { NotificationsService } from '@notifications/services/notifications.service';
 import { NotificationSendService } from '@notifications/services/notification-send.service';
+import { PolicyService } from '../policy/policy.service';
 
 @Injectable()
 export class IncidentsService {
@@ -40,6 +41,8 @@ export class IncidentsService {
     private groupsService: GroupsService,
     private usersService: UsersService,
     private notificationSendService: NotificationSendService,
+    private policyService: PolicyService
+
   ) {}
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
@@ -100,6 +103,7 @@ export class IncidentsService {
     startCreatedOn?: Date,
     endCreatedOn?: Date,
     assignedGroupId?: string,
+    currentUser?: User,
   ): Promise<PaginationIncidentDto> {
     let where: FindOptionsWhere<Incident>[] = [];
     if (search) {
@@ -143,7 +147,12 @@ export class IncidentsService {
         };
       }
     });
+    const policyConditions = await this.policyService.getDataPolicyConditionsForUser(currentUser, 'incidents');
 
+    // Apply the policy conditions to the query
+    if (policyConditions) {
+      where.push(policyConditions);
+    }
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
     if (page > pages) page = 1;

@@ -11,6 +11,7 @@ import { IncidentComment } from './entities/incident-comment.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { GroupsModule } from '@groups/group.module';
 import { UsersModule } from '@users/users.module';
+import { PolicyModule } from '../policy/policy.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsersModule } from '@users/users.module';
     NotificationsModule,
     GroupsModule,
     UsersModule,
+    PolicyModule
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],

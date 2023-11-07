@@ -102,6 +102,42 @@ export class PolicyService {
 
     return policies;
   }
+  async getDataPolicyConditionsForUser(user: User, resourceType: string): Promise<FindOptionsWhere<any> | null> {
+    // Logic to retrieve policy strings for the user and the specific resource type ('incidents' in this case)
+    const policies = await this.retrievePoliciesForUserAndResource(user, resourceType);
+    
+    // Parse and combine the policy conditions
+    let combinedPolicyConditions = null;
+    for (const policy of policies) {
+      const policyCondition = await this.parsePolicyCondition(policy.conditionString, user);
+      if (combinedPolicyConditions) {
+        combinedPolicyConditions = { AND: [combinedPolicyConditions, policyCondition] };
+      } else {
+        combinedPolicyConditions = policyCondition;
+      }
+    }
+
+    return combinedPolicyConditions;
+  }
+  async retrievePoliciesForUserAndResource(user: User, table: string): Promise<Policy[]> {
+    // Assuming you have a method on the user object or service to get user's roles
+    const userRoles = user.roles;
+
+    // Now, find the policies that apply to these roles and the specified resource type
+    const policies = await this.policyRepository.find({
+      where: {
+        roles: In(userRoles.map(role => role.id)),
+        table: table // Assuming you store the table on the policy
+      },
+      relations: ['conditions'] // Assuming policies have conditions that need to be fetched
+    });
+
+    // If there are specific permissions to check, you could also include those in your query
+    const userPermissions = user.roles;
+    // ... add logic to filter policies based on permissions if necessary ...
+
+    return policies;
+  }
 
   evaluatePolicies(
     policies: Policy[],
