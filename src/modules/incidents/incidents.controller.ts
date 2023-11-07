@@ -113,6 +113,7 @@ export class IncidentsController {
   }
 
   // Notifications
+
   @Get('notifications')
   @ApiOkResponse({
     type: NotificationFieldsDto,

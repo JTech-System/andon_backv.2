@@ -11,4 +11,10 @@ export class IncidentCategory extends BaseEntity {
     length: 128,
   })
   value: string;
+
+  @ApiProperty()
+  @Column({
+    default: true,
+  })
+  active: boolean;
 }

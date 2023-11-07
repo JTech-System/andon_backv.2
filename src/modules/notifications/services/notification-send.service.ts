@@ -13,6 +13,7 @@ import { User } from '@users/entities/user.entity';
 import { GroupsService } from '@groups/group.service';
 import { NotificationsService } from './notifications.service';
 import { NotificationType } from '@notifications/enums/notification-type.enum';
+import { NotificationLogService } from './notification-log.service';
 
 webPush.setVapidDetails(
   process.env.SERVER_WORKER_SUBJECT,
@@ -25,6 +26,7 @@ export class NotificationSendService {
   constructor(
     private notificationsService: NotificationsService,
     private notificationPushService: NotificationPushService,
+    private notificationLogService: NotificationLogService,
     private groupsService: GroupsService,
   ) {}
 
@@ -129,22 +131,11 @@ export class NotificationSendService {
   }
 
   private async sendPush(
-    notification: Notification,
     push: NotificationPush[],
-    record: object,
     url: string,
+    body: string,
+    subject?: string,
   ): Promise<void> {
-    // Initialize a variable to store the push notification subject.
-    let subject: string | undefined;
-
-    // If the notification has a subject, parse and store it using the 'parseContent' method.
-    if (notification.subject) {
-      subject = this.parseContent(notification.subject, record, url);
-    }
-
-    // Parse the push notification body using the 'parseContent' method.
-    const body = this.parseContent(notification.body, record, url);
-
     // Iterate over the 'push' array to send push notifications to multiple recipients.
     push.map(async (notificationPush) => {
       try {
@@ -168,7 +159,7 @@ export class NotificationSendService {
             },
           }),
         );
-      } catch {
+      } catch (ex) {
         // If an error occurs while sending the push notification, remove the corresponding push record.
         this.notificationPushService.remove(notificationPush.id);
       }
@@ -478,21 +469,42 @@ export class NotificationSendService {
         },
       })
     ).map(async (notification) => {
+      // Initialize a variable to store the push notification subject.
+      let subject: string | undefined;
+
+      // If the notification has a subject, parse and store it using the 'parseContent' method.
+      if (notification.subject) {
+        subject = this.parseContent(notification.subject, record, url);
+      }
+
+      // Parse the push notification body using the 'parseContent' method.
+      const body = this.parseContent(notification.body, record, url);
+
       const push: NotificationPush[] = [];
 
       // Collect unique push notifications based on recipients.
-      (await this.getRecipients(notification, record)).map((recipient) => {
-        recipient.notificationPush.map((notificationPush) => {
-          if (
-            !push.find(
-              (findNotificationPush) =>
-                findNotificationPush.id == notificationPush.id,
-            )
-          ) {
-            push.push(notificationPush);
-          }
-        });
-      });
+      const recipients = await this.getRecipients(notification, record);
+      await Promise.all(
+        recipients.map(async (recipient) => {
+          recipient.notificationPush.map((notificationPush) => {
+            if (
+              !push.find(
+                (findNotificationPush) =>
+                  findNotificationPush.id == notificationPush.id,
+              )
+            ) {
+              push.push(notificationPush);
+            }
+          });
+          if (!notification.cronTime)
+            await this.notificationLogService.create({
+              subject,
+              body,
+              recipient,
+              url,
+            });
+        }),
+      );
 
       // Check if the notification should be sent based on the criteria.
       if (this.checkIfSend(operation, notification, record, lastRecord)) {
@@ -506,13 +518,24 @@ export class NotificationSendService {
                 notification.id,
                 job,
               ))
-            )
-              await this.sendPush(notification, push, record, url);
+            ) {
+              await this.sendPush(push, url, body, subject);
+              await Promise.all(
+                recipients.map((recipient) => {
+                  this.notificationLogService.create({
+                    recipient,
+                    subject,
+                    body,
+                    url,
+                  });
+                }),
+              );
+            }
           });
           job.start();
         } else {
           // Send push notifications immediately if no cronTime is defined.
-          await this.sendPush(notification, push, record, url);
+          await this.sendPush(push, url, body, subject);
         }
       }
     });

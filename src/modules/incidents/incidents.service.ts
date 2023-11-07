@@ -360,6 +360,9 @@ export class IncidentsService {
 
   async findAllCategories(): Promise<IncidentCategory[]> {
     return await this.incidentCategoriesRepository.find({
+      where: {
+        active: true,
+      },
       order: {
         value: 'ASC',
       },
@@ -370,6 +373,7 @@ export class IncidentsService {
     const incidentCategory = await this.incidentCategoriesRepository.findOne({
       where: {
         id,
+        active: true,
       },
     });
     if (incidentCategory) return incidentCategory;
@@ -390,7 +394,7 @@ export class IncidentsService {
 
   async deleteCategory(id: string): Promise<void> {
     await this.findOneCategory(id);
-    await this.incidentCategoriesRepository.delete({ id });
+    await this.incidentCategoriesRepository.update({ id }, { active: false });
   }
 
   // Incident Comments
