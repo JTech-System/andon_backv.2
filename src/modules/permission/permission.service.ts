@@ -130,36 +130,6 @@ async remove(id: string): Promise<void> {
   }
 
   
-  async evaluatePermissions(roles: Role[]): Promise<any> {
-
-    const permissions = {
-      routes: {},
-      fields: {},
-      actions: {},
-    };
-    for (const role of roles) {
-      for (const permission of role.permissions) {
-        for (const resource of permission.resources) {
-          if (resource.type === 'route') {
-            permissions.routes[resource.name] = {
-              canAccess: permission.action.includes('canAccess'),
-            };
-          } else if (resource.type === 'field') {
-            permissions.fields[resource.name] = {
-              canRead: permission.action.includes('canRead'),
-              canWrite: permission.action.includes('canWrite'),
-            };
-          } else if (resource.type === 'action') {
-            permissions.actions[resource.name] = {
-              canExecute: permission.action.includes('canExecute'),
-            };
-          }
-        }
-      }
-    }
-
-    return permissions;
-  }
 
   async addResources(permissionID: string, updateResources: ResourcePermissionsDto): Promise<Permission> {
     const permission = await this.permissionRepository.findOne({ where: { id: permissionID }, relations: ['resources'] }); // Use permissionRepository
@@ -173,9 +143,6 @@ async remove(id: string): Promise<void> {
       if (!resource) {
         continue; // Skip if resource not found. Alternatively, you can throw an exception.
       }
-
-      
-      
       // Add resource to permission.resources if it doesn't exist
       if (!permission.resources.some(res => res.id === resourceId)) {
         permission.resources.push(resource);
@@ -198,9 +165,6 @@ async remove(id: string): Promise<void> {
       if (!resource) {
         continue; // Skip if resource not found. Alternatively, you can throw an exception.
       }
-
-    
-      
 
       // Remove resource from permission.resources
       const index = permission.resources.findIndex(res => res.id === resourceId);

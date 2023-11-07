@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MaxLength, IsNotEmpty, IsOptional, IsArray, IsObject, IsBoolean } from 'class-validator';
 import { ActionType } from '../enums/action-type.enum';
+import { PolicyAction } from '../entities/policy.entity';
 
 export class CreatePolicyDto {
   @ApiProperty({
@@ -24,14 +25,18 @@ export class CreatePolicyDto {
   table: string;
 
   @ApiProperty({
-    maxLength: 128,
     description: 'description of the policy',
     example: 'Data filter for agents',
   })
   @IsString({ message: 'description should be a string' })
-  @IsNotEmpty({ message: 'description should not be empty' })
-  @MaxLength(128, { message: 'description should not be longer than 128 characters' })
   description: string;
+
+  @ApiProperty({
+    description: 'resource of the policy',
+    example: 'resource ID',
+  })
+  @IsString({ message: 'resource should be a string' })
+  resource: string;
 
 
   @ApiProperty({
@@ -43,21 +48,16 @@ export class CreatePolicyDto {
   isActive: boolean;
 
   @ApiProperty({
-    maxLength: 128,
     description: 'Type of the policy',
     example: 'access',
   })
   @IsString({ message: 'Type should be a string' })
-  @IsNotEmpty({ message: 'Type should not be empty' })
-  @MaxLength(128, { message: 'Type should not be longer than 128 characters' })
-  type: string; 
+  action: PolicyAction; 
 
   @ApiProperty({
-    type: Object,
     description: 'Conditions under which the policy is applicable',
     example: { location: 'USA' },
   })
-  @IsObject({ message: 'Conditions should be an object' })
   @IsOptional()
-  conditions: JSON;
+  conditions: string;
 }

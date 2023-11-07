@@ -51,9 +51,9 @@ export class Policy extends BaseEntity {
     description: 'The resource this policy applies to',
     example: 'incident',
   })
-  @ManyToOne(() => Resource, (resource) => resource.policies)
+  @ManyToOne(() => Resource, { eager: true, nullable: true })
   @JoinColumn({ name: 'resource_id' })
-  resource: Resource;
+  resource: Resource | null;
 
   @ApiProperty({
     type: 'enum',
@@ -94,11 +94,11 @@ export class Policy extends BaseEntity {
   @OneToMany(() => Policy, policy => policy.parentPolicy)
   children: Policy[];
 
-  @ManyToMany(() => Role, role => role.policies, { onDelete: 'CASCADE' })  
+  @ManyToMany(() => Role, role => role.policies, { eager: true, })  
   @JoinTable()
   roles: Role[];
 
-  @ManyToMany(() => Permission, permission => permission.policies, { onDelete: 'CASCADE' })  
+  @ManyToMany(() => Permission, permission => permission.policies, { eager: true, })  
   @JoinTable()
   permissions: Permission[];
 
