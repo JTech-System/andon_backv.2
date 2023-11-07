@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, All } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindOptionsWhere, Like, Repository } from 'typeorm';
+import { Any, Between, Equal, FindOptionsWhere, In, Like, Not, Repository, SelectQueryBuilder } from 'typeorm';
 import { Policy } from './entities/policy.entity';
 import { CreatePolicyDto } from './dto/create-policy.dto';
 import { Role } from '../role/entities/role.entity';
@@ -27,25 +27,73 @@ export class PolicyService {
     'thisYear': () => Between(startOfYear(new Date()), endOfYear(new Date())),
     // Add 'LastWeek', 'LastMonth', 'LastYear', etc...
   };
-
+  
   // A method to interpret string policies and convert them to query objects
   private parsePolicyCondition(policyString: string, user: User): FindOptionsWhere<any> | Promise<FindOptionsWhere<any>> {
-    // Parse the policy string and replace function statements with actual values
-    // This is a simple example and would need to be more robust to handle complex expressions
-    const policyParts = policyString.split(/OR|AND|IN/);
-    const policyConditions: FindOptionsWhere<any>[] = policyParts.map(part => {
-      const [key, func] = part.split('=');
-      const value = this.functionStatements[func]?.(user);
-      if (value instanceof Promise) {
-        return value.then(val => ({ [key]: val }));
+    // This is a placeholder for actual parsing logic, which will be complex and needs to handle nested structures
+    // For simplicity, I am assuming policyString is a JSON string that represents the query structure
+    const policyObject = JSON.parse(policyString);
+  
+    // A helper function to handle individual conditions
+    const handleCondition = (condition: any): any => {
+      // Extract field, operator, and value from condition
+      const { field, operator, value } = condition;
+      let whereClause: any = {};
+  
+      // You might need a more sophisticated switch or strategy pattern here to handle various operators
+      switch (operator) {
+        case 'contains':
+          whereClause[field] = Like(`%${value}%`);
+          break;
+        case 'doesnotcontain':
+          whereClause[field] = Not(Like(`%${value}%`));
+          break;
+        case 'startswith':
+          whereClause[field] = Like(`${value}%`);
+          break;
+        case 'endswith':
+          whereClause[field] = Like(`%${value}`);
+          break;
+        case '=':
+          whereClause[field] = Equal(value);
+          break;
+        case '!=':
+          whereClause[field] = Not(Equal(value));
+          break;
+        // Handle other operators...
+        case 'Me()':
+          return this.functionStatements['Me'](user).then(val => ({ [field]: val }));
+        case 'isOneOfMyGroups()':
+          return this.functionStatements['isOneOfMyGroups'](user).then(val => ({ [field]: In(val) }));
+        // Add other function handlers here...
+        default:
+          throw new Error(`Unsupported operator: ${operator}`);
       }
-      return { [key]: value };
-    });
-
-    return Promise.all(policyConditions).then(conditions => {
-      return conditions.reduce((acc, condition) => ({ ...acc, ...condition }), {});
-    });
+  
+      return whereClause;
+    };
+  
+    // Recursively parse the conditions and build the where clause
+    const parseConditions = (conditions: any[]): any => {
+      return conditions.map(condition => {
+        if ('conditions' in condition) {
+          // It's a nested condition group
+          const logic = condition.logic; // AND or OR
+          const nestedConditions = parseConditions(condition.conditions);
+          return logic === 'AND' ? All(nestedConditions) : Any(nestedConditions);
+        } else {
+          // It's a single condition
+          return handleCondition(condition);
+        }
+      });
+    };
+  
+    const whereClause = parseConditions(policyObject.conditions);
+  
+    // Assuming the top level is always an AND condition
+    return whereClause.length === 1 ? whereClause[0] : All(whereClause);
   }
+
 
   // This service method will apply the policies to the incoming query parameters
   async applyDataPoliciesToQuery(
