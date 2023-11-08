@@ -77,7 +77,17 @@ export class Policy extends BaseEntity {
   })
   @IsJSON()
   @Column({ type: 'json', nullable: true })
-  conditions: any;
+  conditions: string;
+
+  @ApiProperty({    
+    description: 'Data filter for specific table',
+    example: '{"logic":"AND","conditions":[{"field":"number","operator":"=","value":"INC00001"}]}',
+  })
+  @Column({
+    nullable: true 
+  })
+  dataFilter: string;
+  
 
   @ApiProperty({
     description: 'Version number of the policy for tracking changes',

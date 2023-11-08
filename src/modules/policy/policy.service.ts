@@ -9,15 +9,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   Any,
   Between,
+  Brackets,
   Equal,
   FindOptionsWhere,
   In,
+  IsNull,
+  LessThan,
+  LessThanOrEqual,
   Like,
+  MoreThan,
+  MoreThanOrEqual,
   Not,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { Policy } from './entities/policy.entity';
+import { Policy, PolicyAction } from './entities/policy.entity';
 import { CreatePolicyDto } from './dto/create-policy.dto';
 import { Role } from '../role/entities/role.entity';
 import { RoleService } from '../role/role.service';
@@ -34,8 +40,8 @@ export class PolicyService {
     private roleService: RoleService,
     private permissionService: PermissionService,
     private resourceService: ResourceService,
-  ) {}
-  
+  ) { }
+
   async create(createPolicyDto: CreatePolicyDto): Promise<Policy> {
     const existingPolicy = await this.policyRepository.findOne({
       where: { name: createPolicyDto.name },
@@ -47,7 +53,7 @@ export class PolicyService {
     if (createPolicyDto.resource) {
       try {
         resource = await this.resourceService.findOne(createPolicyDto.resource);
-      } catch (error) {}
+      } catch (error) { }
 
       if (!resource) {
         createPolicyDto.resource = null;
@@ -102,49 +108,120 @@ export class PolicyService {
 
     return policies;
   }
-  async getDataPolicyConditionsForUser(user: User, resourceType: string): Promise<FindOptionsWhere<any> | null> {
-    // Logic to retrieve policy strings for the user and the specific resource type ('incidents' in this case)
-    const policies = await this.retrievePoliciesForUserAndResource(user, resourceType);
-    
-    // Parse and combine the policy conditions
-    let combinedPolicyConditions = null;
-    for (const policy of policies) {
-      const policyCondition = await this.parsePolicyCondition(policy.conditions, user);
-      if (combinedPolicyConditions) {
-        combinedPolicyConditions = { AND: [combinedPolicyConditions, policyCondition] };
-      } else {
-        combinedPolicyConditions = policyCondition;
+  
+  // Method to convert policy conditions into TypeORM where clauses
+  private convertPolicyConditionsToWhereClauses(policyConditions: any): FindOptionsWhere<any>[] {
+    if (!policyConditions) {
+      return [];
+    }
+    if (typeof policyConditions === 'string') {
+      // Parse the string into an object
+      policyConditions = JSON.parse(policyConditions);
+    }
+
+    let whereClauses: FindOptionsWhere<any>[] = [];
+
+    const addConditionToWhereClauses = (condition: any) => {
+      switch (condition.operator) {
+        case '=':
+          whereClauses.push({ [condition.field]: Equal(condition.value) });
+          break;
+        case 'LIKE':
+          whereClauses.push({ [condition.field]: Like(`%${condition.value}%`) });
+          break;
+        case '<':
+          whereClauses.push({ [condition.field]: LessThan(condition.value) });
+          break;
+        case '<=':
+          whereClauses.push({ [condition.field]: LessThanOrEqual(condition.value) });
+          break;
+        case '>':
+          whereClauses.push({ [condition.field]: MoreThan(condition.value) });
+          break;
+        case '>=':
+          whereClauses.push({ [condition.field]: MoreThanOrEqual(condition.value) });
+          break;
+        case '!=':
+        case '<>':
+          whereClauses.push({ [condition.field]: Not(Equal(condition.value)) });
+          break;
+        case 'IN':
+          whereClauses.push({ [condition.field]: In(condition.value) }); // assuming condition.value is an array
+          break;
+        case 'BETWEEN':
+          whereClauses.push({ [condition.field]: Between(condition.value.start, condition.value.end) }); // assuming condition.value has 'start' and 'end' properties
+          break;
+        case 'IS NULL':
+          whereClauses.push({ [condition.field]: IsNull() });
+          break;
+        // Add more cases as necessary for your application
+        default:
+          throw new Error(`Unsupported operator: ${condition.operator}`);
       }
+    };
+    
+
+    const processConditions = (conditions: any) => {
+      if (conditions.logic === 'AND' && conditions.conditions) {
+        conditions.conditions.forEach((cond: any) => {
+          if (this.isCondition(cond)) {
+            addConditionToWhereClauses(cond);
+          } else if ('conditions' in cond && Array.isArray(cond.conditions)) {
+            // Recursively process nested conditions
+            processConditions(cond);
+          }
+        });
+      }
+    };
+
+    if ('conditions' in policyConditions && Array.isArray(policyConditions.conditions)) {
+      processConditions(policyConditions);
+    }
+
+    return whereClauses;
+  }
+
+  // Method to determine if an object is a condition
+  private isCondition(condition: any): boolean {
+    return condition && 'field' in condition && 'operator' in condition && 'value' in condition;
+  }
+
+  // Method to retrieve policy conditions for a user and convert them into TypeORM where clauses
+  async getDataPolicyConditionsForUser(user: User, resourceType: string): Promise<FindOptionsWhere<any>[]> {
+    const policies = await this.retrievePoliciesForUserAndResource(user, resourceType);
+    if (!policies) {
+      return [];
+    }
+    // Initialize an array to hold all combined conditions from each policy
+    let combinedPolicyConditions: FindOptionsWhere<any>[] = [];
+
+    for (const policy of policies) {
+      const policyConditions = this.convertPolicyConditionsToWhereClauses(policy.conditions);
+      combinedPolicyConditions = [...combinedPolicyConditions, ...policyConditions];
     }
 
     return combinedPolicyConditions;
   }
+
+
   async retrievePoliciesForUserAndResource(user: User, table: string): Promise<Policy[]> {
     // Assuming you have a method on the user object or service to get user's roles
+    console.log(user)
     const userRoles = user.roles;
 
     // Now, find the policies that apply to these roles and the specified resource type
-    const policies = await this.policyRepository.find({
-      where: {
-        roles: In(userRoles.map(role => role.id)),
-        table: table // Assuming you store the table on the policy
-      },
-      relations: ['conditions'] // Assuming policies have conditions that need to be fetched
-    });
-
-    // If there are specific permissions to check, you could also include those in your query
-    const userPermissions = user.roles;
+    const policies = await this.policyRepository
+      .createQueryBuilder("policy")
+      .innerJoin("policy.roles", "role") // Adjust "policy.roles" to the actual property name
+      .where("role.id IN (:...roleIds)", { roleIds: userRoles.map(role => role.id) })
+      .andWhere("policy.table = :table", { table })
+      .andWhere("policy.action = :action", { action: PolicyAction.FILTER })
+      .getMany();      
     // ... add logic to filter policies based on permissions if necessary ...
-
-    return policies;
+    console.log(policies);
+    return policies || [];    
   }
-
-  evaluatePolicies(
-    policies: Policy[],
-    attributes: Record<string, any>,
-  ): boolean {
-    return policies.every((policy) => this.evaluatePolicy(policy, attributes));
-  }
+  
 
   async findAllFilters(
     skip = 0,
@@ -210,7 +287,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException('Policy not found');
     }
-  
+
     for (const roleId of rolesToUpdate) {
       const role = await this.roleService.findOne(roleId);
       if (!role) {
@@ -221,7 +298,7 @@ export class PolicyService {
         policy.roles.push(role);
       }
     }
-  
+
     await this.policyRepository.save(policy);
     return policy;
   }
@@ -230,7 +307,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException('Policy not found');
     }
-  
+
     for (const roleId of rolesToUpdate) {
       // Remove role from policy.roles
       const index = policy.roles.findIndex(r => r.id === roleId);
@@ -238,7 +315,7 @@ export class PolicyService {
         policy.roles.splice(index, 1);
       }
     }
-  
+
     await this.policyRepository.save(policy);
     return policy;
   }
@@ -247,7 +324,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException('Policy not found');
     }
-  
+
     for (const permissionId of permissionsToUpdate) {
       const permission = await this.permissionService.findOne(permissionId);
       if (!permission) {
@@ -258,7 +335,7 @@ export class PolicyService {
         policy.permissions.push(permission);
       }
     }
-  
+
     await this.policyRepository.save(policy);
     return policy;
   }
@@ -267,7 +344,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException('Policy not found');
     }
-  
+
     for (const permissionId of permissionsToUpdate) {
       // Remove permission from policy.permissions
       const index = policy.permissions.findIndex(p => p.id === permissionId);
@@ -275,11 +352,11 @@ export class PolicyService {
         policy.permissions.splice(index, 1);
       }
     }
-  
+
     await this.policyRepository.save(policy);
     return policy;
   }
-    
+
   // A dictionary to map function statements to their corresponding implementations
   private functionStatements: { [key: string]: (user: User) => any } = {
     Me: (user) => user.id,
@@ -289,102 +366,7 @@ export class PolicyService {
     thisYear: () => Between(startOfYear(new Date()), endOfYear(new Date())),
     // Add 'LastWeek', 'LastMonth', 'LastYear', etc...
   };
-
-  // A method to interpret string policies and convert them to query objects
-  private parsePolicyCondition(
-    policyString: string,
-    user: User,
-  ): FindOptionsWhere<any> | Promise<FindOptionsWhere<any>> {
-    // This is a placeholder for actual parsing logic, which will be complex and needs to handle nested structures
-    // For simplicity, I am assuming policyString is a JSON string that represents the query structure
-    const policyObject = JSON.parse(policyString);
-
-    // A helper function to handle individual conditions
-    const handleCondition = (condition: any): any => {
-      // Extract field, operator, and value from condition
-      const { field, operator, value } = condition;
-      let whereClause: any = {};
-
-      // You might need a more sophisticated switch or strategy pattern here to handle various operators
-      switch (operator) {
-        case 'contains':
-          whereClause[field] = Like(`%${value}%`);
-          break;
-        case 'doesnotcontain':
-          whereClause[field] = Not(Like(`%${value}%`));
-          break;
-        case 'startswith':
-          whereClause[field] = Like(`${value}%`);
-          break;
-        case 'endswith':
-          whereClause[field] = Like(`%${value}`);
-          break;
-        case '=':
-          whereClause[field] = Equal(value);
-          break;
-        case '!=':
-          whereClause[field] = Not(Equal(value));
-          break;
-        // Handle other operators...
-        case 'Me()':
-          return this.functionStatements['Me'](user).then((val) => ({
-            [field]: val,
-          }));
-        case 'isOneOfMyGroups()':
-          return this.functionStatements['isOneOfMyGroups'](user).then(
-            (val) => ({ [field]: In(val) }),
-          );
-        // Add other function handlers here...
-        default:
-          throw new Error(`Unsupported operator: ${operator}`);
-      }
-
-      return whereClause;
-    };
-
-    // Recursively parse the conditions and build the where clause
-    const parseConditions = (conditions: any[]): any => {
-      return conditions.map((condition) => {
-        if ('conditions' in condition) {
-          // It's a nested condition group
-          const logic = condition.logic; // AND or OR
-          const nestedConditions = parseConditions(condition.conditions);
-          return logic === 'AND'
-            ? All(nestedConditions)
-            : Any(nestedConditions);
-        } else {
-          // It's a single condition
-          return handleCondition(condition);
-        }
-      });
-    };
-
-    const whereClause = parseConditions(policyObject.conditions);
-
-    // Assuming the top level is always an AND condition
-    return whereClause.length === 1 ? whereClause[0] : All(whereClause);
-  }
-
-  // This service method will apply the policies to the incoming query parameters
-  async applyDataPoliciesToQuery(
-    user: User,
-    queryParameters: FindOptionsWhere<any>,
-    policyString: string, // New parameter for the dynamic policy string
-  ): Promise<FindOptionsWhere<any>> {
-    // Interpret the dynamic policy string
-    const policyFilter: FindOptionsWhere<any> = await this.parsePolicyCondition(
-      policyString,
-      user,
-    );
-
-    // Combine the policy filter with the user's query parameters using AND logic
-    const combinedFilters: FindOptionsWhere<any> = {
-      AND: [policyFilter, queryParameters],
-    };
-
-    return combinedFilters;
-  }
-
+  
   // A mock function to get user group IDs (you'll need to implement this according to your data sources)
   async getUserGroupIds(user: User): Promise<string[]> {
     // Assuming 'user.groups' is an array of Group entities and each group entity has an 'id' property

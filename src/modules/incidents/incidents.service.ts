@@ -147,12 +147,10 @@ export class IncidentsService {
         };
       }
     });
-    const policyConditions = await this.policyService.getDataPolicyConditionsForUser(currentUser, 'incidents');
+    const policyWhereClauses = await this.policyService.getDataPolicyConditionsForUser(currentUser, 'incidents');
+    where = [...where, ...policyWhereClauses];
+    
 
-    // Apply the policy conditions to the query
-    if (policyConditions) {
-      where.push(policyConditions);
-    }
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
     if (page > pages) page = 1;
