@@ -109,7 +109,7 @@ export class PolicyService {
     // Parse and combine the policy conditions
     let combinedPolicyConditions = null;
     for (const policy of policies) {
-      const policyCondition = await this.parsePolicyCondition(policy.conditionString, user);
+      const policyCondition = await this.parsePolicyCondition(policy.conditions, user);
       if (combinedPolicyConditions) {
         combinedPolicyConditions = { AND: [combinedPolicyConditions, policyCondition] };
       } else {
