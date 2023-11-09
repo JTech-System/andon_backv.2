@@ -60,11 +60,4 @@ export class CreatePolicyDto {
   })
   @IsOptional()
   conditions: string;
-
-  @ApiProperty({
-    description: 'dataFilter under which the policy is applicable',
-    example: { location: 'USA' },
-  })
-  @IsOptional()
-  dataFilter: string;
 }

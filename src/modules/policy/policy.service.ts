@@ -105,7 +105,6 @@ export class PolicyService {
         `No policies found for permission ID ${permissionId}`,
       );
     }
-
     return policies;
   }
   

@@ -1,9 +1,18 @@
-import { Entity, Column, ManyToMany, JoinTable, Index, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  JoinTable,
+  Index,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
 import { Permission } from '../../permission/entities/permission.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsJSON, IsString, IsInt   } from 'class-validator';
+import { IsJSON, IsString, IsInt } from 'class-validator';
 import { Resource } from 'src/modules/resource/entities/resource.entity';
 
 export enum PolicyAction {
@@ -11,7 +20,7 @@ export enum PolicyAction {
   FILTER = 'filter',
   EXECUTE = 'execute',
   READ = 'read',
-  VIEW = 'view'
+  VIEW = 'view',
 }
 
 @Entity()
@@ -34,7 +43,7 @@ export class Policy extends BaseEntity {
     length: 128,
   })
   table: string;
-  
+
   @ApiProperty({
     maxLength: 256,
     description: 'Description of the resource',
@@ -45,7 +54,7 @@ export class Policy extends BaseEntity {
     nullable: true,
   })
   description: string;
-  
+
   @ApiProperty({
     maxLength: 128,
     description: 'The resource this policy applies to',
@@ -62,12 +71,11 @@ export class Policy extends BaseEntity {
     description: 'The action this policy regulates',
     example: 'filter',
   })
-  @Column({ 
-    
+  @Column({
     type: 'enum',
     enum: PolicyAction,
     default: PolicyAction.FILTER,
-   })
+  })
   action: PolicyAction;
 
   @ApiProperty({
@@ -79,16 +87,6 @@ export class Policy extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   conditions: string;
 
-  @ApiProperty({    
-    description: 'Data filter for specific table',
-    example: '{"logic":"AND","conditions":[{"field":"number","operator":"=","value":"INC00001"}]}',
-  })
-  @Column({
-    nullable: true 
-  })
-  dataFilter: string;
-  
-
   @ApiProperty({
     description: 'Version number of the policy for tracking changes',
     example: 1,
@@ -98,18 +96,19 @@ export class Policy extends BaseEntity {
   version: number;
 
   // Hierarchical relationship
-  @ManyToOne(() => Policy, policy => policy.children, { nullable: true })
+  @ManyToOne(() => Policy, (policy) => policy.children, { nullable: true })
   parentPolicy: Policy;
 
-  @OneToMany(() => Policy, policy => policy.parentPolicy)
+  @OneToMany(() => Policy, (policy) => policy.parentPolicy)
   children: Policy[];
 
-  @ManyToMany(() => Role, role => role.policies, { eager: true, })  
+  @ManyToMany(() => Role, (role) => role.policies, { eager: true })
   @JoinTable()
   roles: Role[];
 
-  @ManyToMany(() => Permission, permission => permission.policies, { eager: true, })  
+  @ManyToMany(() => Permission, (permission) => permission.policies, {
+    eager: true,
+  })
   @JoinTable()
   permissions: Permission[];
-
 }
