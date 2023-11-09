@@ -11,6 +11,7 @@ import { IncidentComment } from './entities/incident-comment.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { GroupsModule } from '@groups/group.module';
 import { UsersModule } from '@users/users.module';
+import { SocketsModule } from 'src/integrations/sockets/sockets.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsersModule } from '@users/users.module';
     NotificationsModule,
     GroupsModule,
     UsersModule,
+    SocketsModule,
   ],
   controllers: [IncidentsController],
   providers: [IncidentsService, IncidentStatusValidationPipe],
