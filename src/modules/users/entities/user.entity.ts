@@ -13,15 +13,7 @@ export class User extends BaseEntity {
   @Column({
     length: 128,
   })
-  name: string;
-
-  @ApiProperty({
-    maxLength: 128,
-  })
-  @Column({
-    length: 128,
-  })
-  user_id: string;
+  username: string;
 
   @ApiProperty({
     maxLength: 128,

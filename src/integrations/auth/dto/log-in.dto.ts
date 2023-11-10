@@ -6,7 +6,7 @@ export class LogInDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(128)
-  user_id: string;
+  username: string;
 
   @ApiProperty()
   @IsNotEmpty()

@@ -23,8 +23,8 @@ import { IncidentComment } from './entities/incident-comment.entity';
 import { NotificationOperation } from '../notifications/enums/notification-operation.enum';
 import { GroupsService } from '@groups/group.service';
 import { UsersService } from '@users/users.service';
-import { NotificationsService } from '@notifications/services/notifications.service';
 import { NotificationSendService } from '@notifications/services/notification-send.service';
+import { SocketsGateway } from 'src/integrations/sockets/sockets.gateway';
 
 @Injectable()
 export class IncidentsService {
@@ -40,6 +40,7 @@ export class IncidentsService {
     private groupsService: GroupsService,
     private usersService: UsersService,
     private notificationSendService: NotificationSendService,
+    private socketsGateway: SocketsGateway,
   ) {}
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
@@ -87,6 +88,7 @@ export class IncidentsService {
       `/incidents/${incident.id}`,
       incident,
     );
+    this.socketsGateway.sendIncident();
 
     return await this.findOne(incident.id);
   }
@@ -334,6 +336,8 @@ export class IncidentsService {
       incident,
       lastIncident,
     );
+    this.socketsGateway.sendIncident();
+
     return incident;
   }
 
@@ -344,6 +348,7 @@ export class IncidentsService {
       '/incidents',
       await this.findOne(id),
     );
+    this.socketsGateway.sendIncident();
     await this.incidentsRepository.delete({ id });
   }
 

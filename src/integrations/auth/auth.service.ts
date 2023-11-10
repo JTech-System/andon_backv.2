@@ -9,21 +9,18 @@ import { UsersService } from '@users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@users/entities/user.entity';
-import { PermissionService } from 'src/modules/permission/permission.service';
-import { group } from 'console';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private permissionService: PermissionService,
   ) {}
 
   async logIn(logInDto: LogInDto): Promise<ResponseLogInDto> {
     let user = await this.usersService.findOneBy({
       where: {
-        user_id: logInDto.user_id,
+        username: logInDto.username,
       },
       select: {
         id: true,
@@ -32,8 +29,15 @@ export class AuthService {
     });
     if (user) {
       if (await bcrypt.compare(logInDto.password, user.passwordHash)) {
-        user = await this.usersService.findOne(user.id, {relations: ['groups']});
-        let permissions = {permissions: await this.evaluateUserPermissions(user.id)};
+        user = await this.usersService.findOneBy({
+          where: {
+            id: user.id,
+          },
+          relations: ['groups'],
+        });
+        let permissions = {
+          permissions: await this.evaluateUserPermissions(user.id),
+        };
         const payload = {
           user,
           permissions,
@@ -54,7 +58,7 @@ export class AuthService {
       const user = await this.usersService.findOneBy({
         where: {
           id: payload.id,
-        },        
+        },
         relations: ['groups'],
       });
       if (user) return user;
@@ -63,14 +67,22 @@ export class AuthService {
   }
 
   async evaluateUserPermissions(userId: string): Promise<any> {
-    const user = await this.usersService.findOne(userId, {
-      relations: ['roles', 'roles.permissions', 'roles.permissions.resources', 'groups']
+    const user = await this.usersService.findOneBy({
+      where: {
+        id: userId,
+      },
+      relations: [
+        'roles',
+        'roles.permissions',
+        'roles.permissions.resources',
+        'groups',
+      ],
     });
-  
+
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
-  
+
     const permissions = {
       permissions: {
         routes: {},
@@ -79,9 +91,9 @@ export class AuthService {
         files: {},
         data: {},
         actions: {},
-      }
+      },
     };
-  
+
     for (const role of user.roles) {
       for (const permission of role.permissions) {
         for (const resource of permission.resources) {
@@ -90,37 +102,45 @@ export class AuthService {
               if (!permissions.permissions.routes[resource.name]) {
                 permissions.permissions.routes[resource.name] = {};
               }
-              permissions.permissions.routes[resource.name][permission.action] = true;
+              permissions.permissions.routes[resource.name][permission.action] =
+                true;
               break;
             case 'field':
               if (!permissions.permissions.fields[resource.name]) {
                 permissions.permissions.fields[resource.name] = {};
               }
-              permissions.permissions.fields[resource.name][permission.action] = true;
+              permissions.permissions.fields[resource.name][permission.action] =
+                true;
               break;
             case 'button':
               if (!permissions.permissions.buttons[resource.name]) {
                 permissions.permissions.buttons[resource.name] = {};
               }
-              permissions.permissions.buttons[resource.name][permission.action] = true;
+              permissions.permissions.buttons[resource.name][
+                permission.action
+              ] = true;
               break;
             case 'file':
               if (!permissions.permissions.files[resource.name]) {
                 permissions.permissions.files[resource.name] = {};
               }
-              permissions.permissions.files[resource.name][permission.action] = true;
+              permissions.permissions.files[resource.name][permission.action] =
+                true;
               break;
             case 'data':
               if (!permissions.permissions.data[resource.name]) {
                 permissions.permissions.data[resource.name] = {};
               }
-              permissions.permissions.data[resource.name][permission.action] = true;
+              permissions.permissions.data[resource.name][permission.action] =
+                true;
               break;
             case 'action':
               if (!permissions.permissions.actions[resource.name]) {
                 permissions.permissions.actions[resource.name] = {};
               }
-              permissions.permissions.actions[resource.name][permission.action] = true;
+              permissions.permissions.actions[resource.name][
+                permission.action
+              ] = true;
               break;
             default:
               // Handle unknown resource types or log an error
@@ -129,8 +149,7 @@ export class AuthService {
         }
       }
     }
-  
+
     return permissions.permissions;
   }
-  
 }
