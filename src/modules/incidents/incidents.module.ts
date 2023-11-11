@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { IncidentsService } from './incidents.service';
 import { IncidentsController } from './incidents.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Incident } from './entities/incident.entity';
@@ -12,6 +11,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { GroupsModule } from '@groups/group.module';
 import { UsersModule } from '@users/users.module';
 import { SocketsModule } from 'src/integrations/sockets/sockets.module';
+import { IncidentCategoriesService } from './services/incident-categories.service';
+import { IncidentCommentsService } from './services/incident-comments.service';
+import { IncidentsService } from './services/incidents.service';
 
 @Module({
   imports: [
@@ -24,7 +26,12 @@ import { SocketsModule } from 'src/integrations/sockets/sockets.module';
     SocketsModule,
   ],
   controllers: [IncidentsController],
-  providers: [IncidentsService, IncidentStatusValidationPipe],
-  exports: [IncidentsService]
+  providers: [
+    IncidentsService,
+    IncidentStatusValidationPipe,
+    IncidentCategoriesService,
+    IncidentCommentsService,
+  ],
+  exports: [IncidentsService],
 })
 export class IncidentsModule {}

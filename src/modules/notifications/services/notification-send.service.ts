@@ -197,10 +197,18 @@ export class NotificationSendService {
           } else {
             // Handle non-related update fields.
             if (record[field.name] && lastRecord[field.name]) {
-              // Compare the current record's field to the last record's field.
-              if (record[field.name] == lastRecord[field.name]) return false;
-              else if (field.value && record[field.name] != field.value)
-                return false;
+              if (
+                Array.isArray(record[field.name]) &&
+                Array.isArray(lastRecord[field.name])
+              ) {
+                if (record[field.name].length == lastRecord[field.name].length)
+                  return false;
+              } else {
+                // Compare the current record's field to the last record's field.
+                if (record[field.name] == lastRecord[field.name]) return false;
+                else if (field.value && record[field.name] != field.value)
+                  return false;
+              }
             } else if (record[field.name]) {
               // Check if the field value is provided and differs from the current record's field.
               if (field.value && record[field.name] != field.value)

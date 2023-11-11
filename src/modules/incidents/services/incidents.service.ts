@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateIncidentDto } from './dto/create-incident.dto';
-import { Incident } from './entities/incident.entity';
 import { User } from '@users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -10,31 +8,26 @@ import {
   Between,
   FindManyOptions,
 } from 'typeorm';
-import { IncidentCategory } from './entities/incident-category.entity';
-import { CreateIncidentCategoryDto } from './dto/create-incident-category.dto';
-import { UpdateIncidentCategoryDto } from './dto/update-incident-category.dto';
-import { IncidentStatus } from './enums/incident-status.enum';
 import { ProductionLinesService } from '@production-lines/production-lines.service';
-import { PaginationIncidentDto } from './dto/pagination-incident.dto';
-import { UpdateIncidentDto } from './dto/update-incident.dto';
 import { MachinesService } from '@machines/machines.service';
-import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
-import { IncidentComment } from './entities/incident-comment.entity';
-import { NotificationOperation } from '../notifications/enums/notification-operation.enum';
 import { GroupsService } from '@groups/group.service';
 import { UsersService } from '@users/users.service';
 import { NotificationSendService } from '@notifications/services/notification-send.service';
 import { SocketsGateway } from 'src/integrations/sockets/sockets.gateway';
+import { Incident } from '@incidents/entities/incident.entity';
+import { CreateIncidentDto } from '@incidents/dto/create-incident.dto';
+import { IncidentStatus } from '@incidents/enums/incident-status.enum';
+import { NotificationOperation } from '@notifications/enums/notification-operation.enum';
+import { PaginationIncidentDto } from '@incidents/dto/pagination-incident.dto';
+import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
+import { IncidentCategoriesService } from './incident-categories.service';
 
 @Injectable()
 export class IncidentsService {
   constructor(
     @InjectRepository(Incident)
     private incidentsRepository: Repository<Incident>,
-    @InjectRepository(IncidentCategory)
-    private incidentCategoriesRepository: Repository<IncidentCategory>,
-    @InjectRepository(IncidentComment)
-    private incidentCommentsRepository: Repository<IncidentComment>,
+    private incidentCategoriesService: IncidentCategoriesService,
     private productionLinesService: ProductionLinesService,
     private machinesService: MachinesService,
     private groupsService: GroupsService,
@@ -67,7 +60,9 @@ export class IncidentsService {
     createIncidentDto: CreateIncidentDto,
     currentUser: User,
   ): Promise<Incident> {
-    const category = await this.findOneCategory(createIncidentDto.category);
+    const category = await this.incidentCategoriesService.findOne(
+      createIncidentDto.category,
+    );
     const productionLine = await this.productionLinesService.findOne(
       createIncidentDto.productionLine,
     );
@@ -214,9 +209,10 @@ export class IncidentsService {
     const lastIncident = await this.findOne(id);
 
     // Find and replaces the id values
-    updateIncidentDto['category'] = await this.findOneCategory(
-      updateIncidentDto.categoryId,
-    );
+    updateIncidentDto['category'] =
+      await this.incidentCategoriesService.findOne(
+        updateIncidentDto.categoryId,
+      );
     delete updateIncidentDto['categoryId'];
     updateIncidentDto['productionLine'] =
       await this.productionLinesService.findOne(
@@ -350,70 +346,5 @@ export class IncidentsService {
     );
     this.socketsGateway.sendIncident();
     await this.incidentsRepository.delete({ id });
-  }
-
-  // Incident Categories
-
-  async createCategory(
-    createIncidentCategoryDto: CreateIncidentCategoryDto,
-  ): Promise<IncidentCategory> {
-    const incidentCategory = await this.incidentCategoriesRepository.save(
-      createIncidentCategoryDto,
-    );
-    return await this.findOneCategory(incidentCategory.id);
-  }
-
-  async findAllCategories(): Promise<IncidentCategory[]> {
-    return await this.incidentCategoriesRepository.find({
-      where: {
-        active: true,
-      },
-      order: {
-        value: 'ASC',
-      },
-    });
-  }
-
-  async findOneCategory(id: string): Promise<IncidentCategory> {
-    const incidentCategory = await this.incidentCategoriesRepository.findOne({
-      where: {
-        id,
-        active: true,
-      },
-    });
-    if (incidentCategory) return incidentCategory;
-    throw new NotFoundException('Incident category not found');
-  }
-
-  async updateCategory(
-    id: string,
-    updateIncidentCategoryDto: UpdateIncidentCategoryDto,
-  ): Promise<IncidentCategory> {
-    await this.findOneCategory(id);
-    await this.incidentCategoriesRepository.update(
-      { id },
-      updateIncidentCategoryDto,
-    );
-    return await this.findOneCategory(id);
-  }
-
-  async deleteCategory(id: string): Promise<void> {
-    await this.findOneCategory(id);
-    await this.incidentCategoriesRepository.update({ id }, { active: false });
-  }
-
-  // Incident Comments
-
-  async createComment(
-    createIncidentCommentDto: CreateIncidentCommentDto,
-    currentUser: User,
-  ): Promise<Incident> {
-    const incident = await this.findOne(createIncidentCommentDto.incidentId);
-    await this.incidentCommentsRepository.save({
-      createdBy: currentUser,
-      incident,
-      ...createIncidentCommentDto,
-    });
-    return await this.findOne(incident.id);
   }
 }
