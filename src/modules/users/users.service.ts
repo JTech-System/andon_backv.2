@@ -29,11 +29,14 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    const existingUser = await this.findOneBy({
-      where: { email: createUserDto.email },
-    });
-    if (existingUser) {
-      throw new BadRequestException(`User already exists.`);
+    if (createUserDto.email) {
+      if (
+        await this.findOneBy({
+          where: { email: createUserDto.email },
+        })
+      ) {
+        throw new BadRequestException(`User already exists.`);
+      }
     }
 
     let roles = [];

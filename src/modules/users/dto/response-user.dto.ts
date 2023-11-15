@@ -23,13 +23,15 @@ export class ResponseUserDto extends BaseDto {
 
   @ApiProperty({
     maxLength: 128,
+    required: false,
   })
-  email: string;
+  email?: string;
 
   @ApiProperty({
     maxLength: 13,
+    required: false,
   })
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ type: [Role], description: 'Array of role IDs' })
   @IsArray()

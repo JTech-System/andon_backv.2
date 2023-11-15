@@ -33,20 +33,24 @@ export class User extends BaseEntity {
 
   @ApiProperty({
     maxLength: 128,
+    required: false,
   })
   @Column({
     length: 128,
     unique: true,
+    nullable: true,
   })
-  email: string;
+  email?: string;
 
   @ApiProperty({
     maxLength: 13,
+    required: false,
   })
   @Column({
     length: 13,
+    nullable: true,
   })
-  phone: string;
+  phone?: string;
 
   @ApiProperty()
   @Column({
@@ -65,7 +69,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of roles associated with the user.',
   })
-  @ManyToMany(() => Role, (role) => role.users, { eager: true, })
+  @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable()
   roles: Role[];
 
@@ -74,7 +78,7 @@ export class User extends BaseEntity {
     isArray: true,
     description: 'A list of groups associated with the user.',
   })
-  @ManyToMany(() => Group, (group) => group.users,)
+  @ManyToMany(() => Group, (group) => group.users)
   @JoinTable()
   groups: Group[];
 
