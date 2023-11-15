@@ -23,9 +23,12 @@ export class ProductionLinesService {
 
   async findAll(): Promise<ProductionLine[]> {
     return await this.productionLinesRepository.find({
+      where: {
+        active: true,
+      },
       order: {
-        value: "ASC"
-      }
+        value: 'ASC',
+      },
     });
   }
 
@@ -33,6 +36,7 @@ export class ProductionLinesService {
     const productionLine = await this.productionLinesRepository.findOne({
       where: {
         id,
+        active: true,
       },
     });
     if (productionLine) return productionLine;
@@ -53,6 +57,7 @@ export class ProductionLinesService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.productionLinesRepository.delete({ id });
+    await this.productionLinesRepository.update({ id }, { active: false });
+    // await this.productionLinesRepository.delete({ id });
   }
 }

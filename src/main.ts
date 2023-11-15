@@ -3,9 +3,15 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger/dist';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // httpsOptions: {
+    //   key: fs.readFileSync('./key.pem'),
+    //   cert: fs.readFileSync('./cert.pem'),
+    // },
+  });
 
   app.useGlobalPipes(new ValidationPipe());
 

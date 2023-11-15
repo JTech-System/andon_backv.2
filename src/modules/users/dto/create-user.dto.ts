@@ -5,21 +5,10 @@ import {
   IsEmail,
   Matches,
   IsArray,
-  IsUUID,
   IsOptional,
 } from 'class-validator';
 
 export class CreateUserDto {
-  
-  @ApiProperty({
-    maxLength: 128,
-  })
-  @IsString({ message: 'Name should be a string' })
-  @MaxLength(128, {
-    message: 'Name should not be longer than 128 characters',
-  })
-  name: string;
-
   @ApiProperty({
     maxLength: 128,
   })
@@ -27,8 +16,7 @@ export class CreateUserDto {
   @MaxLength(128, {
     message: 'User ID should not be longer than 128 characters',
   })
-  user_id: string;
-
+  username: string;
 
   @ApiProperty({
     maxLength: 128,
@@ -48,16 +36,18 @@ export class CreateUserDto {
 
   @ApiProperty({
     maxLength: 128,
+    required: false,
   })
   @IsString()
   @IsEmail({}, { message: 'Invalid email format' })
-  @MaxLength(128, { message: 'Email should not be longer than 128 characters' })  
+  @MaxLength(128, { message: 'Email should not be longer than 128 characters' })
   @IsOptional()
   email?: string;
 
   @ApiProperty({
     maxLength: 13,
     description: 'Eg. 4491234567 or +524491234567',
+    required: false,
   })
   @IsString()
   @Matches(/^(?:\+\d{2})?\d{10}$/)
@@ -80,7 +70,7 @@ export class CreateUserDto {
   @IsArray()
   @IsOptional()
   roles?: string[];
-  
+
   @ApiProperty()
   @IsOptional()
   isActive?: boolean;

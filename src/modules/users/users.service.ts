@@ -3,15 +3,21 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, In, Like } from 'typeorm';
+import {
+  Repository,
+  FindOneOptions,
+  In,
+  Like,
+  FindOptionsWhere,
+} from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Role } from '../role/entities/role.entity';
 import { RoleService } from '../role/role.service';
-
 import * as bcrypt from 'bcrypt';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { GroupsService } from '../groups/group.service';
@@ -26,14 +32,17 @@ export class UsersService {
     private usersRepository: Repository<User>,
     private roleService: RoleService,
     private groupService: GroupsService,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    const existingUser = await this.findOneBy({
-      where: { email: createUserDto.email },
-    });
-    if (existingUser) {
-      throw new BadRequestException(`User already exists.`);
+    if (createUserDto.email) {
+      if (
+        await this.findOneBy({
+          where: { email: createUserDto.email },
+        })
+      ) {
+        throw new BadRequestException(`User already exists.`);
+      }
     }
 
     let roles = [];
@@ -49,7 +58,6 @@ export class UsersService {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(createUserDto.password, salt);
-    
 
     const user = this.usersRepository.create({
       ...createUserDto,
@@ -62,8 +70,7 @@ export class UsersService {
 
     // Create a response object without the password hash
     const responseUser: ResponseUserDto = {
-      name: savedUser.name,
-      user_id: savedUser.user_id,
+      username: savedUser.username,
       firstName: savedUser.firstName,
       lastName: savedUser.lastName,
       email: savedUser.email,
@@ -82,30 +89,29 @@ export class UsersService {
   async findAll(): Promise<User[]> {
     return await this.usersRepository.find();
   }
-  
+
   async findAllFilters(
     skip = 0,
     take = 10,
     sortField = 'id',
     sortOrder: 'ASC' | 'DESC' = 'ASC',
-    search: string
+    search: string,
   ): Promise<UserAPIListDto> {
-    
-    let whereCondition = {};
-  
+    let whereCondition: FindOptionsWhere<User> | undefined = undefined;
+
     if (search) {
       whereCondition = {
-        name: Like(`%${search}%`)
+        username: Like(`%${search}%`),
       };
     }
-  
+
     const [result, total] = await this.usersRepository.findAndCount({
       where: whereCondition,
       order: { [sortField]: sortOrder },
       skip,
       take,
     });
-  
+
     if (total === 0) {
       // You can either return an empty result or throw an exception based on your requirements
     }
@@ -115,17 +121,12 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string, options?: FindOneOptions<User>): Promise<User> {
-    const findOptions = {
-      ...options,
+  async findOne(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
       where: {
         id,
-        ...(options?.where || {}),
       },
-    };
-
-    const user = await this.usersRepository.findOne(findOptions);
-
+    });
     if (user) return user;
     throw new NotFoundException('User not found');
   }
@@ -169,7 +170,10 @@ export class UsersService {
     return users;
   }
 
-  async addUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): Promise<User> {
+  async addUserRoles(
+    userId: string,
+    updateUserRolesDto: UpdateUserRolesDto,
+  ): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
       relations: ['roles', 'groups'],
@@ -179,7 +183,9 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const rolesToAdd = await this.roleService.findRolesByIds(updateUserRolesDto.roles);
+    const rolesToAdd = await this.roleService.findRolesByIds(
+      updateUserRolesDto.roles,
+    );
 
     // Add new roles to the user, ensuring uniqueness
     user.roles = [...new Set([...user.roles, ...rolesToAdd])];
@@ -191,31 +197,39 @@ export class UsersService {
         'An error occurred while adding roles to the user',
       );
     }
-}
-
-
-async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): Promise<User> {
-  const user = await this.usersRepository.findOne({
-    where: { id: userId },
-    relations: ['roles', 'groups'],
-  });
-
-  if (!user) {
-    throw new NotFoundException(`User with ID ${userId} not found`);
   }
 
-  const rolesToRemove = await this.roleService.findRolesByIds(updateUserRolesDto.roles);
+  async removeUserRoles(
+    userId: string,
+    updateUserRolesDto: UpdateUserRolesDto,
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles', 'groups'],
+    });
 
-  // Remove specified roles from the user
-  user.roles = user.roles.filter(userRole => !rolesToRemove.some(roleToRemove => roleToRemove.id === userRole.id));
-  try {
-    return await this.usersRepository.save(user);
-  } catch (error) {
-    throw new InternalServerErrorException(
-      'An error occurred while removing roles from the user',
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const rolesToRemove = await this.roleService.findRolesByIds(
+      updateUserRolesDto.roles,
     );
+
+    // Remove specified roles from the user
+    user.roles = user.roles.filter(
+      (userRole) =>
+        !rolesToRemove.some((roleToRemove) => roleToRemove.id === userRole.id),
+    );
+    try {
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while removing roles from the user',
+      );
+    }
   }
-}
+
   async getUserRoles(userId: string): Promise<Role[]> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -226,17 +240,21 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
     }
     return user.roles;
   }
+
   async remove(id: string) {
     const user = await this.findOne(id);
 
     try {
       await this.usersRepository.remove(user);
     } catch (error) {
-      throw new InternalServerErrorException(`Error deleting the user: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Error deleting the user: ${error.message}`,
+      );
     }
 
     return `User with ID ${id} has been deleted successfully`;
   }
+
   async getUserPermissions(userId: string): Promise<Role[]> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -249,26 +267,42 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    await this.findOne(id);
     const { roles, ...updateData } = updateUserDto;
-    const user = await this.usersRepository.preload({
-      id: id,
-      ...updateData
-    });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`)
+    if (updateData.password) {
+      const user = await this.usersRepository.findOne({
+        where: {
+          id,
+        },
+        select: {
+          id: true,
+          passwordHash: true,
+        },
+      });
+      if (!user) throw new UnauthorizedException();
+      if (
+        !(await bcrypt.compare(updateUserDto.lastPassword, user.passwordHash))
+      )
+        throw new UnauthorizedException();
 
+      const salt = await bcrypt.genSalt();
+      updateData['passwordHash'] = await bcrypt.hash(updateData.password, salt);
+      delete updateData['password'];
+      delete updateData['lastPassword'];
     }
-    try {
-      return await this.usersRepository.save(user);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'An error occurred while updating the user',
-      );
-    }
+    await this.usersRepository.update({ id }, updateData);
+
+    return await this.findOne(id);
   }
 
-  async addUserToGroups(userId: string, updateGroupsDto: UpdateGroupsDto): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['groups'] }); // Use userRepository
+  async addUserToGroups(
+    userId: string,
+    updateGroupsDto: UpdateGroupsDto,
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['groups'],
+    }); // Use userRepository
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -284,7 +318,7 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
       user.roles = [...new Set([...user.roles, ...group.roles])];
 
       // Add group to user.groups if it doesn't exist
-      if (!user.groups.some(g => g.id === groupId)) {
+      if (!user.groups.some((g) => g.id === groupId)) {
         user.groups.push(group);
       }
     }
@@ -293,8 +327,14 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
     return user;
   }
 
-  async removeUserFromGroups(userId: string, updateGroupsDto: UpdateGroupsDto): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['groups'] }); // Use userRepository
+  async removeUserFromGroups(
+    userId: string,
+    updateGroupsDto: UpdateGroupsDto,
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['groups'],
+    }); // Use userRepository
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -307,10 +347,10 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
       }
 
       // Remove group roles from user
-      user.roles = user.roles.filter(role => !group.roles.includes(role));
+      user.roles = user.roles.filter((role) => !group.roles.includes(role));
 
       // Remove group from user.groups
-      const index = user.groups.findIndex(g => g.id === groupId);
+      const index = user.groups.findIndex((g) => g.id === groupId);
       if (index !== -1) {
         user.groups.splice(index, 1);
       }
@@ -319,6 +359,4 @@ async removeUserRoles(userId: string, updateUserRolesDto: UpdateUserRolesDto): P
     await this.usersRepository.save(user); // Use userRepository to save user
     return user;
   }
-
-
 }

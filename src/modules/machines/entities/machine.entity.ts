@@ -11,4 +11,10 @@ export class Machine extends BaseEntity {
     length: 128,
   })
   value: string;
+
+  @ApiProperty()
+  @Column({
+    default: true,
+  })
+  active: boolean;
 }

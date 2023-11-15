@@ -1,3 +1,3 @@
 export class NotificationFieldsDto {
-  [key: string]: string[];
+  [key: string]: string[] | true;
 }

@@ -1,9 +1,9 @@
 import { IncidentStatus } from '@incidents/enums/incident-status.enum';
-import { IncidentsService } from '@incidents/incidents.service';
 import { Injectable } from '@nestjs/common';
 import { StatisticsIncidentProductionLineDto } from './dto/statistics-incident-production-line.dto';
 import { StatisticsIncidentAssignedGroupDto } from './dto/statistics-incident-assigned-group.dto';
 import { Between } from 'typeorm';
+import { IncidentsService } from '@incidents/services/incidents.service';
 
 @Injectable()
 export class StatisticsService {

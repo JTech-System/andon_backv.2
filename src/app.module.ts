@@ -22,6 +22,7 @@ import { GroupsModule } from './modules/groups/group.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { StatisticsModule } from './modules/statistics/statistics.module';
+import { SocketsModule } from './integrations/sockets/sockets.module';
 
 @Module({
   imports: [
@@ -45,8 +46,11 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
       rootPath: join(__dirname, process.env.CLIENT_PATH),
     }),
 
-    //Modules
+    // Integrations
     AuthModule,
+    SocketsModule,
+
+    // Modules
     UsersModule,
     IncidentsModule,
     ProductionLinesModule,

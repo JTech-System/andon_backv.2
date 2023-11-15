@@ -18,13 +18,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Notification } from './entities/notification.entity';
-import { NotificationOperation } from './enums/notification-operation.enum';
 import { CurrentUser } from '@auth/auth.decorator';
 import { User } from '@users/entities/user.entity';
 import { CreateNotificationPushDto } from './dto/create-notification-push.dto';
 import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 import { NotificationsService } from './services/notifications.service';
+import { NotificationLog } from './entities/notification-log.entity';
 import { NotificationPushService } from './services/notification-push.service';
+import { NotificationLogService } from './services/notification-log.service';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -32,7 +33,17 @@ export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly notificationPushService: NotificationPushService,
+    private readonly notificationLogService: NotificationLogService,
   ) {}
+
+  // Inbox
+
+  @Get('inbox')
+  @ApiOkResponse({})
+  @ApiBearerAuth()
+  async findAllNotificationLogs(@CurrentUser() currentUser: User): Promise<NotificationLog[]> {
+    return this.notificationLogService.findAll(currentUser);
+  }
 
   // Push
 

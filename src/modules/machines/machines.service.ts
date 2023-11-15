@@ -18,6 +18,9 @@ export class MachinesService {
 
   async findAll(): Promise<Machine[]> {
     return await this.machinesRepository.find({
+      where: {
+        active: true,
+      },
       order: {
         value: 'ASC',
       },
@@ -28,6 +31,7 @@ export class MachinesService {
     const machine = await this.machinesRepository.findOne({
       where: {
         id,
+        active: true,
       },
     });
     if (machine) return machine;
@@ -45,6 +49,6 @@ export class MachinesService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.machinesRepository.delete({ id });
+    await this.machinesRepository.update({ id }, { active: false });
   }
 }

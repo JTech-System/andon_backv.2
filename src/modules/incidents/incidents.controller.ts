@@ -9,7 +9,6 @@ import {
   Delete,
   ParseIntPipe,
 } from '@nestjs/common';
-import { IncidentsService } from './incidents.service';
 import { CreateIncidentDto } from './dto/create-incident.dto';
 import { UpdateIncidentDto } from './dto/update-incident.dto';
 import {
@@ -35,11 +34,18 @@ import { UUIDValidationPipe } from '@utils/pipes/uuid-validation.pipe';
 import { DateValidationPipe } from '@utils/pipes/date-validation.pipe';
 import { CreateIncidentCommentDto } from './dto/create-incident-comment.dto';
 import { NotificationFieldsDto } from '@utils/dto/notification-fields.dto';
+import { IncidentsService } from './services/incidents.service';
+import { IncidentCategoriesService } from './services/incident-categories.service';
+import { IncidentCommentsService } from './services/incident-comments.service';
 
 @ApiTags('Incidents')
 @Controller('incidents')
 export class IncidentsController {
-  constructor(private readonly incidentsService: IncidentsService) {}
+  constructor(
+    private readonly incidentsService: IncidentsService,
+    private readonly incidentCategoriesService: IncidentCategoriesService,
+    private readonly incidentCommentsService: IncidentCommentsService,
+  ) {}
 
   // Incident Categories
 
@@ -51,7 +57,7 @@ export class IncidentsController {
   async createCategory(
     @Body() createIncidentCategoryDto: CreateIncidentCategoryDto,
   ): Promise<IncidentCategory> {
-    return await this.incidentsService.createCategory(
+    return await this.incidentCategoriesService.create(
       createIncidentCategoryDto,
     );
   }
@@ -60,9 +66,8 @@ export class IncidentsController {
   @ApiOkResponse({
     type: [IncidentCategory],
   })
-  @ApiBearerAuth()
   async findAllCategories(): Promise<IncidentCategory[]> {
-    return await this.incidentsService.findAllCategories();
+    return await this.incidentCategoriesService.findAll();
   }
 
   @Get('categories/:id')
@@ -71,7 +76,7 @@ export class IncidentsController {
   })
   @ApiBearerAuth()
   async findOneCategory(@Param('id') id: string): Promise<IncidentCategory> {
-    return await this.incidentsService.findOneCategory(id);
+    return await this.incidentCategoriesService.findOne(id);
   }
 
   @Patch('categories/:id')
@@ -83,7 +88,7 @@ export class IncidentsController {
     @Param('id') id: string,
     @Body() updateIncidentCategoryDto: UpdateIncidentCategoryDto,
   ) {
-    return await this.incidentsService.updateCategory(
+    return await this.incidentCategoriesService.update(
       id,
       updateIncidentCategoryDto,
     );
@@ -93,7 +98,7 @@ export class IncidentsController {
   @ApiOkResponse()
   @ApiBearerAuth()
   async deleteCategory(@Param('id') id: string): Promise<void> {
-    await this.incidentsService.deleteCategory(id);
+    await this.incidentCategoriesService.delete(id);
   }
 
   // Incident comments
@@ -107,13 +112,14 @@ export class IncidentsController {
     @Body() createIncidentCommentDto: CreateIncidentCommentDto,
     @CurrentUser() currentUser: User,
   ) {
-    return await this.incidentsService.createComment(
+    return await this.incidentCommentsService.create(
       createIncidentCommentDto,
       currentUser,
     );
   }
 
   // Notifications
+
   @Get('notifications')
   @ApiOkResponse({
     type: NotificationFieldsDto,
@@ -125,6 +131,7 @@ export class IncidentsController {
       priority: ['P1', 'P2', 'P3'],
       description: [],
       assignedGroup: ['group'],
+      comments: true,
     };
   }
 
@@ -134,7 +141,6 @@ export class IncidentsController {
   @ApiCreatedResponse({
     type: Incident,
   })
-  @ApiBearerAuth()
   async create(
     @Body() createIncidentDto: CreateIncidentDto,
     @CurrentUser() currentUser: User,
