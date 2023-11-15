@@ -6,7 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, In, Like } from 'typeorm';
+import {
+  Repository,
+  FindOneOptions,
+  In,
+  Like,
+  FindOptionsWhere,
+} from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -91,11 +97,11 @@ export class UsersService {
     sortOrder: 'ASC' | 'DESC' = 'ASC',
     search: string,
   ): Promise<UserAPIListDto> {
-    let whereCondition = {};
+    let whereCondition: FindOptionsWhere<User> | undefined = undefined;
 
     if (search) {
       whereCondition = {
-        name: Like(`%${search}%`),
+        username: Like(`%${search}%`),
       };
     }
 
