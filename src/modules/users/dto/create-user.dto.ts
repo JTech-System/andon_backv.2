@@ -36,6 +36,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     maxLength: 128,
+    required: false,
   })
   @IsString()
   @IsEmail({}, { message: 'Invalid email format' })
@@ -46,6 +47,7 @@ export class CreateUserDto {
   @ApiProperty({
     maxLength: 13,
     description: 'Eg. 4491234567 or +524491234567',
+    required: false,
   })
   @IsString()
   @Matches(/^(?:\+\d{2})?\d{10}$/)
