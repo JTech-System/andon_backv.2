@@ -109,7 +109,7 @@ export class PolicyService {
   }
   
   // Method to convert policy conditions into TypeORM where clauses
-  private convertPolicyConditionsToWhereClauses(policyConditions: any): FindOptionsWhere<any>[] {
+  private convertPolicyConditionsToWhereClauses(policyConditions: any, user: User): FindOptionsWhere<any>[] {
     if (!policyConditions) {
       return [];
     }
@@ -122,6 +122,12 @@ export class PolicyService {
 
     const addConditionToWhereClauses = (condition: any) => {
       switch (condition.operator) {
+        case 'ME':
+          whereClauses.push({ [condition.field]: Equal(user.id) });
+        break;
+        case 'isOneOfMyGroups':
+          whereClauses.push({ [condition.field]: In(this.getUserGroupIds(user)) });
+        break;
         case '=':
           whereClauses.push({ [condition.field]: Equal(condition.value) });
           break;
@@ -141,7 +147,6 @@ export class PolicyService {
           whereClauses.push({ [condition.field]: MoreThanOrEqual(condition.value) });
           break;
         case '!=':
-        case '<>':
           whereClauses.push({ [condition.field]: Not(Equal(condition.value)) });
           break;
         case 'IN':
@@ -195,7 +200,7 @@ export class PolicyService {
     let combinedPolicyConditions: FindOptionsWhere<any>[] = [];
 
     for (const policy of policies) {
-      const policyConditions = this.convertPolicyConditionsToWhereClauses(policy.conditions);
+      const policyConditions = this.convertPolicyConditionsToWhereClauses(policy.conditions, user);
       combinedPolicyConditions = [...combinedPolicyConditions, ...policyConditions];
     }
 
@@ -363,11 +368,10 @@ export class PolicyService {
     thisWeek: () => Between(startOfWeek(new Date()), endOfWeek(new Date())),
     thisMonth: () => Between(startOfMonth(new Date()), endOfMonth(new Date())),
     thisYear: () => Between(startOfYear(new Date()), endOfYear(new Date())),
-    // Add 'LastWeek', 'LastMonth', 'LastYear', etc...
   };
   
   // A mock function to get user group IDs (you'll need to implement this according to your data sources)
-  async getUserGroupIds(user: User): Promise<string[]> {
+  getUserGroupIds(user: User): string[] {
     // Assuming 'user.groups' is an array of Group entities and each group entity has an 'id' property
     if (user.groups) {
       // Map over the groups and return an array of their IDs
