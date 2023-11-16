@@ -36,7 +36,7 @@ export class IncidentsService {
     private policyService: PolicyService,
     private notificationSendService: NotificationSendService,
     private socketsGateway: SocketsGateway,
-  ) {}
+  ) { }
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
     return await this.incidentsRepository.count(options);
@@ -148,16 +148,19 @@ export class IncidentsService {
     const policyWhereClauses = await this.policyService.getDataPolicyConditionsForUser(
       currentUser,
       'incidents'
-      );
+    );
+
 
     where = [...where, ...policyWhereClauses];
+
+    console.log(where);
 
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
     if (page > pages) page = 1;
     const min = (page - 1) * pageSize;
 
-    
+
 
 
     return {

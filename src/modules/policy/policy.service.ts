@@ -122,14 +122,8 @@ export class PolicyService {
 
     const addConditionToWhereClauses = (condition: any) => {
       switch (condition.operator) {
-        case 'ME':
-          whereClauses.push({ [condition.field]: Equal(user.id) });
-        break;
-        case 'isOneOfMyGroups':
-          whereClauses.push({ [condition.field]: In(this.getUserGroupIds(user)) });
-        break;
         case '=':
-          whereClauses.push({ [condition.field]: Equal(condition.value) });
+          whereClauses.push({ [condition.field]: Equal(condition.value=='Me()'? user.id : condition.value) });
           break;
         case 'LIKE':
           whereClauses.push({ [condition.field]: Like(`%${condition.value}%`) });
@@ -150,7 +144,7 @@ export class PolicyService {
           whereClauses.push({ [condition.field]: Not(Equal(condition.value)) });
           break;
         case 'IN':
-          whereClauses.push({ [condition.field]: In(condition.value) }); // assuming condition.value is an array
+          whereClauses.push({ [condition.field]: In(condition.value== "isOneOfMyGroups()"? this.getUserGroupIds(user): condition.value) }); // assuming condition.value is an array
           break;
         case 'BETWEEN':
           whereClauses.push({ [condition.field]: Between(condition.value.start, condition.value.end) }); // assuming condition.value has 'start' and 'end' properties
