@@ -1,70 +1,114 @@
-import { Entity, Column, ManyToMany, JoinTable, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  JoinTable,
+  Index,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
 import { Permission } from '../../permission/entities/permission.entity';
 import { BaseEntity } from '@utils/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsJSON, IsString, MaxLength, IsBoolean } from 'class-validator';
-import { ActionType } from '../enums/action-type.enum'; 
+import { IsJSON, IsString, IsInt } from 'class-validator';
+import { Resource } from 'src/modules/resource/entities/resource.entity';
+
+export enum PolicyAction {
+  WRITE = 'write',
+  FILTER = 'filter',
+  EXECUTE = 'execute',
+  READ = 'read',
+  VIEW = 'view',
+}
 
 @Entity()
-export class Policy extends BaseEntity{
+export class Policy extends BaseEntity {
   @Index()
   @ApiProperty({
     maxLength: 128,
     description: 'Name of the policy',
     example: 'AdminAccess',
   })
-  @IsString({ message: 'Name should be a string' })
+  @IsString()
   @Column({ type: 'varchar', length: 128 })
   name: string;
+  @ApiProperty({
+    maxLength: 128,
+    description: 'Name of the table',
+    example: 'Users',
+  })
+  @Column({
+    length: 128,
+  })
+  table: string;
+
+  @ApiProperty({
+    maxLength: 256,
+    description: 'Description of the resource',
+    example: 'A resource representing user password field',
+  })
+  @Column({
+    length: 256,
+    nullable: true,
+  })
+  description: string;
 
   @ApiProperty({
     maxLength: 128,
-    description: 'Value of the policy',
-    example: 'allow',
+    description: 'The resource this policy applies to',
+    example: 'incident',
   })
-  @IsString({ message: 'Value should be a string' })
-  @Column({ type: 'varchar', length: 128 })
-  value: string;
+  @ManyToOne(() => Resource, { eager: true, nullable: true })
+  @JoinColumn({ name: 'resource_id' })
+  resource: Resource | null;
 
   @ApiProperty({
-    description: 'Active status of the policy',
-    example: true,
+    type: 'enum',
+    enum: PolicyAction,
+    default: PolicyAction.FILTER,
+    description: 'The action this policy regulates',
+    example: 'filter',
   })
-
-  @Index()
-  @IsBoolean({ message: 'Active should be a boolean' })
-  @Column({ type: 'boolean' })
-  active: boolean;
+  @Column({
+    type: 'enum',
+    enum: PolicyAction,
+    default: PolicyAction.FILTER,
+  })
+  action: PolicyAction;
 
   @ApiProperty({
-    maxLength: 128,
-    description: 'Type of the policy',
-    example: 'access',
+    type: 'json',
+    description: 'Conditions under which the policy is evaluated',
+    example: '{ "role": "admin", "state": "assigned" }',
   })
-  @IsString({ message: 'Type should be a string' })
-  @Column({ type: 'varchar', length: 128 })
-  type: string;
-
-  @Column({ type: 'json', nullable: true })
   @IsJSON()
-  conditions: JSON;
-  
+  @Column({ type: 'json', nullable: true })
+  conditions: string;
+
   @ApiProperty({
-    type: () => Role,
-    isArray: true,
-    description: 'A list of roles associated with the policy.',
+    description: 'Version number of the policy for tracking changes',
+    example: 1,
   })
-  @ManyToMany(() => Role, role => role.policies, { onDelete: 'CASCADE' })  
+  @IsInt()
+  @Column({ nullable: true })
+  version: number;
+
+  // Hierarchical relationship
+  @ManyToOne(() => Policy, (policy) => policy.children, { nullable: true })
+  parentPolicy: Policy;
+
+  @OneToMany(() => Policy, (policy) => policy.parentPolicy)
+  children: Policy[];
+
+  @ManyToMany(() => Role, (role) => role.policies, { eager: true })
   @JoinTable()
   roles: Role[];
 
-  @ApiProperty({
-    type: () => Permission,
-    isArray: true,
-    description: 'A list of permissions associated with the policy.',
+  @ManyToMany(() => Permission, (permission) => permission.policies, {
+    eager: true,
   })
-  @ManyToMany(() => Permission, permission => permission.policies, { onDelete: 'CASCADE' })  
   @JoinTable()
   permissions: Permission[];
 }

@@ -214,6 +214,7 @@ export class IncidentsController {
     endCreatedOn?: Date,
     @Query('assignedGroupId', new UUIDValidationPipe({ optional: true }))
     assignedGroupId?: string,
+    @CurrentUser({ optional: true }) currentUser?: User,
   ): Promise<PaginationIncidentDto> {
     return await this.incidentsService.findAll(
       pageSize ?? 25,
@@ -224,6 +225,8 @@ export class IncidentsController {
       startCreatedOn,
       endCreatedOn,
       assignedGroupId,
+      currentUser
+      
     );
   }
 

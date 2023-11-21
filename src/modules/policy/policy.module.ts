@@ -5,13 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Policy } from './entities/policy.entity';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
+import { ResourceModule } from '../resource/resource.module';
 
 @Module({
 
   imports: [
     TypeOrmModule.forFeature([Policy], ),
     RoleModule,
-    PermissionModule
+    PermissionModule,
+    ResourceModule
 
   ],
     providers: [PolicyService,],

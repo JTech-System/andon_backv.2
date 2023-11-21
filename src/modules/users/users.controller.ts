@@ -44,7 +44,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  //@Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a User' })
   @ApiCreatedResponse({
     type: ResponseUserDto,

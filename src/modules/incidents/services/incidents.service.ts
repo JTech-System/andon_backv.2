@@ -21,6 +21,7 @@ import { NotificationOperation } from '@notifications/enums/notification-operati
 import { PaginationIncidentDto } from '@incidents/dto/pagination-incident.dto';
 import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
 import { IncidentCategoriesService } from './incident-categories.service';
+import { PolicyService } from 'src/modules/policy/policy.service';
 
 @Injectable()
 export class IncidentsService {
@@ -32,9 +33,10 @@ export class IncidentsService {
     private machinesService: MachinesService,
     private groupsService: GroupsService,
     private usersService: UsersService,
+    private policyService: PolicyService,
     private notificationSendService: NotificationSendService,
     private socketsGateway: SocketsGateway,
-  ) {}
+  ) { }
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
     return await this.incidentsRepository.count(options);
@@ -97,6 +99,8 @@ export class IncidentsService {
     startCreatedOn?: Date,
     endCreatedOn?: Date,
     assignedGroupId?: string,
+    currentUser?: User,
+
   ): Promise<PaginationIncidentDto> {
     let where: FindOptionsWhere<Incident>[] = [];
     if (search) {
@@ -141,10 +145,22 @@ export class IncidentsService {
       }
     });
 
+    const policyWhereClauses = await this.policyService.getDataPolicyConditionsForUser(
+      currentUser,
+      'incidents'
+    );
+
+
+    where = [...where, ...policyWhereClauses];
+    
+
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
     if (page > pages) page = 1;
     const min = (page - 1) * pageSize;
+
+
+
 
     return {
       incidents: await this.incidentsRepository.find({
