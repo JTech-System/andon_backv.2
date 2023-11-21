@@ -152,8 +152,7 @@ export class IncidentsService {
 
 
     where = [...where, ...policyWhereClauses];
-
-    console.log(where);
+    
 
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
