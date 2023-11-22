@@ -22,6 +22,7 @@ import { PaginationIncidentDto } from '@incidents/dto/pagination-incident.dto';
 import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
 import { IncidentCategoriesService } from './incident-categories.service';
 import { PolicyService } from 'src/modules/policy/policy.service';
+import { Parser } from 'json2csv';
 
 @Injectable()
 export class IncidentsService {
@@ -36,7 +37,7 @@ export class IncidentsService {
     private policyService: PolicyService,
     private notificationSendService: NotificationSendService,
     private socketsGateway: SocketsGateway,
-  ) { }
+  ) {}
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
     return await this.incidentsRepository.count(options);
@@ -90,9 +91,7 @@ export class IncidentsService {
     return await this.findOne(incident.id);
   }
 
-  async findAll(
-    pageSize: number,
-    page: number,
+  private async findAllWhere(
     search?: string,
     status?: IncidentStatus,
     categoryId?: string,
@@ -100,8 +99,7 @@ export class IncidentsService {
     endCreatedOn?: Date,
     assignedGroupId?: string,
     currentUser?: User,
-
-  ): Promise<PaginationIncidentDto> {
+  ): Promise<FindOptionsWhere<Incident>[]> {
     let where: FindOptionsWhere<Incident>[] = [];
     if (search) {
       where = [
@@ -145,22 +143,40 @@ export class IncidentsService {
       }
     });
 
-    const policyWhereClauses = await this.policyService.getDataPolicyConditionsForUser(
+    const policyWhereClauses =
+      await this.policyService.getDataPolicyConditionsForUser(
+        currentUser,
+        'incidents',
+      );
+
+    return [...where, ...policyWhereClauses];
+  }
+
+  async findAll(
+    pageSize: number,
+    page: number,
+    search?: string,
+    status?: IncidentStatus,
+    categoryId?: string,
+    startCreatedOn?: Date,
+    endCreatedOn?: Date,
+    assignedGroupId?: string,
+    currentUser?: User,
+  ): Promise<PaginationIncidentDto> {
+    const where = await this.findAllWhere(
+      search,
+      status,
+      categoryId,
+      startCreatedOn,
+      endCreatedOn,
+      assignedGroupId,
       currentUser,
-      'incidents'
     );
-
-
-    where = [...where, ...policyWhereClauses];
-    
 
     const length = await this.incidentsRepository.count({ where });
     const pages = Math.ceil(length / pageSize);
     if (page > pages) page = 1;
     const min = (page - 1) * pageSize;
-
-
-
 
     return {
       incidents: await this.incidentsRepository.find({
@@ -362,5 +378,107 @@ export class IncidentsService {
     );
     this.socketsGateway.sendIncident();
     await this.incidentsRepository.delete({ id });
+  }
+
+  private getFullName(user?: User): string | undefined {
+    if (user) return user.firstName + ' ' + user.lastName;
+    else return undefined;
+  }
+
+  async generateCSV(
+    search?: string,
+    status?: IncidentStatus,
+    categoryId?: string,
+    startCreatedOn?: Date,
+    endCreatedOn?: Date,
+    assignedGroupId?: string,
+    currentUser?: User,
+  ): Promise<any> {
+    const where = await this.findAllWhere(
+      search,
+      status,
+      categoryId,
+      startCreatedOn,
+      endCreatedOn,
+      assignedGroupId,
+      currentUser,
+    );
+
+    const incidents = await this.incidentsRepository.find({
+      where,
+      relations: {
+        createdBy: true,
+        updatedBy: true,
+        category: true,
+        productionLine: true,
+        assignedGroup: true,
+        assignedTo: true,
+        machine: true,
+        closedBy: true,
+      },
+      order: {
+        number: 'ASC',
+      },
+    });
+
+    const data: any[] = [];
+
+    incidents.map((incident) => {
+      data.push({
+        id: incident.id,
+        createdOn: incident.createdOn,
+        updatedOn: incident.updatedOn,
+        number: incident.number,
+        description: incident.description,
+        status: incident.status,
+        employee: incident.employee,
+        priority: incident.priority,
+        proposedSolution: incident.proposedSolution,
+        resolutionTimeInMinutes: incident.resolutionTimeInMinutes,
+        closeNotes: incident.closeNotes,
+        inProgressOn: incident.inProgressOn,
+        closedOn: incident.closedOn,
+        closeTimeLapsed: incident.closeTimeLapsed,
+        createdBy: this.getFullName(incident.createdBy),
+        updateBy: this.getFullName(incident.updatedBy),
+        category: incident.category.value,
+        productionLine: incident.productionLine.value,
+        assignedGroup: incident.assignedGroup
+          ? incident.assignedGroup.name
+          : undefined,
+        assignedTo: this.getFullName(incident.assignedTo),
+        machine: incident.machine ? incident.machine.value : undefined,
+        closedBy: this.getFullName(incident.closedBy),
+      });
+    });
+
+    const fields = [
+      'id',
+      'createdOn',
+      'updatedOn',
+      'number',
+      'description',
+      'status',
+      'employee',
+      'priority',
+      'proposedSolution',
+      'resolutionTimeInMinutes',
+      'closeNotes',
+      'inProgressOn',
+      'closedOn',
+      'closeTimeLapsed',
+      'createdBy',
+      'updateBy',
+      'category',
+      'productionLine',
+      'assignedGroup',
+      'assignedTo',
+      'machine',
+      'closedBy',
+    ];
+    const parser = new Parser({
+      fields,
+    });
+    return parser.parse(data);
   }
 }

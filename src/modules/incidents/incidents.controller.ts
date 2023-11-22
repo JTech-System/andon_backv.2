@@ -8,6 +8,7 @@ import {
   Query,
   Delete,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
 import { CreateIncidentDto } from './dto/create-incident.dto';
 import { UpdateIncidentDto } from './dto/update-incident.dto';
@@ -37,6 +38,7 @@ import { NotificationFieldsDto } from '@utils/dto/notification-fields.dto';
 import { IncidentsService } from './services/incidents.service';
 import { IncidentCategoriesService } from './services/incident-categories.service';
 import { IncidentCommentsService } from './services/incident-comments.service';
+import { Response } from 'express';
 
 @ApiTags('Incidents')
 @Controller('incidents')
@@ -135,6 +137,80 @@ export class IncidentsController {
     };
   }
 
+  // CSV
+
+  @Get('csv')
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'status',
+    type: String,
+    enum: IncidentStatusArray,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'startCreatedOn',
+    type: Date,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'endCreatedOn',
+    type: Date,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'assignedGroupId',
+    type: String,
+    required: false,
+  })
+  @ApiOkResponse({
+    content: {
+      'text/csv': {},
+    },
+  })
+  @ApiBearerAuth()
+  async generateCSV(
+    @Res() res: Response,
+    @Query('search') search?: string,
+    @Query('status', new IncidentStatusValidationPipe())
+    status?: IncidentStatus,
+    @Query(
+      'categoryId',
+      new UUIDValidationPipe({
+        optional: true,
+      }),
+    )
+    categoryId?: string,
+    @Query('startCreatedOn', new DateValidationPipe({ optional: true }))
+    startCreatedOn?: Date,
+    @Query('endCreatedOn', new DateValidationPipe({ optional: true }))
+    endCreatedOn?: Date,
+    @Query('assignedGroupId', new UUIDValidationPipe({ optional: true }))
+    assignedGroupId?: string,
+    @CurrentUser({ optional: true }) currentUser?: User,
+  ): Promise<any> {
+    const csv = await this.incidentsService.generateCSV(
+      search,
+      status,
+      categoryId,
+      startCreatedOn,
+      endCreatedOn,
+      assignedGroupId,
+      currentUser,
+    );
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=data.csv');
+    res.status(200).send(csv);
+  }
+
   // Incidents
 
   @Post()
@@ -225,8 +301,7 @@ export class IncidentsController {
       startCreatedOn,
       endCreatedOn,
       assignedGroupId,
-      currentUser
-      
+      currentUser,
     );
   }
 

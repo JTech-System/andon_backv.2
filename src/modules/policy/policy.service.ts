@@ -204,7 +204,6 @@ export class PolicyService {
 
   async retrievePoliciesForUserAndResource(user: User, table: string): Promise<Policy[]> {
     // Assuming you have a method on the user object or service to get user's roles
-    console.log(user)
     const userRoles = user.roles;
 
     // Now, find the policies that apply to these roles and the specified resource type
@@ -216,7 +215,6 @@ export class PolicyService {
       .andWhere("policy.action = :action", { action: PolicyAction.FILTER })
       .getMany();      
     // ... add logic to filter policies based on permissions if necessary ...
-    console.log(policies);
     return policies || [];    
   }
   
