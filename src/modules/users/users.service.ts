@@ -87,7 +87,16 @@ export class UsersService {
   }
 
   async findAll(): Promise<User[]> {
-    return await this.usersRepository.find();
+    return await this.usersRepository.find({
+      relations: {
+        groups: true,
+        roles: true,
+      },
+      order: {
+        firstName: 'ASC',
+        lastName: 'ASC',
+      }
+    });
   }
 
   async findAllFilters(

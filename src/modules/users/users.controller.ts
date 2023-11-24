@@ -4,7 +4,6 @@ import {
   Post,
   UseGuards,
   Body,
-  Patch,
   Param,
   Delete,
   NotFoundException,
@@ -35,7 +34,7 @@ import { FindOneOptions } from 'typeorm';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { UpdateUserRolesDto } from './dto/update-roles.dto';
 import { UserAPIListDto } from './dto/response-api.dto';
-import { IsOptional } from 'class-validator';
+
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -65,17 +64,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all Users' })
   @ApiOkResponse({ type: [User], description: 'Returned all users.' })
   async findAll(): Promise<User[]> {
-    const users = await this.usersService.findAllFilters(
-      0,
-      5,
-      'id',
-      'DESC',
-      '',
-    );
-    if (users.row_count === 0) {
-      throw new NotFoundException('No users found.');
-    }
-    return users.rows;
+    return await this.usersService.findAll();
   }
 
   @Get('/filters')
