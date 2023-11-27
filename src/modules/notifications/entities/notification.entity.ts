@@ -105,6 +105,14 @@ export class Notification extends BaseEntity {
   stopFields: NotificationStopField[];
 
   @ApiProperty({
+    default: true,
+  })
+  @Column({
+    default: true
+  })
+  active: boolean;
+
+  @ApiProperty({
     required: false,
   })
   @Column({

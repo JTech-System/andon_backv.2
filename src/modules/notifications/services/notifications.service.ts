@@ -34,6 +34,7 @@ export class NotificationsService {
    */
   async create(
     createNotificationDto: CreateNotificationDto,
+    id?: string,
   ): Promise<Notification> {
     // Initialize an empty array to store recipients.
     const recipients: User[] = [];
@@ -64,6 +65,7 @@ export class NotificationsService {
 
     // Create a notification using the provided data in the DTO.
     const notification = await this.notificationsRepository.save({
+      id,
       recipients,
       groups,
       managerGroups,
@@ -172,6 +174,7 @@ export class NotificationsService {
     // Create a new notification using the data from the 'updateNotificationDto'.
     const notification = await this.create(
       updateNotificationDto as unknown as any,
+      id,
     );
 
     // Return the newly created notification by looking it up in the database.

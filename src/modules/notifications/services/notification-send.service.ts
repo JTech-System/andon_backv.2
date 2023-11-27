@@ -258,7 +258,7 @@ export class NotificationSendService {
     )) as object[];
 
     const notifications = (await appDataSource.query(
-      `SELECT * FROM notification WHERE id='${notificationId}'`,
+      `SELECT * FROM notification WHERE id='${notificationId}' AND active=1`,
     )) as Notification[];
 
     // Check if records and notifications are found in the database.
@@ -345,9 +345,10 @@ export class NotificationSendService {
 
     // Iterate through manager groups to add their managers as recipients.
     notification.managerGroups.map((group) => {
-      if (!recipients.find((recipient) => recipient.id == group.manager.id)) {
-        recipients.push(group.manager);
-      }
+      if (group.manager)
+        if (!recipients.find((recipient) => recipient.id == group.manager.id)) {
+          recipients.push(group.manager);
+        }
     });
 
     // Check if the notification has a recipient group defined.
@@ -406,6 +407,7 @@ export class NotificationSendService {
           entity,
           operations: Like(`%${operation}%`) as any,
           types: Like(`%${NotificationType.EMAIL}%`) as any,
+          active: true,
         },
         relations: {
           recipients: true,
@@ -457,6 +459,7 @@ export class NotificationSendService {
           entity,
           operations: Like(`%${operation}%`) as any,
           types: Like(`%${NotificationType.PUSH}%`) as any,
+          active: true,
         },
         relations: {
           recipients: {

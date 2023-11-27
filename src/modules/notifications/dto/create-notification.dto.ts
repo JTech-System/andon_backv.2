@@ -104,6 +104,11 @@ export class CreateNotificationDto {
   @Type(() => CreateNotificationStopFieldDto)
   stopFields: CreateNotificationStopFieldDto[];
 
+  @ApiProperty({
+    default: true,
+  })
+  active: boolean;
+
   @ApiProperty()
   @IsString()
   @IsOptional()
