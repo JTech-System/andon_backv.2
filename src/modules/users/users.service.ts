@@ -95,7 +95,7 @@ export class UsersService {
       order: {
         firstName: 'ASC',
         lastName: 'ASC',
-      }
+      },
     });
   }
 
@@ -105,13 +105,41 @@ export class UsersService {
     sortField = 'id',
     sortOrder: 'ASC' | 'DESC' = 'ASC',
     search: string,
+    roleId: string | null,
+    groupId: string | null,
   ): Promise<UserAPIListDto> {
-    let whereCondition: FindOptionsWhere<User> | undefined = undefined;
+    let whereCondition: FindOptionsWhere<User>[] | undefined = undefined;
 
     if (search) {
-      whereCondition = {
-        username: Like(`%${search}%`),
-      };
+      whereCondition = [
+        { username: Like(`%${search}%`) },
+        { firstName: Like(`%${search}%`) },
+        { lastName: Like(`%${search}%`) },
+      ];
+    } else if (roleId || groupId) {
+      whereCondition = [{}];
+    }
+    if (whereCondition) {
+      for (const i in whereCondition) {
+        if (roleId) {
+          await this.roleService.findOne(roleId);
+          whereCondition[i] = {
+            roles: {
+              id: roleId,
+            },
+            ...whereCondition[i],
+          };
+        }
+        if (groupId) {
+          await this.groupService.findOne(groupId);
+          whereCondition[i] = {
+            groups: {
+              id: groupId,
+            },
+            ...whereCondition[i],
+          };
+        }
+      }
     }
 
     const [result, total] = await this.usersRepository.findAndCount({
@@ -279,25 +307,9 @@ export class UsersService {
     await this.findOne(id);
     const { roles, ...updateData } = updateUserDto;
     if (updateData.password) {
-      const user = await this.usersRepository.findOne({
-        where: {
-          id,
-        },
-        select: {
-          id: true,
-          passwordHash: true,
-        },
-      });
-      if (!user) throw new UnauthorizedException();
-      if (
-        !(await bcrypt.compare(updateUserDto.lastPassword, user.passwordHash))
-      )
-        throw new UnauthorizedException();
-
       const salt = await bcrypt.genSalt();
       updateData['passwordHash'] = await bcrypt.hash(updateData.password, salt);
       delete updateData['password'];
-      delete updateData['lastPassword'];
     }
     await this.usersRepository.update({ id }, updateData);
 

@@ -131,7 +131,7 @@ export class IncidentsController {
     return {
       status: ['Unassigned', 'Assigned', 'In progress', 'Closed', 'Canceled'],
       priority: ['P1', 'P2', 'P3'],
-      description: [],
+      // description: [],
       assignedGroup: ['group'],
       comments: true,
     };

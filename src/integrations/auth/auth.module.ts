@@ -12,7 +12,7 @@ import { PermissionModule } from 'src/modules/permission/permission.module';
     JwtModule.register({
       secret: process.env.SECRET_KEY,
       signOptions: {
-        expiresIn: '20h' 
+        expiresIn: '5d' 
       }
     }),
     UsersModule,

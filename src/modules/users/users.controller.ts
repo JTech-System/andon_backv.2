@@ -20,6 +20,7 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -70,6 +71,9 @@ export class UsersController {
   @Get('/filters')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Filter Users' })
+  @ApiQuery({ name: 'search', type: String, required: false })
+  @ApiQuery({ name: 'roleId', type: String, required: false })
+  @ApiQuery({ name: 'groupId', type: String, required: false })
   @ApiOkResponse({ type: [User], description: 'Returning users filtered.' })
   async findAllQuery(
     @Query('skip') skip: number,
@@ -77,18 +81,18 @@ export class UsersController {
     @Query('sortField') sortField: string,
     @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
     @Query('search') search: string | null,
+    @Query('roleId') roleId: string | null,
+    @Query('groupId') groupId: string | null,
   ): Promise<UserAPIListDto> {
-    const users = await this.usersService.findAllFilters(
+    return await this.usersService.findAllFilters(
       skip,
       take,
       sortField,
       sortOrder,
       search,
+      roleId,
+      groupId,
     );
-    if (users.row_count === 0) {
-      throw new NotFoundException('No users found.');
-    }
-    return users;
   }
 
   @Get(':id')

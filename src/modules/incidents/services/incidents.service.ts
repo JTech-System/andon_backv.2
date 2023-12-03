@@ -324,12 +324,7 @@ export class IncidentsService {
           else
             updateIncidentDto['closeTimeLapsed'] =
               date.getTime() - new Date(lastIncident.inProgressOn).getTime();
-        } else {
-          updateIncidentDto['inProgressOn'] = date;
-          updateIncidentDto['inProgressTimeLapsed'] = updateIncidentDto[
-            'closeTimeLapsed'
-          ] = date.getTime() - new Date(lastIncident.createdOn).getTime();
-        }
+        } else updateIncidentDto['inProgressOn'] = date;
         updateIncidentDto['closedOn'] = date;
       } else if (lastStatus == IncidentStatus.CLOSED) {
         updateIncidentDto['closedOn'] = date;
