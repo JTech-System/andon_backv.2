@@ -135,4 +135,22 @@ export class CreateNotificationDto {
   @MaxLength(32)
   @IsOptional()
   recipientManagerGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  recipientAgentsGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  recipientUser?: string;
 }

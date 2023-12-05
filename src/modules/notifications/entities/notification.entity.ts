@@ -108,7 +108,7 @@ export class Notification extends BaseEntity {
     default: true,
   })
   @Column({
-    default: true
+    default: true,
   })
   active: boolean;
 
@@ -123,7 +123,7 @@ export class Notification extends BaseEntity {
 
   @ApiProperty({
     required: false,
-    maxLength: 32
+    maxLength: 32,
   })
   @Column({
     length: 32,
@@ -133,11 +133,31 @@ export class Notification extends BaseEntity {
 
   @ApiProperty({
     required: false,
-    maxLength: 32
+    maxLength: 32,
   })
   @Column({
     length: 32,
     nullable: true,
   })
   recipientManagerGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @Column({
+    length: 32,
+    nullable: true,
+  })
+  recipientAgentsGroup?: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 32,
+  })
+  @Column({
+    length: 32,
+    nullable: true,
+  })
+  recipientUser?: string;
 }

@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  JoinTable,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../role/entities/role.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -19,7 +26,7 @@ export class Group extends BaseEntity {
   @ApiProperty({
     description: 'manager of the group',
     example: 'manager',
-    type: () => User
+    type: () => User,
   })
   @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'managerId' })
@@ -30,9 +37,8 @@ export class Group extends BaseEntity {
     description: 'managerId of the group',
     example: '',
   })
-  @Column({nullable: true})
+  @Column({ nullable: true })
   managerId: string | null;
-
 
   @ApiProperty({
     maxLength: 256,
@@ -86,4 +92,11 @@ export class Group extends BaseEntity {
   @ManyToMany(() => User)
   @JoinTable()
   users: User[];
+
+  @ApiProperty({
+    type: [User],
+  })
+  @ManyToMany(() => User)
+  @JoinTable()
+  agents: User[];
 }

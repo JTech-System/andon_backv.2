@@ -2,7 +2,6 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
-  BadRequestException,
   Inject,
   forwardRef,
   InternalServerErrorException,
@@ -15,6 +14,8 @@ import { RoleService } from '../role/role.service';
 import { UsersService } from '@users/users.service';
 import { GroupAPIListDto } from './dto/group-api.dto';
 import { GroupRolesDto } from './dto/add-roles-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
+import { User } from '@users/entities/user.entity';
 
 @Injectable()
 export class GroupsService {
@@ -36,8 +37,7 @@ export class GroupsService {
     if (createGroupDto.manager) {
       try {
         manager = await this.usersService.findOne(createGroupDto.manager);
-      } catch (error) {
-      }
+      } catch (error) {}
 
       if (!manager) {
         createGroupDto.manager = null;
@@ -45,7 +45,7 @@ export class GroupsService {
     }
     const group = this.groupRepository.create({
       ...createGroupDto,
-      manager,      
+      manager,
     });
 
     try {
@@ -93,7 +93,11 @@ export class GroupsService {
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: id },
-      relations: ['roles', 'users'],
+      relations: {
+        roles: true,
+        users: true,
+        agents: true,
+      },
     });
 
     if (!group) {
@@ -102,36 +106,31 @@ export class GroupsService {
     return group;
   }
 
-  async update(id: string, updateGroupDto: CreateGroupDto): Promise<Group> {
-    const group = await this.findOne(id);
+  async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
+    await this.findOne(id);
 
-    if (!updateGroupDto.name) {
-      throw new BadRequestException('Name is required');
-    }
-
-    let manager;
+    let manager: User | null = null;
     if (updateGroupDto.manager) {
-      try {
-        manager = await this.usersService.findOne(updateGroupDto.manager);
-      } catch (error) {
-      }      
+      manager = await this.usersService.findOne(updateGroupDto.manager);
     }
-    if (!manager) {
-      let managerId = null;
-      Object.assign(group, {
-        ...updateGroupDto,
-        manager,  
-        managerId   
-      });
-    }else{
-      Object.assign(group, {
-        ...updateGroupDto,
-        manager,      
-      });
+
+    const agents = [];
+    if (updateGroupDto.agentsId) {
+      for (const agentId of updateGroupDto.agentsId) {
+        agents.push(await this.usersService.findOne(agentId));
+      }
     }
-    await this.groupRepository.save(group);
-    return group;
+
+    await this.groupRepository.save({
+      ...updateGroupDto,
+      id,
+      manager,
+      agents,
+    });
+
+    return await this.findOne(id);
   }
+
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
     group.users = [];
@@ -171,7 +170,9 @@ export class GroupsService {
     // Update the roles for all users in the group
     for (const user of group.users) {
       user.roles = [...new Set([...user.roles, ...rolesToAdd])];
-      await this.usersService.addUserRoles(user.id,  {roles: updateGroupRolesDto.roles}); // Update user roles
+      await this.usersService.addUserRoles(user.id, {
+        roles: updateGroupRolesDto.roles,
+      }); // Update user roles
     }
 
     try {
@@ -207,7 +208,9 @@ export class GroupsService {
     );
 
     for (const user of group.users) {
-      this.usersService.removeUserRoles(user.id, {roles:  updateGroupRolesDto.roles})
+      this.usersService.removeUserRoles(user.id, {
+        roles: updateGroupRolesDto.roles,
+      });
     }
 
     try {

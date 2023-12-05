@@ -9,7 +9,7 @@ import {
   Delete,
   HttpCode,
   NotFoundException,
-  Query
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -24,9 +24,9 @@ import { Group } from './entities/group.entity'; // Adjust the path according to
 import { RolesGuard } from '@utils/guards/roles.guard';
 import { Roles } from '@utils/decorators/roles.decorator';
 import { UserRole } from '@utils/enums/user-role.enum'; // Adjust the path according to your project structure
-import { AddUserGroupDto } from './dto/add-user-group.dto';
 import { GroupAPIListDto } from './dto/group-api.dto';
 import { GroupRolesDto } from './dto/add-roles-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 
 @ApiTags('Groups')
 @Controller('groups')
@@ -61,10 +61,16 @@ export class GroupsController {
     @Query('skip') skip: number,
     @Query('take') take: number,
     @Query('sortField') sortField: string,
-    @Query('sortOrder') sortOrder: 'ASC' | 'DESC', 
-    @Query('search') search: string | null
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC',
+    @Query('search') search: string | null,
   ): Promise<GroupAPIListDto> {
-    const users = await this.groupsService.findAllFilters(skip,take,sortField,sortOrder,search);
+    const users = await this.groupsService.findAllFilters(
+      skip,
+      take,
+      sortField,
+      sortOrder,
+      search,
+    );
     if (users.row_count === 0) {
       throw new NotFoundException('No groups found.');
     }
@@ -91,7 +97,7 @@ export class GroupsController {
   @ApiResponse({ status: 404, description: 'Group not found.' })
   async update(
     @Param('id') id: string,
-    @Body() updateGroupDto: CreateGroupDto,
+    @Body() updateGroupDto: UpdateGroupDto,
   ): Promise<Group> {
     return await this.groupsService.update(id, updateGroupDto);
   }
@@ -105,23 +111,34 @@ export class GroupsController {
   async remove(@Param('id') id: string): Promise<void> {
     await this.groupsService.remove(id);
   }
-  
+
   @Put('/roles/:id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Add Roles to a group' })
-  @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group roles updated successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Group not found.' })
-  async addRolesToGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
+  async addRolesToGroup(
+    @Param('id') id: string,
+    @Body() updaterolesDto: GroupRolesDto,
+  ): Promise<Group> {
     return await this.groupsService.addGroupRoles(id, updaterolesDto);
   }
 
-  @Delete('/roles/:id') 
+  @Delete('/roles/:id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove roles from group' })
-  @ApiResponse({ status: 200, description: 'Group roles updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group roles updated successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Group not found.' })
-  async removeRolesFromGroup(@Param('id') id: string, @Body() updaterolesDto: GroupRolesDto): Promise<Group> {
+  async removeRolesFromGroup(
+    @Param('id') id: string,
+    @Body() updaterolesDto: GroupRolesDto,
+  ): Promise<Group> {
     return await this.groupsService.removeGroupRoles(id, updaterolesDto);
   }
-
 }

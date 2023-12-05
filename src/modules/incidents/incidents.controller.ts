@@ -133,6 +133,7 @@ export class IncidentsController {
       priority: ['P1', 'P2', 'P3'],
       // description: [],
       assignedGroup: ['group'],
+      assignedTo: ['user'],
       comments: true,
     };
   }

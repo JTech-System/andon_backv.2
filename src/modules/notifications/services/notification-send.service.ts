@@ -14,6 +14,7 @@ import { GroupsService } from '@groups/group.service';
 import { NotificationsService } from './notifications.service';
 import { NotificationType } from '@notifications/enums/notification-type.enum';
 import { NotificationLogService } from './notification-log.service';
+import { UsersService } from '@users/users.service';
 
 webPush.setVapidDetails(
   process.env.SERVER_WORKER_SUBJECT,
@@ -28,6 +29,7 @@ export class NotificationSendService {
     private notificationPushService: NotificationPushService,
     private notificationLogService: NotificationLogService,
     private groupsService: GroupsService,
+    private usersService: UsersService,
   ) {}
 
   private parseContent(content: string, record: object, url: string): string {
@@ -380,8 +382,49 @@ export class NotificationSendService {
         }
       }
     }
+
+    if (notification.recipientAgentsGroup) {
+      if (record[notification.recipientAgentsGroup]) {
+        const agents = (
+          await this.groupsService.findOne(
+            record[notification.recipientAgentsGroup]['id'],
+          )
+        ).agents;
+        if (agents) {
+          agents.map((agent) => {
+            if (!recipients.find((recipient) => recipient.id == agent.id))
+              recipients.push(agent);
+          });
+        }
+      }
+    }
+
+    if (notification.recipientUser) {
+      if (record[notification.recipientUser]) {
+        const user = await this.usersService.findOne(
+          record[notification.recipientUser]['id'],
+        );
+        if (user) {
+          if (!recipients.find((recipient) => recipient.id == user.id))
+            recipients.push(user);
+        }
+      }
+    }
+
     // Return the list of recipients, including those added from groups and manager groups.
-    return recipients;
+    return await Promise.all(
+      recipients.map(
+        async (recipient) =>
+          await this.usersService.findOneBy({
+            where: {
+              id: recipient.id,
+            },
+            relations: {
+              notificationPush: true,
+            },
+          }),
+      ),
+    );
   }
 
   /**

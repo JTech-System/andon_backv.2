@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@users/entities/user.entity';
-import { IsString, MaxLength, IsOptional, IsBoolean, IsArray, ArrayNotEmpty, ArrayUnique } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateGroupDto {
-
   @ApiProperty({
     maxLength: 128,
     description: 'Name of the group',
@@ -18,7 +16,7 @@ export class CreateGroupDto {
   })
   @IsString({ message: 'manager should be a string' })
   @IsOptional()
-  manager: string; 
+  manager: string;
 
   @ApiProperty({
     maxLength: 256,
@@ -52,5 +50,4 @@ export class CreateGroupDto {
   @IsBoolean({ message: 'isActive should be a boolean' })
   @IsOptional()
   isActive?: boolean;
-
 }

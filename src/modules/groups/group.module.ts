@@ -8,13 +8,13 @@ import { GroupsService } from './group.service';
 import { UsersModule } from '@users/users.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Group]),
-        RoleModule,
-        forwardRef(() => UsersModule),
-    ],
-    controllers: [GroupsController],
-    providers: [GroupsService],
-    exports: [GroupsService],
+  imports: [
+    TypeOrmModule.forFeature([Group]),
+    RoleModule,
+    forwardRef(() => UsersModule),
+  ],
+  controllers: [GroupsController],
+  providers: [GroupsService],
+  exports: [GroupsService],
 })
 export class GroupsModule {}
