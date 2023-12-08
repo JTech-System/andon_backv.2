@@ -1842,13 +1842,6 @@ ${msgIdle}`, { headers: this.adapter.newHeaders({ "Content-Type": "text/plain" }
   var scope = self;
   var adapter = new Adapter(scope.registration.scope, self.caches);
   new Driver(scope, adapter, new CacheDatabase(adapter));
-
-  scope.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    if (clients.openWindow && event.notification.data.url) {
-      event.waitUntil(clients.openWindow(event.notification.data.url));
-    }
-  });
 })();
 /**
  * @license
