@@ -3,7 +3,7 @@
   "short_name": "Andon",
   "theme_color": "#ec1c24",
   "background_color": "#ec1c24",
-  "display": "fullscreen",
+  "display": "standalone",
   "scope": "./",
   "start_url": "./",
   "icons": [
