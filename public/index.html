@@ -21,6 +21,7 @@
 
       function askForPermission() {
         alert('ask');
+        alert(window.safari);
         // Ensure that the user can receive Safari Push Notifications.
         if ("safari" in window && "pushNotification" in window.safari) {
           alert('safari');
