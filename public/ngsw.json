@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1702591488309,
+  "timestamp": 1702593949717,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -26,7 +26,7 @@
         "/favicon.ico",
         "/index.html",
         "/main.717758c02d892002.js",
-        "/manifest.webmanifest",
+        "/manifest.json",
         "/polyfills.d34055f831148409.js",
         "/runtime.fd0daa61bf2c3dcf.js",
         "/scripts.e6659fb639dc488f.js",
@@ -247,9 +247,9 @@
     "/engineers-working-02.1861c7f3cc7b8f44.png": "5c57313920540fd2a7890e4a4fee5164befab31a",
     "/favicon.ico": "6daf24352ad3b842473b7b7d355ca7706b3ed349",
     "/icon_engineering_roles-removebg-preview.dd6f744c15e506b7.png": "e49bc66c25b4bed0f4762c5ca7bf5e049aea0f27",
-    "/index.html": "bb8b6e555fd232e04ef2fd651ad4bf74b3c34f1c",
+    "/index.html": "8129369ea8f581b5c53132e62c46cae9f6bbae8c",
     "/main.717758c02d892002.js": "a37c5cbd2053ae84b9c400737cf786c8b61f48f7",
-    "/manifest.webmanifest": "c2094482dae851b155e18f2e4ac613c25d341de2",
+    "/manifest.json": "c2094482dae851b155e18f2e4ac613c25d341de2",
     "/polyfills.d34055f831148409.js": "c2df6d10adddc1ef8f6b2c413f7d6607c5e25591",
     "/robot01-removebg-preview.f742b791a0cf9a26.png": "5dd8bce7fdf629485d391a4e92ffdee9b5f68815",
     "/robots-03.2d3caddef6f94e3e.png": "35962330a6c461b8f32c27721e319f500fd2cad3",
