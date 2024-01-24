@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { Group } from './entities/group.entity';
 import { RoleService } from '../role/role.service';
@@ -56,7 +56,7 @@ export class GroupsService {
   }
 
   async findAll(): Promise<Group[]> {
-    return await this.groupRepository.find();
+    return await this.groupRepository.find({ where: { isActive: true } });
   }
 
   async findAllFilters(
@@ -66,11 +66,12 @@ export class GroupsService {
     sortOrder: 'ASC' | 'DESC' = 'ASC',
     search: string,
   ): Promise<GroupAPIListDto> {
-    let whereCondition = {};
+    let whereCondition: FindOptionsWhere<Group> = { isActive: true };
 
     if (search) {
       whereCondition = {
         name: Like(`%${search}%`),
+        isActive: true,
       };
     }
 
@@ -80,6 +81,8 @@ export class GroupsService {
       skip,
       take,
     });
+
+    console.log(result);
 
     if (total === 0) {
       // You can either return an empty result or throw an exception based on your requirements
@@ -92,7 +95,7 @@ export class GroupsService {
 
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
-      where: { id: id },
+      where: { id: id, isActive: true },
       relations: {
         roles: true,
         users: true,
@@ -139,7 +142,7 @@ export class GroupsService {
     await this.groupRepository.save(group);
 
     try {
-      await this.groupRepository.remove(group);
+      await this.groupRepository.update(group.id, { isActive: false });
     } catch (error) {
       throw new ConflictException(
         `Error deleting group with ID ${id}: ${error.message}`,
