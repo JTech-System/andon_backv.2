@@ -82,8 +82,6 @@ export class GroupsService {
       take,
     });
 
-    console.log(result);
-
     if (total === 0) {
       // You can either return an empty result or throw an exception based on your requirements
     }
