@@ -41,8 +41,15 @@ export class UsersService {
           where: { email: createUserDto.email },
         })
       ) {
-        throw new BadRequestException(`User already exists.`);
+        throw new BadRequestException(`email already exist.`);
       }
+    }
+    if (
+      await this.findOneBy({
+        where: { username: createUserDto.username },
+      })
+    ) {
+      throw new BadRequestException(`username already exist.`);
     }
 
     let roles = [];
