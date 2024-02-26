@@ -46,15 +46,17 @@ export class GroupsController {
   async create(@Body() createGroupDto: CreateGroupDto): Promise<Group> {
     return await this.groupsService.create(createGroupDto);
   }
+
   @Get()
-  @Roles(UserRole.ADMIN)
+  //@Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all groups' })
   @ApiOkResponse({ type: [Group] })
   findAll(): Promise<Group[]> {
     return this.groupsService.findAll();
   }
+
   @Get('/filters')
-  @Roles(UserRole.ADMIN)
+  //@Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Filter Groups' })
   @ApiOkResponse({ type: [Group], description: 'Returning groups filtered.' })
   async findAllQuery(
@@ -78,7 +80,7 @@ export class GroupsController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN)
+  //@Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get a group by id' })
   @ApiResponse({ status: 200, description: 'Group fetched successfully.' })
   @ApiResponse({ status: 404, description: 'Group not found.' })
