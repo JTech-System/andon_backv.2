@@ -241,17 +241,20 @@ export class IncidentsService {
     const lastIncident = await this.findOne(id);
 
     // Find and replaces the id values
-    updateIncidentDto['category'] =
-      await this.incidentCategoriesService.findOne(
-        updateIncidentDto.categoryId,
-      );
-    delete updateIncidentDto['categoryId'];
-    updateIncidentDto['productionLine'] =
-      await this.productionLinesService.findOne(
-        updateIncidentDto['productionLineId'],
-      );
-    delete updateIncidentDto['productionLineId'];
-
+    if (updateIncidentDto.categoryId) {
+      updateIncidentDto['category'] =
+        await this.incidentCategoriesService.findOne(
+          updateIncidentDto.categoryId,
+        );
+      delete updateIncidentDto['categoryId'];
+    }
+    if (updateIncidentDto['productionLineId']) {
+      updateIncidentDto['productionLine'] =
+        await this.productionLinesService.findOne(
+          updateIncidentDto['productionLineId'],
+        );
+      delete updateIncidentDto['productionLineId'];
+    }
     if (updateIncidentDto.assignedGroupId) {
       updateIncidentDto['assignedGroup'] = await this.groupsService.findOne(
         updateIncidentDto.assignedGroupId,
@@ -270,64 +273,47 @@ export class IncidentsService {
       );
       delete updateIncidentDto['machineId'];
     }
+    if (updateIncidentDto.status) {
+      // Set times
+      const lastStatus = lastIncident.status,
+        status = updateIncidentDto.status;
 
-    // Set times
-    const lastStatus = lastIncident.status,
-      status = updateIncidentDto.status;
-
-    if (lastStatus != status) {
-      if (
-        status == IncidentStatus.IN_PROGRESS ||
-        status == IncidentStatus.CLOSED ||
-        status == IncidentStatus.CANCEL
-      ) {
-        if (!lastIncident.inProgressOn)
-          updateIncidentDto['inProgressOn'] = new Date();
+      if (lastStatus != status) {
+        if (
+          status == IncidentStatus.IN_PROGRESS ||
+          status == IncidentStatus.CLOSED ||
+          status == IncidentStatus.CANCEL
+        ) {
+          if (!lastIncident.inProgressOn)
+            updateIncidentDto['inProgressOn'] = new Date();
+        }
+        if (
+          status == IncidentStatus.CLOSED ||
+          status == IncidentStatus.CANCEL
+        ) {
+          updateIncidentDto['closedOn'] = new Date();
+          updateIncidentDto['closedBy'] = currentUser;
+        }
       }
-      if (status == IncidentStatus.CLOSED || status == IncidentStatus.CANCEL) {
-        updateIncidentDto['closedOn'] = new Date();
-        updateIncidentDto['closedBy'] = currentUser;
-      }
-    }
 
-    // const lastStatus = lastIncident.status,
-    //   status = updateIncidentDto.status;
-    const date = new Date();
-    if (lastStatus != status && status != IncidentStatus.CANCEL) {
-      //   if (status == IncidentStatus.IN_PROGRESS) {
-      //     if (
-      //       lastStatus == IncidentStatus.UNASSIGNED ||
-      //       lastStatus == IncidentStatus.ASSIGNED
-      //     ) {
-      //       if (lastIncident.inProgressTimeLapsed && lastIncident.inProgressOn)
-      //         updateIncidentDto['inProgressTimeLapsed'] =
-      //           date.getTime() -
-      //           new Date(lastIncident.inProgressOn).getTime() +
-      //           lastIncident.inProgressTimeLapsed;
-      //       else
-      //         updateIncidentDto['inProgressTimeLapsed'] =
-      //           date.getTime() - new Date(lastIncident.createdOn).getTime();
-      //     }
-      //     updateIncidentDto['inProgressOn'] = date;
-      //   } else if (lastStatus == IncidentStatus.IN_PROGRESS) {
-      //     updateIncidentDto['inProgressOn'] = date;
-      //   }
-
-      if (status == IncidentStatus.CLOSED) {
-        updateIncidentDto['closedBy'] = currentUser;
-        if (lastIncident.inProgressOn) {
-          if (lastIncident.closeTimeLapsed && lastIncident.closedOn)
-            updateIncidentDto['closeTimeLapsed'] =
-              date.getTime() -
-              new Date(lastIncident.closedOn).getTime() +
-              lastIncident.closeTimeLapsed;
-          else
-            updateIncidentDto['closeTimeLapsed'] =
-              date.getTime() - new Date(lastIncident.inProgressOn).getTime();
-        } else updateIncidentDto['inProgressOn'] = date;
-        updateIncidentDto['closedOn'] = date;
-      } else if (lastStatus == IncidentStatus.CLOSED) {
-        updateIncidentDto['closedOn'] = date;
+      const date = new Date();
+      if (lastStatus != status && status != IncidentStatus.CANCEL) {
+        if (status == IncidentStatus.CLOSED) {
+          updateIncidentDto['closedBy'] = currentUser;
+          if (lastIncident.inProgressOn) {
+            if (lastIncident.closeTimeLapsed && lastIncident.closedOn)
+              updateIncidentDto['closeTimeLapsed'] =
+                date.getTime() -
+                new Date(lastIncident.closedOn).getTime() +
+                lastIncident.closeTimeLapsed;
+            else
+              updateIncidentDto['closeTimeLapsed'] =
+                date.getTime() - new Date(lastIncident.inProgressOn).getTime();
+          } else updateIncidentDto['inProgressOn'] = date;
+          updateIncidentDto['closedOn'] = date;
+        } else if (lastStatus == IncidentStatus.CLOSED) {
+          updateIncidentDto['closedOn'] = date;
+        }
       }
     }
 

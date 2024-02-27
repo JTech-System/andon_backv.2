@@ -19,24 +19,28 @@ import {
 export class UpdateIncidentDto {
   @ApiProperty()
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @ApiProperty({
     enum: IncidentStatusArray,
   })
   @IsString()
   @IsEnum(IncidentStatusArray)
-  status: IncidentStatus;
+  @IsOptional()
+  status?: IncidentStatus;
 
   @ApiProperty()
   @IsString()
   @IsUUID()
-  categoryId: string;
+  @IsOptional()
+  categoryId?: string;
 
   @ApiProperty()
   @IsString()
   @IsUUID()
-  productionLineId: string;
+  @IsOptional()
+  productionLineId?: string;
 
   @ApiProperty({
     required: false,
