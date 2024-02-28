@@ -473,7 +473,7 @@ export class NotificationSendService {
       }
 
       // Check if the notification should be sent based on the criteria.
-      if (this.checkIfSend(operation, notification, record, lastRecord)) {
+      if (this.checkIfSend(operation, notification, record, lastRecord) && recipientEmails.length > 0) {
         if (notification.cronTime) {
           // Schedule a cron job to send the email if a cronTime is defined.
           const job = new CronJob(notification.cronTime, async () => {
