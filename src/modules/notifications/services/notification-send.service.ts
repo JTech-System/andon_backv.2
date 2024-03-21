@@ -178,6 +178,7 @@ export class NotificationSendService {
       if (lastRecord) {
         // Iterate through each update field in the notification.
         for (let field of notification.updateFields) {
+          //console.log(notification.name,field);
           // Check if the update field is related to a 'group.'
           if (field.relation) {
             switch (field.relation) {
@@ -195,6 +196,7 @@ export class NotificationSendService {
                   if (record[field.name].name != field.value) return false;
                 } else return false;
                 break;
+                
             }
           } else {
             // Handle non-related update fields.
@@ -204,15 +206,27 @@ export class NotificationSendService {
                 Array.isArray(lastRecord[field.name])
               ) {
                 if (record[field.name].length == lastRecord[field.name].length)
+                  //console.log(record[field.name], " -- 1");
                   return false;
               } else {
                 // Compare the current record's field to the last record's field.
-                if (record[field.name] == lastRecord[field.name]) return false;
-                else if (field.value && record[field.name] != field.value)
-                  return false;
+                //console.log(notification.recipientUser)
+                //console.log(field.value)
+                //console.log(record[field.name])
+                if(notification.recipientUser != "" && record[field.name] == field.value ){
+                  if (record[notification.recipientUser] == lastRecord[notification.recipientUser])
+                    return false;
+                }else{
+                  //console.log(record[field.name], " -- 2");
+                  if (record[field.name] == lastRecord[field.name]) return false;
+                  else if (field.value && record[field.name] != field.value)
+                    return false;
+                }
               }
             } else if (record[field.name]) {
               // Check if the field value is provided and differs from the current record's field.
+              
+              //console.log(record[field.name], " -- 3");
               if (field.value && record[field.name] != field.value)
                 return false;
             } else {
@@ -306,6 +320,7 @@ export class NotificationSendService {
                   stop = true;
                 }
                 break;
+                
             }
           } else {
             // Handle non-related stop fields.
@@ -473,6 +488,7 @@ export class NotificationSendService {
       }
 
       // Check if the notification should be sent based on the criteria.
+      //console.log(lastRecord);
       if (this.checkIfSend(operation, notification, record, lastRecord) && recipientEmails.length > 0) {
         if (notification.cronTime) {
           // Schedule a cron job to send the email if a cronTime is defined.
