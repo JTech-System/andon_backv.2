@@ -37,6 +37,7 @@ export class Incident extends BaseEntity {
   })
   @Column({
     length: 16,
+    unique: true
   })
   number: string;
 

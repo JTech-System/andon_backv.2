@@ -37,7 +37,7 @@ export class IncidentsService {
     private policyService: PolicyService,
     private notificationSendService: NotificationSendService,
     private socketsGateway: SocketsGateway,
-  ) {}
+  ) { }
 
   async count(options?: FindManyOptions<Incident>): Promise<number> {
     return await this.incidentsRepository.count(options);
@@ -63,6 +63,20 @@ export class IncidentsService {
     createIncidentDto: CreateIncidentDto,
     currentUser: User,
   ): Promise<Incident> {
+    // Generate the number for the new incident
+    const incidentNumber = await this.createNumber();
+    // Use findBy with FindManyOptions to check for existing incidents with the same number
+    const existingIncidents = await this.findBy({
+      where: { number: incidentNumber },
+    });
+
+    // Check if any incidents were found
+    if (existingIncidents.length > 0) {
+      // Handle the duplicate incident case, e.g., throw an error
+      throw new Error(`An incident with number ${incidentNumber} already exists.`);
+    }
+
+    // Continue with the creation process if no duplicate was found
     const category = await this.incidentCategoriesService.findOne(
       createIncidentDto.category,
     );
@@ -72,7 +86,7 @@ export class IncidentsService {
 
     const incident = await this.incidentsRepository.save({
       ...createIncidentDto,
-      number: await this.createNumber(),
+      number: incidentNumber, // Use the generated number
       createdBy: currentUser,
       updatedBy: currentUser,
       status: IncidentStatus.UNASSIGNED,
@@ -90,6 +104,7 @@ export class IncidentsService {
 
     return await this.findOne(incident.id);
   }
+
 
   private async findAllWhere(
     search?: string,
