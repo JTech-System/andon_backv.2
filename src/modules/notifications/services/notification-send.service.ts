@@ -175,6 +175,9 @@ export class NotificationSendService {
     lastRecord?: object,
   ): boolean {
     if (operation == NotificationOperation.UPDATE) {
+      if(notification.name == "ANDON ASIGNADO A EL GRUPO"){
+        console.log(notification.name, " notification.name");
+      }
       if (lastRecord) {
         // Iterate through each update field in the notification.
         for (let field of notification.updateFields) {
@@ -183,6 +186,7 @@ export class NotificationSendService {
           if (field.relation) {
             switch (field.relation) {
               case 'group':
+                console.log("Group noti");
                 // Check if both the current record and the last record have the 'group' field.
                 if (record[field.name] && lastRecord[field.name]) {
                   // Compare the group names or the field value to determine if a notification should be sent.
@@ -205,19 +209,25 @@ export class NotificationSendService {
                 Array.isArray(record[field.name]) &&
                 Array.isArray(lastRecord[field.name])
               ) {
-                if (record[field.name].length == lastRecord[field.name].length)
-                  //console.log(record[field.name], " -- 1");
+                if (record[field.name].length == lastRecord[field.name].length){
+                  console.log(record[field.name], " -- 1");
                   return false;
+                }
               } else {
                 // Compare the current record's field to the last record's field.
                 //console.log(notification.recipientUser)
                 //console.log(field.value)
                 //console.log(record[field.name])
-                if(notification.recipientUser != "" && record[field.name] == field.value ){
+                if(notification.recipientUser && notification.recipientUser != "" && record[field.name] == field.value ){
+                  console.log(notification.recipientUser)
                   if (record[notification.recipientUser] == lastRecord[notification.recipientUser])
                     return false;
                 }else{
-                  //console.log(record[field.name], " -- 2");
+                  if(notification.name == "ANDON ASIGNADO A EL GRUPO"){
+                    console.log(record[field.name], " record[field.name] -- 2");
+                  console.log(lastRecord[field.name], " lastRecord -- 2");
+                  console.log(field.value, " field.value -- 2");
+                  }
                   if (record[field.name] == lastRecord[field.name]) return false;
                   else if (field.value && record[field.name] != field.value)
                     return false;
@@ -226,10 +236,11 @@ export class NotificationSendService {
             } else if (record[field.name]) {
               // Check if the field value is provided and differs from the current record's field.
               
-              //console.log(record[field.name], " -- 3");
+              console.log(record[field.name], " -- 3");
               if (field.value && record[field.name] != field.value)
                 return false;
             } else {
+              console.log(record[field.name], " -- 4");
               // If the field value is provided but the field in the current record is missing.
               if (field.value) return false;
             }
