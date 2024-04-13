@@ -6,12 +6,7 @@ import { SwaggerModule } from '@nestjs/swagger/dist';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    // httpsOptions: {
-    //   key: fs.readFileSync('./key.pem'),
-    //   cert: fs.readFileSync('./cert.pem'),
-    // },
-  });
+  const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ValidationPipe());
 
@@ -28,7 +23,7 @@ async function bootstrap() {
     customSiteTitle: 'Andon API',
   });
 
-  await app.listen(process.env.PORT || 3000, '0.0.0.0');
+  await app.listen(process.env.PORT || 3000);
 }
 
 bootstrap(); 
