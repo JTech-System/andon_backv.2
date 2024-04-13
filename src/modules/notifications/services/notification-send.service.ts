@@ -141,6 +141,7 @@ export class NotificationSendService {
     // Iterate over the 'push' array to send push notifications to multiple recipients.
     push.map(async (notificationPush) => {
       try {
+        console.log("Send a push notification using webPush library and data provided");
         // Send a push notification using webPush library and data provided.
         await webPush.sendNotification(
           {
@@ -163,6 +164,7 @@ export class NotificationSendService {
         );
       } catch (ex) {
         // If an error occurs while sending the push notification, remove the corresponding push record.
+        console.log("If an error occurs while sending the push notification, remove the corresponding push record");
         this.notificationPushService.remove(notificationPush.id);
       }
     });
@@ -175,18 +177,13 @@ export class NotificationSendService {
     lastRecord?: object,
   ): boolean {
     if (operation == NotificationOperation.UPDATE) {
-      if(notification.name == "ANDON ASIGNADO A EL GRUPO"){
-        console.log(notification.name, " notification.name");
-      }
       if (lastRecord) {
         // Iterate through each update field in the notification.
         for (let field of notification.updateFields) {
-          //console.log(notification.name,field);
           // Check if the update field is related to a 'group.'
           if (field.relation) {
             switch (field.relation) {
               case 'group':
-                console.log("Group noti");
                 // Check if both the current record and the last record have the 'group' field.
                 if (record[field.name] && lastRecord[field.name]) {
                   // Compare the group names or the field value to determine if a notification should be sent.
@@ -210,24 +207,14 @@ export class NotificationSendService {
                 Array.isArray(lastRecord[field.name])
               ) {
                 if (record[field.name].length == lastRecord[field.name].length){
-                  console.log(record[field.name], " -- 1");
                   return false;
                 }
               } else {
                 // Compare the current record's field to the last record's field.
-                //console.log(notification.recipientUser)
-                //console.log(field.value)
-                //console.log(record[field.name])
                 if(notification.recipientUser && notification.recipientUser != "" && record[field.name] == field.value ){
-                  console.log(notification.recipientUser)
                   if (record[notification.recipientUser] == lastRecord[notification.recipientUser])
                     return false;
                 }else{
-                  if(notification.name == "ANDON ASIGNADO A EL GRUPO"){
-                    console.log(record[field.name], " record[field.name] -- 2");
-                  console.log(lastRecord[field.name], " lastRecord -- 2");
-                  console.log(field.value, " field.value -- 2");
-                  }
                   if (record[field.name] == lastRecord[field.name]) return false;
                   else if (field.value && record[field.name] != field.value)
                     return false;
@@ -235,12 +222,9 @@ export class NotificationSendService {
               }
             } else if (record[field.name]) {
               // Check if the field value is provided and differs from the current record's field.
-              
-              console.log(record[field.name], " -- 3");
               if (field.value && record[field.name] != field.value)
                 return false;
             } else {
-              console.log(record[field.name], " -- 4");
               // If the field value is provided but the field in the current record is missing.
               if (field.value) return false;
             }
@@ -522,103 +506,63 @@ export class NotificationSendService {
       }
     });
 
-    // Retrieve notifications related to the entity, operation, and push type.
-    (
-      await this.notificationsService.findBy({
-        where: {
-          entity,
-          operations: Like(`%${operation}%`) as any,
-          types: Like(`%${NotificationType.PUSH}%`) as any,
-          active: true,
+    const notifications = await this.notificationsService.findBy({
+      where: {
+        entity,
+        operations: Like(`%${operation}%`) as any,
+        types: Like(`%${NotificationType.PUSH}%`) as any,
+        active: true,
+      },
+      relations: {
+        recipients: {
+          notificationPush: true,
         },
-        relations: {
-          recipients: {
+        groups: {
+          users: {
             notificationPush: true,
           },
-          groups: {
-            users: {
-              notificationPush: true,
-            },
-          },
-          managerGroups: {
-            manager: {
-              notificationPush: true,
-            },
-          },
-          updateFields: true,
-          stopFields: true,
         },
-      })
-    ).map(async (notification) => {
-      // Initialize a variable to store the push notification subject.
-      let subject: string | undefined;
-
-      // If the notification has a subject, parse and store it using the 'parseContent' method.
-      if (notification.subject) {
-        subject = this.parseContent(notification.subject, record, url);
-      }
-
-      // Parse the push notification body using the 'parseContent' method.
+        managerGroups: {
+          manager: {
+            notificationPush: true,
+          },
+        },
+        updateFields: true,
+        stopFields: true,
+      },
+    });
+  
+    for (const notification of notifications) {
+      let subject = notification.subject ? this.parseContent(notification.subject, record, url) : undefined;
       const body = this.parseContent(notification.body, record, url);
-
-      const push: NotificationPush[] = [];
-
-      // Collect unique push notifications based on recipients.
+      const push = [];
+  
       const recipients = await this.getRecipients(notification, record);
-      await Promise.all(
-        recipients.map(async (recipient) => {
-          recipient.notificationPush.map((notificationPush) => {
-            if (
-              !push.find(
-                (findNotificationPush) =>
-                  findNotificationPush.id == notificationPush.id,
-              )
-            ) {
-              push.push(notificationPush);
-            }
-          });
-          if (!notification.cronTime)
-            await this.notificationLogService.create({
-              subject,
-              body,
-              recipient,
-              url,
-            });
-        }),
-      );
-
-      // Check if the notification should be sent based on the criteria.
-      if (this.checkIfSend(operation, notification, record, lastRecord)) {
+  
+      for (const recipient of recipients) {
+        for (const notificationPush of recipient.notificationPush) {
+          if (!push.some(p => p.id === notificationPush.id)) {
+            push.push(notificationPush);
+            console.log('Added to push:', notificationPush);
+          }
+        }
+      }
+  
+      console.log('Final push array before check:', push);
+  
+      if (push.length > 0 && this.checkIfSend(operation, notification, record, lastRecord)) {
+        console.log('Push array at check:', push);
         if (notification.cronTime) {
-          // Schedule a cron job to send push notifications if a cronTime is defined.
           const job = new CronJob(notification.cronTime, async () => {
-            if (
-              !(await this.stoppedCronTime(
-                entity,
-                record['id'],
-                notification.id,
-                job,
-              ))
-            ) {
+            if (!(await this.stoppedCronTime(entity, record['id'], notification.id, job))) {
               await this.sendPush(push, url, body, subject);
-              await Promise.all(
-                recipients.map((recipient) => {
-                  this.notificationLogService.create({
-                    recipient,
-                    subject,
-                    body,
-                    url,
-                  });
-                }),
-              );
             }
           });
           job.start();
         } else {
-          // Send push notifications immediately if no cronTime is defined.
           await this.sendPush(push, url, body, subject);
         }
       }
-    });
+    }
   }
 }

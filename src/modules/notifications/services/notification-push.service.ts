@@ -32,11 +32,14 @@ export class NotificationPushService {
         },
       }))
     ) {
+      console.log("sending push to " + currentUser.email);
       // If no matching notification push is found, save the new push notification.
       await this.notificationPushRepository.save({
         user: currentUser,
         ...createNotificationPushDto,
       });
+    }else{
+      console.log("Notification Found");
     }
   }
 
