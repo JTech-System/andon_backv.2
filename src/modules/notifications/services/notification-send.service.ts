@@ -30,7 +30,7 @@ export class NotificationSendService {
     private notificationLogService: NotificationLogService,
     private groupsService: GroupsService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   private parseContent(content: string, record: object, url: string): string {
     // Initialize the 'parsedContent' variable with the original content.
@@ -197,7 +197,7 @@ export class NotificationSendService {
                   if (record[field.name].name != field.value) return false;
                 } else return false;
                 break;
-                
+
             }
           } else {
             // Handle non-related update fields.
@@ -206,15 +206,18 @@ export class NotificationSendService {
                 Array.isArray(record[field.name]) &&
                 Array.isArray(lastRecord[field.name])
               ) {
-                if (record[field.name].length == lastRecord[field.name].length){
+                if (record[field.name].length == lastRecord[field.name].length) {
                   return false;
                 }
               } else {
                 // Compare the current record's field to the last record's field.
-                if(notification.recipientUser && notification.recipientUser != "" && record[field.name] == field.value ){
-                  if (record[notification.recipientUser] == lastRecord[notification.recipientUser])
+                if ((notification.recipientAgentsGroup && notification.recipientAgentsGroup != "") && record[field.name] == field.value) {
+                  if (record[notification.recipientAgentsGroup] == lastRecord[notification.recipientAgentsGroup])
                     return false;
-                }else{
+                } else if (((notification.recipientUser && notification.recipientUser != "")) && record[field.name] == field.value) {
+                  if ( record[notification.recipientUser] == lastRecord[notification.recipientUser])
+                    return false;
+                } else {
                   if (record[field.name] == lastRecord[field.name]) return false;
                   else if (field.value && record[field.name] != field.value)
                     return false;
@@ -297,8 +300,7 @@ export class NotificationSendService {
                 // Check if the record has a related group ID.
                 if (record[field.name + 'Id']) {
                   const groups = (await appDataSource.query(
-                    `SELECT * FROM \`group\` WHERE id='${
-                      record[field.name + 'Id']
+                    `SELECT * FROM \`group\` WHERE id='${record[field.name + 'Id']
                     }'`,
                   )) as Group[];
 
@@ -315,7 +317,7 @@ export class NotificationSendService {
                   stop = true;
                 }
                 break;
-                
+
             }
           } else {
             // Handle non-related stop fields.
@@ -531,27 +533,27 @@ export class NotificationSendService {
         stopFields: true,
       },
     });
-  
+
     for (const notification of notifications) {
       let subject = notification.subject ? this.parseContent(notification.subject, record, url) : undefined;
       const body = this.parseContent(notification.body, record, url);
       const push = [];
-  
+
       const recipients = await this.getRecipients(notification, record);
-  
+
       for (const recipient of recipients) {
         for (const notificationPush of recipient.notificationPush) {
           if (!push.some(p => p.id === notificationPush.id)) {
             push.push(notificationPush);
-            console.log('Added to push:', notificationPush);
+            //console.log('Added to push:', notificationPush);
           }
         }
       }
-  
-      console.log('Final push array before check:', push);
-  
+
+      //console.log('Final push array before check:', push);
+
       if (push.length > 0 && this.checkIfSend(operation, notification, record, lastRecord)) {
-        console.log('Push array at check:', push);
+        //console.log('Push array at check:', push);
         if (notification.cronTime) {
           const job = new CronJob(notification.cronTime, async () => {
             if (!(await this.stoppedCronTime(entity, record['id'], notification.id, job))) {
