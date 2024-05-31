@@ -254,8 +254,12 @@ export class IncidentsService {
     currentUser: User,
   ): Promise<Incident> {
     const lastIncident = await this.findOne(id);
+   
+    if(lastIncident['inProgressOn']){
+        updateIncidentDto['inProgressOn'] =  lastIncident['inProgressOn'];  
+        
+    }// Find and replaces the id values
 
-    // Find and replaces the id values
     if (updateIncidentDto.categoryId) {
       updateIncidentDto['category'] =
         await this.incidentCategoriesService.findOne(
@@ -295,12 +299,17 @@ export class IncidentsService {
 
       if (lastStatus != status) {
         if (
+          (
           status == IncidentStatus.IN_PROGRESS ||
           status == IncidentStatus.CLOSED ||
           status == IncidentStatus.CANCEL
+        ) && lastIncident.inProgressOn == null
+
         ) {
-          if (!lastIncident.inProgressOn)
             updateIncidentDto['inProgressOn'] = new Date();
+        }else{
+          updateIncidentDto['inProgressOn'] = lastIncident['inProgressOn']
+
         }
         if (
           status == IncidentStatus.CLOSED ||
@@ -347,9 +356,19 @@ export class IncidentsService {
         updateIncidentDto[field] = null;
     });
 
+    let lastInProgressOn = !lastIncident['lastInProgressOn']? lastIncident['inProgressOn']: lastIncident['lastInProgressOn'];
+    
+    console.log(lastInProgressOn);
+
+
+    let additionalData = {
+      lastInProgressOn: lastInProgressOn,
+       updatedBy: currentUser
+    }
+    console.log(additionalData);
     await this.incidentsRepository.update(
       { id },
-      { updatedBy: currentUser, ...updateIncidentDto },
+      {...additionalData, ...updateIncidentDto },
     );
 
     const incident = await this.findOne(id);

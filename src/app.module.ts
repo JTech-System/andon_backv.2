@@ -39,7 +39,7 @@ import { SocketsModule } from './integrations/sockets/sockets.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      synchronize: process.env.APP_ENV !== 'production',
+      synchronize: true,//process.env.APP_ENV !== 'production',
       autoLoadEntities: true,
     }),
     ServeStaticModule.forRoot({

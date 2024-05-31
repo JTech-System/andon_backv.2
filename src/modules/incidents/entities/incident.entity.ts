@@ -172,6 +172,14 @@ export class Incident extends BaseEntity {
   @Column({
     nullable: true,
   })
+  lastInProgressOn?: Date;
+  
+  @ApiProperty({
+    required: false,
+  })
+  @Column({
+    nullable: true,
+  })
   closedOn?: Date;
 
   @ApiProperty({
