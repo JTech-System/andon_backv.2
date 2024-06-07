@@ -332,7 +332,7 @@ export class IncidentsService {
                 lastIncident.closeTimeLapsed;
             else
               updateIncidentDto['closeTimeLapsed'] =
-                date.getTime() - new Date(lastIncident.inProgressOn).getTime();
+                date.getTime() - new Date(lastIncident.createdOn).getTime();
           } else updateIncidentDto['inProgressOn'] = date;
           updateIncidentDto['closedOn'] = date;
         } else if (lastStatus == IncidentStatus.CLOSED) {
@@ -400,6 +400,14 @@ export class IncidentsService {
     else return undefined;
   }
 
+  msToTime(duration: number): string {
+    const seconds = (duration / 1000) % 60;
+    const minutes = (duration / (1000 * 60)) % 60;
+    const hours = (duration / (1000 * 60 * 60)) % 24;
+    const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+    return `${days} days, ${Math.floor(hours)} hours, ${Math.floor(minutes)} minutes`;
+  }
+  
   async generateCSV(
     search?: string,
     status?: IncidentStatus,
@@ -418,7 +426,7 @@ export class IncidentsService {
       assignedGroupId,
       currentUser,
     );
-
+  
     const incidents = await this.incidentsRepository.find({
       where,
       relations: {
@@ -435,9 +443,9 @@ export class IncidentsService {
         number: 'ASC',
       },
     });
-
+  
     const data: any[] = [];
-
+  
     incidents.map((incident) => {
       data.push({
         id: incident.id,
@@ -453,7 +461,7 @@ export class IncidentsService {
         closeNotes: incident.closeNotes,
         inProgressOn: incident.inProgressOn,
         closedOn: incident.closedOn,
-        closeTimeLapsed: incident.closeTimeLapsed,
+        closeTimeLapsed: this.msToTime(incident.closeTimeLapsed),
         createdBy: this.getFullName(incident.createdBy),
         updateBy: this.getFullName(incident.updatedBy),
         category: incident.category.value,
@@ -466,7 +474,7 @@ export class IncidentsService {
         closedBy: this.getFullName(incident.closedBy),
       });
     });
-
+  
     const fields = [
       'id',
       'createdOn',
