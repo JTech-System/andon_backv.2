@@ -321,7 +321,7 @@ export class IncidentsService {
       }
 
       const date = new Date();
-      if (lastStatus != status && status != IncidentStatus.CANCEL) {
+      if (lastStatus != status ) {//&& status != IncidentStatus.CANCEL
         if (status == IncidentStatus.CLOSED) {
           updateIncidentDto['closedBy'] = currentUser;
           if (lastIncident.inProgressOn) {
