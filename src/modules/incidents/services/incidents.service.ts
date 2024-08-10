@@ -22,10 +22,9 @@ import { PaginationIncidentDto } from '@incidents/dto/pagination-incident.dto';
 import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
 import { IncidentCategoriesService } from './incident-categories.service';
 import { PolicyService } from 'src/modules/policy/policy.service';
+import { format, add } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { Parser } from 'json2csv';
-import { format, toDate } from 'date-fns-tz';
-
-
 @Injectable()
 export class IncidentsService {
   constructor(
@@ -409,106 +408,106 @@ export class IncidentsService {
     const days = Math.floor(duration / (1000 * 60 * 60 * 24));
     return `${days} days, ${Math.floor(hours)} hours, ${Math.floor(minutes)} minutes`;
   }
-  async generateCSV(
-    search?: string,
-    status?: IncidentStatus,
-    categoryId?: string,
-    startCreatedOn?: Date,
-    endCreatedOn?: Date,
-    assignedGroupId?: string,
-    currentUser?: User,
-  ): Promise<any> {
-    const where = await this.findAllWhere(
-      search,
-      status,
-      categoryId,
-      startCreatedOn,
-      endCreatedOn,
-      assignedGroupId,
-      currentUser,
-    );
 
-    const incidents = await this.incidentsRepository.find({
-      where,
-      relations: {
-        createdBy: true,
-        updatedBy: true,
-        category: true,
-        productionLine: true,
-        assignedGroup: true,
-        assignedTo: true,
-        machine: true,
-        closedBy: true,
-      },
-      order: {
-        number: 'ASC',
-      },
+  
+async generateCSV(
+  search?: string,
+  status?: IncidentStatus,
+  categoryId?: string,
+  startCreatedOn?: Date,
+  endCreatedOn?: Date,
+  assignedGroupId?: string,
+  currentUser?: User,
+): Promise<any> {
+  const where = await this.findAllWhere(
+    search,
+    status,
+    categoryId,
+    startCreatedOn,
+    endCreatedOn,
+    assignedGroupId,
+    currentUser,
+  );
+
+  const incidents = await this.incidentsRepository.find({
+    where,
+    relations: {
+      createdBy: true,
+      updatedBy: true,
+      category: true,
+      productionLine: true,
+      assignedGroup: true,
+      assignedTo: true,
+      machine: true,
+      closedBy: true,
+    },
+    order: {
+      number: 'ASC',
+    },
+  });
+
+  const timeZone = 'America/Mexico_City'; // Time zone for Mexico City
+
+  const data: any[] = [];
+
+  incidents.forEach((incident) => {
+    const createdOnZoned = toZonedTime(incident.createdOn, timeZone);
+    const updatedOnZoned = toZonedTime(incident.updatedOn, timeZone);
+    const inProgressOnZoned = incident.inProgressOn ? toZonedTime(incident.inProgressOn, timeZone) : null;
+    const closedOnZoned = incident.closedOn ? toZonedTime(incident.closedOn, timeZone) : null;
+
+    data.push({
+      id: incident.id,
+      createdOn: format(createdOnZoned, 'yyyy-MM-dd HH:mm:ssXXX'),
+      updatedOn: format(updatedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX'),
+      number: incident.number,
+      description: incident.description,
+      status: incident.status,
+      employee: incident.employee,
+      priority: incident.priority,
+      proposedSolution: incident.proposedSolution,
+      resolutionTimeInMinutes: incident.resolutionTimeInMinutes,
+      closeNotes: incident.closeNotes,
+      inProgressOn: inProgressOnZoned ? format(inProgressOnZoned, 'yyyy-MM-dd HH:mm:ssXXX') : null,
+      closedOn: closedOnZoned ? format(closedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX') : null,
+      closeTimeLapsed: this.msToTime(incident.closeTimeLapsed),
+      createdBy: this.getFullName(incident.createdBy),
+      updateBy: this.getFullName(incident.updatedBy),
+      category: incident.category.value,
+      productionLine: incident.productionLine.value,
+      assignedGroup: incident.assignedGroup ? incident.assignedGroup.name : undefined,
+      assignedTo: this.getFullName(incident.assignedTo),
+      machine: incident.machine ? incident.machine.value : undefined,
+      closedBy: this.getFullName(incident.closedBy),
     });
+  });
 
-    const timeZone = 'America/Mexico_City'; // Time zone for Mexico City
+  const fields = [
+    'id',
+    'createdOn',
+    'updatedOn',
+    'number',
+    'description',
+    'status',
+    'employee',
+    'priority',
+    'proposedSolution',
+    'resolutionTimeInMinutes',
+    'closeNotes',
+    'inProgressOn',
+    'closedOn',
+    'closeTimeLapsed',
+    'createdBy',
+    'updateBy',
+    'category',
+    'productionLine',
+    'assignedGroup',
+    'assignedTo',
+    'machine',
+    'closedBy',
+  ];
 
-    const data: any[] = [];
-
-    incidents.map((incident) => {
-      const createdOnZoned = toDate(new Date(incident.createdOn), { timeZone });
-      const updatedOnZoned = toDate(new Date(incident.updatedOn), { timeZone });
-      const inProgressOnZoned = incident.inProgressOn ? toDate(new Date(incident.inProgressOn), { timeZone }) : null;
-      const closedOnZoned = incident.closedOn ? toDate(new Date(incident.closedOn), { timeZone }) : null;
-      if(incident.number == "INC02233")console.log("Date: " + createdOnZoned);
-
-      data.push({
-        id: incident.id,
-        createdOn: format(createdOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
-        updatedOn: format(updatedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
-        number: incident.number,
-        description: incident.description,
-        status: incident.status,
-        employee: incident.employee,
-        priority: incident.priority,
-        proposedSolution: incident.proposedSolution,
-        resolutionTimeInMinutes: incident.resolutionTimeInMinutes,
-        closeNotes: incident.closeNotes,
-        inProgressOn: inProgressOnZoned ? format(inProgressOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }) : null,
-        closedOn: closedOnZoned ? format(closedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }) : null,
-        closeTimeLapsed: this.msToTime(incident.closeTimeLapsed),
-        createdBy: this.getFullName(incident.createdBy),
-        updateBy: this.getFullName(incident.updatedBy),
-        category: incident.category.value,
-        productionLine: incident.productionLine.value,
-        assignedGroup: incident.assignedGroup ? incident.assignedGroup.name : undefined,
-        assignedTo: this.getFullName(incident.assignedTo),
-        machine: incident.machine ? incident.machine.value : undefined,
-        closedBy: this.getFullName(incident.closedBy),
-      });
-    });
-
-    const fields = [
-      'id',
-      'createdOn',
-      'updatedOn',
-      'number',
-      'description',
-      'status',
-      'employee',
-      'priority',
-      'proposedSolution',
-      'resolutionTimeInMinutes',
-      'closeNotes',
-      'inProgressOn',
-      'closedOn',
-      'closeTimeLapsed',
-      'createdBy',
-      'updateBy',
-      'category',
-      'productionLine',
-      'assignedGroup',
-      'assignedTo',
-      'machine',
-      'closedBy',
-    ];
-
-    const parser = new Parser({ fields });
-    return parser.parse(data);
-  }
-
+  const parser = new Parser({ fields });
+  return parser.parse(data);
+}
 }
