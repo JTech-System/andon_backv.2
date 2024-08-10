@@ -23,7 +23,7 @@ import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
 import { IncidentCategoriesService } from './incident-categories.service';
 import { PolicyService } from 'src/modules/policy/policy.service';
 import { Parser } from 'json2csv';
-import { format } from 'date-fns-tz';
+import { format, toDate } from 'date-fns-tz';
 
 
 @Injectable()
@@ -256,10 +256,10 @@ export class IncidentsService {
     currentUser: User,
   ): Promise<Incident> {
     const lastIncident = await this.findOne(id);
-   
-    if(lastIncident['inProgressOn']){
-        updateIncidentDto['inProgressOn'] =  lastIncident['inProgressOn'];  
-        
+
+    if (lastIncident['inProgressOn']) {
+      updateIncidentDto['inProgressOn'] = lastIncident['inProgressOn'];
+
     }// Find and replaces the id values
 
     if (updateIncidentDto.categoryId) {
@@ -302,14 +302,14 @@ export class IncidentsService {
       if (lastStatus != status) {
         if (
           (
-          status == IncidentStatus.IN_PROGRESS ||
-          status == IncidentStatus.CLOSED ||
-          status == IncidentStatus.CANCEL
-        ) && lastIncident.inProgressOn == null
+            status == IncidentStatus.IN_PROGRESS ||
+            status == IncidentStatus.CLOSED ||
+            status == IncidentStatus.CANCEL
+          ) && lastIncident.inProgressOn == null
 
         ) {
-            updateIncidentDto['inProgressOn'] = new Date();
-        }else{
+          updateIncidentDto['inProgressOn'] = new Date();
+        } else {
           updateIncidentDto['inProgressOn'] = lastIncident['inProgressOn']
 
         }
@@ -323,7 +323,7 @@ export class IncidentsService {
       }
 
       const date = new Date();
-      if (lastStatus != status ) {//&& status != IncidentStatus.CANCEL
+      if (lastStatus != status) {//&& status != IncidentStatus.CANCEL
         if (status == IncidentStatus.CLOSED) {
           updateIncidentDto['closedBy'] = currentUser;
           if (lastIncident.inProgressOn) {
@@ -358,19 +358,19 @@ export class IncidentsService {
         updateIncidentDto[field] = null;
     });
 
-    let lastInProgressOn = !lastIncident['lastInProgressOn']? lastIncident['inProgressOn']: lastIncident['lastInProgressOn'];
-    
+    let lastInProgressOn = !lastIncident['lastInProgressOn'] ? lastIncident['inProgressOn'] : lastIncident['lastInProgressOn'];
+
     console.log(lastInProgressOn);
 
 
     let additionalData = {
       lastInProgressOn: lastInProgressOn,
-       updatedBy: currentUser
+      updatedBy: currentUser
     }
     console.log(additionalData);
     await this.incidentsRepository.update(
       { id },
-      {...additionalData, ...updateIncidentDto },
+      { ...additionalData, ...updateIncidentDto },
     );
 
     const incident = await this.findOne(id);
@@ -427,7 +427,7 @@ export class IncidentsService {
       assignedGroupId,
       currentUser,
     );
-  
+
     const incidents = await this.incidentsRepository.find({
       where,
       relations: {
@@ -444,16 +444,21 @@ export class IncidentsService {
         number: 'ASC',
       },
     });
-  
-    const timeZone = 'America/Mexico_City'; // Replace with your desired time zone
-  
+
+    const timeZone = 'America/Mexico_City'; // Time zone for Mexico City
+
     const data: any[] = [];
-  
+
     incidents.map((incident) => {
+      const createdOnZoned = toDate(new Date(incident.createdOn), { timeZone });
+      const updatedOnZoned = toDate(new Date(incident.updatedOn), { timeZone });
+      const inProgressOnZoned = incident.inProgressOn ? toDate(new Date(incident.inProgressOn), { timeZone }) : null;
+      const closedOnZoned = incident.closedOn ? toDate(new Date(incident.closedOn), { timeZone }) : null;
+
       data.push({
         id: incident.id,
-        createdOn: format(new Date(incident.createdOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
-        updatedOn: format(new Date(incident.updatedOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
+        createdOn: format(createdOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
+        updatedOn: format(updatedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
         number: incident.number,
         description: incident.description,
         status: incident.status,
@@ -462,8 +467,8 @@ export class IncidentsService {
         proposedSolution: incident.proposedSolution,
         resolutionTimeInMinutes: incident.resolutionTimeInMinutes,
         closeNotes: incident.closeNotes,
-        inProgressOn: format(new Date(incident.inProgressOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
-        closedOn: format(new Date(incident.closedOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
+        inProgressOn: inProgressOnZoned ? format(inProgressOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }) : null,
+        closedOn: closedOnZoned ? format(closedOnZoned, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }) : null,
         closeTimeLapsed: this.msToTime(incident.closeTimeLapsed),
         createdBy: this.getFullName(incident.createdBy),
         updateBy: this.getFullName(incident.updatedBy),
@@ -475,7 +480,7 @@ export class IncidentsService {
         closedBy: this.getFullName(incident.closedBy),
       });
     });
-  
+
     const fields = [
       'id',
       'createdOn',
@@ -500,8 +505,9 @@ export class IncidentsService {
       'machine',
       'closedBy',
     ];
-  
+
     const parser = new Parser({ fields });
     return parser.parse(data);
   }
+
 }
