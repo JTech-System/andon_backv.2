@@ -23,6 +23,8 @@ import { UpdateIncidentDto } from '@incidents/dto/update-incident.dto';
 import { IncidentCategoriesService } from './incident-categories.service';
 import { PolicyService } from 'src/modules/policy/policy.service';
 import { Parser } from 'json2csv';
+import { format } from 'date-fns-tz';
+
 
 @Injectable()
 export class IncidentsService {
@@ -407,7 +409,6 @@ export class IncidentsService {
     const days = Math.floor(duration / (1000 * 60 * 60 * 24));
     return `${days} days, ${Math.floor(hours)} hours, ${Math.floor(minutes)} minutes`;
   }
-  
   async generateCSV(
     search?: string,
     status?: IncidentStatus,
@@ -444,13 +445,15 @@ export class IncidentsService {
       },
     });
   
+    const timeZone = 'America/Mexico_City'; // Replace with your desired time zone
+  
     const data: any[] = [];
   
     incidents.map((incident) => {
       data.push({
         id: incident.id,
-        createdOn: incident.createdOn,
-        updatedOn: incident.updatedOn,
+        createdOn: format(new Date(incident.createdOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
+        updatedOn: format(new Date(incident.updatedOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
         number: incident.number,
         description: incident.description,
         status: incident.status,
@@ -459,16 +462,14 @@ export class IncidentsService {
         proposedSolution: incident.proposedSolution,
         resolutionTimeInMinutes: incident.resolutionTimeInMinutes,
         closeNotes: incident.closeNotes,
-        inProgressOn: incident.inProgressOn,
-        closedOn: incident.closedOn,
+        inProgressOn: format(new Date(incident.inProgressOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
+        closedOn: format(new Date(incident.closedOn), 'yyyy-MM-dd HH:mm:ssXXX', { timeZone }),
         closeTimeLapsed: this.msToTime(incident.closeTimeLapsed),
         createdBy: this.getFullName(incident.createdBy),
         updateBy: this.getFullName(incident.updatedBy),
         category: incident.category.value,
         productionLine: incident.productionLine.value,
-        assignedGroup: incident.assignedGroup
-          ? incident.assignedGroup.name
-          : undefined,
+        assignedGroup: incident.assignedGroup ? incident.assignedGroup.name : undefined,
         assignedTo: this.getFullName(incident.assignedTo),
         machine: incident.machine ? incident.machine.value : undefined,
         closedBy: this.getFullName(incident.closedBy),
@@ -499,9 +500,8 @@ export class IncidentsService {
       'machine',
       'closedBy',
     ];
-    const parser = new Parser({
-      fields,
-    });
+  
+    const parser = new Parser({ fields });
     return parser.parse(data);
   }
 }

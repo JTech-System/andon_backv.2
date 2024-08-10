@@ -186,6 +186,7 @@ export class Incident extends BaseEntity {
     required: false,
   })
   @Column({
+    type: 'bigint',
     nullable: true,
   })
   closeTimeLapsed?: number;
