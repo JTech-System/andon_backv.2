@@ -454,6 +454,7 @@ export class IncidentsService {
       const updatedOnZoned = toDate(new Date(incident.updatedOn), { timeZone });
       const inProgressOnZoned = incident.inProgressOn ? toDate(new Date(incident.inProgressOn), { timeZone }) : null;
       const closedOnZoned = incident.closedOn ? toDate(new Date(incident.closedOn), { timeZone }) : null;
+      if(incident.number == "INC02233")console.log("Date: " + createdOnZoned);
 
       data.push({
         id: incident.id,
